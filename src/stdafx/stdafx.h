@@ -49,6 +49,7 @@
 #include <vtkCellData.h>
 #include <vtkImageData.h>
 #include <vtkPNGWriter.h>
+#include <vtkCoordinate.h>
 #include <vtkAutoInit.h>
 #include <CGAL/Polygon_mesh_processing/triangulate_hole.h>
 #include <CGAL/Polygon_mesh_processing/corefinement.h>
@@ -77,6 +78,7 @@
 #include <CGAL/AABB_triangle_primitive.h>
 #include <CGAL/Polygon_2_algorithms.h>
 #include "vectorAlgorithm.h"
+#include "Rotation.h"
 #include "Timer.hpp"
 VTK_MODULE_INIT(vtkRenderingOpenGL2)
 VTK_MODULE_INIT(vtkInteractionStyle)

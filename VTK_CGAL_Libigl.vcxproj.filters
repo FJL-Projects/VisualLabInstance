@@ -47,5 +47,8 @@
     <ClInclude Include="src\rendering pipeline\simpleRender.h">
       <Filter>src\rendering pipeline</Filter>
     </ClInclude>
+    <ClInclude Include="src\algorithm\Rotation.h">
+      <Filter>src\algorithm</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
