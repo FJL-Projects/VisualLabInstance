@@ -89,6 +89,11 @@
 
 #include <boost/optional.hpp>
 
+#include <Windows.h>
+#include <shlobj.h>
+#include <locale>
+#include <codecvt>
+
 #include "vectorAlgorithm.h"
 #include "Rotation.h"
 #include "Timer.hpp"
