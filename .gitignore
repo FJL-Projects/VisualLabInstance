@@ -59,3 +59,4 @@ _NCrunch_*
 .vs/
 *.opendb
 *.db
+*.FileListAbsolute.txt
