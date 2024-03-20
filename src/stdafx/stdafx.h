@@ -90,9 +90,9 @@
 #include <boost/optional.hpp>
 
 #include "vectorAlgorithm.h"
-#include "Rotation.h"
-#include "Timer.hpp"
 
+#include "Timer.hpp"
+#include "Rotation.h"
 VTK_MODULE_INIT(vtkRenderingOpenGL2)
 VTK_MODULE_INIT(vtkInteractionStyle)
 VTK_MODULE_INIT(vtkRenderingFreeType)
