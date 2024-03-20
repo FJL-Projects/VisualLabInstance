@@ -138,7 +138,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
-      <AdditionalIncludeDirectories>$(ProjectDir)src\rendering pipeline\;$(ProjectDir)src\algorithm\;$(ProjectDir)src\main program\;$(ProjectDir)src\stdafx\;$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src\rendering pipeline\;$(ProjectDir)src\algorithm\;$(ProjectDir)src\main program\;$(ProjectDir)src\new function\;$(ProjectDir)src\stdafx\;$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>MaxSpeed</Optimization>
       <UseStandardPreprocessor>true</UseStandardPreprocessor>
       <OpenMPSupport>true</OpenMPSupport>
@@ -157,6 +157,7 @@
     <ClCompile Include="src\main program\main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\new function\TeethWrapper.cpp" />
     <ClCompile Include="src\stdafx\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
@@ -165,6 +166,7 @@
     <ClInclude Include="src\algorithm\meshTransform.h" />
     <ClInclude Include="src\algorithm\Timer.hpp" />
     <ClInclude Include="src\algorithm\vectorAlgorithm.h" />
+    <ClInclude Include="src\new function\TeethWrapper.h" />
     <ClInclude Include="src\rendering pipeline\simpleRender.h" />
     <ClInclude Include="src\rendering pipeline\vtkRenderPipeline.h" />
     <ClInclude Include="src\stdafx\stdafx.h" />
