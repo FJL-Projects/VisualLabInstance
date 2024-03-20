@@ -16,7 +16,7 @@ void MouseMove(vtkObject* caller, long unsigned int eventId, void* clientData, v
 	
 }
 
-void writePNG(SurfaceMesh& sm,double3 dir)
+void writePNG(SurfaceMesh sm,double3 dir)
 {
 	dir = -dir;
 	dir.normalize();
@@ -24,11 +24,16 @@ void writePNG(SurfaceMesh& sm,double3 dir)
 	double3 axis = double3::crossProduct(dir,y);
 	axis.normalize();
 	axis = axis * acos(double3::dotProduct(dir, y));
+	double3 center(0, 0, 0);
+	for (auto v : sm.vertices())
+		center = center + double3(sm.point(v).x(), sm.point(v).y(), sm.point(v).z());
+	center = center / sm.number_of_vertices();
 	for (auto v : sm.vertices())
 	{
 		double3 pt(sm.point(v).x(), sm.point(v).y(), sm.point(v).z());
-		
+		pt = pt - center;
 		AngleAxisRotatePoint(axis.data, pt.data, pt.data);
+		sm.point(v) = Point_3(pt[0] , pt[1] , pt[2] );
 	}
 	
 	Tree tree(faces(sm).first, faces(sm).second, sm);
