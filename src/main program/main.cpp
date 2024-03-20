@@ -378,7 +378,7 @@ int main(int argc, char* argv[])
     RemeshedTeethPolyDataActor->GetProperty()->SetSpecularPower(100);
     RemeshedTeethPolyDataActor->GetProperty()->SetSpecular(0.5);
     RemeshedTeethPolyDataActor->GetProperty()->SetDiffuse(0.5);
-    RemeshedTeethPolyDataActor->GetProperty()->SetOpacity(0.8);
+    RemeshedTeethPolyDataActor->GetProperty()->SetOpacity(1.0);
     RemeshedTeethPolyDataActor->GetProperty()->EdgeVisibilityOff();
     //RemeshedTeethPolyDataActor->PickableOn();
 
@@ -410,7 +410,7 @@ int main(int argc, char* argv[])
     TeethPolyDataActor->GetProperty()->SetSpecularPower(100);
     TeethPolyDataActor->GetProperty()->SetSpecular(0.5);
     TeethPolyDataActor->GetProperty()->SetDiffuse(0.5);
-    TeethPolyDataActor->GetProperty()->SetOpacity(0.8);
+    TeethPolyDataActor->GetProperty()->SetOpacity(1.0);
     //TeethPolyDataActor->GetProperty()->EdgeVisibilityOn();
     //TeethPolyDataActor->PickableOn();
     pipeline->Renderer->AddActor(TeethPolyDataActor);
