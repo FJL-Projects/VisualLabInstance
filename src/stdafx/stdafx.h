@@ -135,6 +135,8 @@ namespace PMP = CGAL::Polygon_mesh_processing;
 typedef Kernel::Segment_2															Segment_2;
 typedef Kernel::Segment_3															Segment_3;
 typedef Kernel::Plane_3																Plane_3;
+typedef Kernel::Point_3																Point_3;
+typedef Kernel::Point_2																Point_2;
 typedef CGAL::AABB_face_graph_triangle_primitive<SurfaceMesh>						FacePrimitive;
 typedef CGAL::AABB_traits<Kernel, FacePrimitive>									FaceTraits;
 typedef CGAL::AABB_tree<FaceTraits>														FaceTree;
