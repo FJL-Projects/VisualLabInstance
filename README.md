@@ -13,8 +13,9 @@
 
 1. Qt is not included currently.
 2. "stdafx" is adopted for accelerating the compiling.
+3.
 
-## Acknowledgement
+
 
 1. This Project is designed and compiled by [Schwarz Solomon](https://github.com/SchwarzSolomon).
 2. Tidied up and uploaded by [0x11111111](https://github.com/0x11111111).
