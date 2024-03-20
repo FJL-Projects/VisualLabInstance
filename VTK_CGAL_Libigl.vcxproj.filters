@@ -27,6 +27,9 @@
     <ClCompile Include="src\stdafx\stdafx.cpp">
       <Filter>src\stdafx</Filter>
     </ClCompile>
+    <ClCompile Include="src\new function\TeethWrapper.cpp">
+      <Filter>src\new function</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\stdafx\stdafx.h">
@@ -46,6 +49,9 @@
     </ClInclude>
     <ClInclude Include="src\rendering pipeline\simpleRender.h">
       <Filter>src\rendering pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="src\new function\TeethWrapper.h">
+      <Filter>src\new function</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
