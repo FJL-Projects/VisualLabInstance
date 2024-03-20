@@ -2,9 +2,13 @@
 #include"vtkRenderPipeline.h"
 #include"meshTransform.h"
 #include"simpleRender.h"
+
+vtkRenderPipeline* pipeline;
+SurfaceMesh mesh;
+
 void LeftPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
-	cout<<"Left Press" << endl;
+	//cout<<"Left Press" << endl;
 }
 
 void MouseMove(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
@@ -12,8 +16,21 @@ void MouseMove(vtkObject* caller, long unsigned int eventId, void* clientData, v
 	
 }
 
-void writePNG(SurfaceMesh& sm)
+void writePNG(SurfaceMesh& sm,double3 dir)
 {
+	dir = -dir;
+	dir.normalize();
+	double3 y(0, 1, 0);
+	double3 axis = double3::crossProduct(dir,y);
+	axis.normalize();
+	axis = axis * acos(double3::dotProduct(dir, y));
+	for (auto v : sm.vertices())
+	{
+		double3 pt(sm.point(v).x(), sm.point(v).y(), sm.point(v).z());
+		
+		AngleAxisRotatePoint(axis.data, pt.data, pt.data);
+	}
+	
 	Tree tree(faces(sm).first, faces(sm).second, sm);
 	double x_min = std::numeric_limits<double>::max();
 	double x_max = std::numeric_limits<double>::min();
@@ -77,16 +94,16 @@ void writePNG(SurfaceMesh& sm)
 			if (depth[x][z] == 0)
 			{
 				unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x, z, 0));
-				pixel[0] = static_cast<int>(depth[x][z] / depth_max * 255); // 修改红色通道的值
-				pixel[1] = static_cast<int>(depth[x][z] / depth_max * 255);   // 修改绿色通道的值
-				pixel[2] = static_cast<int>(depth[x][z] / depth_max * 255);   // 修改蓝色通道的值
+				pixel[0] = static_cast<int>(depth[x][z] / depth_max * 255); 
+				pixel[1] = static_cast<int>(depth[x][z] / depth_max * 255);  
+				pixel[2] = static_cast<int>(depth[x][z] / depth_max * 255); 
 			}
 			else
 			{
 				unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x, z, 0));
-				pixel[0] = 255 - static_cast<int>(depth[x][z] / depth_max * 255); // 修改红色通道的值
-				pixel[1] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);   // 修改绿色通道的值
-				pixel[2] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);   // 修改蓝色通道的值
+				pixel[0] = 255 - static_cast<int>(depth[x][z] / depth_max * 255); 
+				pixel[1] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);   
+				pixel[2] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);   
 			}
 		}
 	}
@@ -96,15 +113,20 @@ void writePNG(SurfaceMesh& sm)
 	writer->Write();
 }
 
-SurfaceMesh mesh;
+
 void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
-	writePNG(mesh);
+	vtkSmartPointer<vtkCoordinate> coordinate = vtkSmartPointer<vtkCoordinate>::New();
+	coordinate->SetCoordinateSystemToDisplay();
+	coordinate->SetValue(pipeline->RenderWindow->GetSize()[0] / 2, pipeline->RenderWindow->GetSize()[1] / 2, 0);
+	double3 dir(coordinate->GetComputedWorldValue(pipeline->Renderer));
+	dir = dir - double3(pipeline->Renderer->GetActiveCamera()->GetPosition());
+	writePNG(mesh,dir);
 }
 
 
 
-vtkRenderPipeline* pipeline;
+
 
 int main()
 {

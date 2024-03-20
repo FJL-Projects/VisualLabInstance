@@ -31,7 +31,7 @@ public:
 		this->Renderer->SetBackground(0.41, 0.41, 0.41);
 		this->RenderWindow->AddRenderer(this->Renderer);
 		this->RenderWindow->SetSize(800, 800);
-		this->RenderWindow->Render();
+		//this->RenderWindow->Render();
 		this->InteractorStyle = vtkSmartPointer<DesignInteractorStyle>::New();
 		this->RenderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
 		this->RenderWindowInteractor->SetInteractorStyle(this->InteractorStyle);

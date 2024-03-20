@@ -163,6 +163,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\algorithm\meshTransform.h" />
+    <ClInclude Include="src\algorithm\Rotation.h" />
     <ClInclude Include="src\algorithm\Timer.hpp" />
     <ClInclude Include="src\algorithm\vectorAlgorithm.h" />
     <ClInclude Include="src\rendering pipeline\simpleRender.h" />
