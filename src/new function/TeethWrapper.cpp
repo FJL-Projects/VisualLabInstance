@@ -2143,59 +2143,8 @@ void TeethWrapper::ProximalShaving(double offset)
             }
         }
     }
-    //std::cout << "Faces: " << m_teeth_sm->number_of_faces() << std::endl;
-    //std::cout << "Vertices: " << m_teeth_sm->number_of_vertices() << std::endl;
-    //std::cout << modified_faces_border.size() << std::endl;
-    //for (auto& f : modified_faces_border)
-    //{
-    //    //std::cout << "Face: " << f.idx() << " ";
-    //    halfedge_descriptor hd = m_teeth_sm->halfedge(f);
-    //    vertex_descriptor v1 = m_teeth_sm->target(hd);
-    //    vertex_descriptor v2 = m_teeth_sm->target(m_teeth_sm->next(hd));
-    //    vertex_descriptor v3 = m_teeth_sm->target(m_teeth_sm->next(m_teeth_sm->next(hd)));
-    //    Point_3 p1 = m_teeth_sm->point(v1);
-    //    Point_3 p2 = m_teeth_sm->point(v2);
-    //    Point_3 p3 = m_teeth_sm->point(v3);
-    //    
-    //    modified_vertices_border.insert(v1);
-    //    modified_vertices_border.insert(v2);
-    //    modified_vertices_border.insert(v3);
 
-    //    //std::cout << v1.idx() << p1 << " " << v2.idx() << p2 << " " << v3.idx() << p3 << std::endl;
-
-    //    vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
-    //    points->InsertNextPoint(p1.x(), p1.y(), p1.z());
-    //    points->InsertNextPoint(p2.x(), p2.y(), p2.z());
-    //    points->InsertNextPoint(p3.x(), p3.y(), p3.z());
-
-    //    vtkSmartPointer<vtkLine> line1 = vtkSmartPointer<vtkLine>::New();
-    //    line1->GetPointIds()->SetId(0, 0);
-    //    line1->GetPointIds()->SetId(1, 1);
-
-    //    vtkSmartPointer<vtkLine> line2 = vtkSmartPointer<vtkLine>::New();
-    //    line2->GetPointIds()->SetId(0, 1);
-    //    line2->GetPointIds()->SetId(1, 2);
-
-    //    vtkSmartPointer<vtkLine> line3 = vtkSmartPointer<vtkLine>::New();
-    //    line3->GetPointIds()->SetId(0, 2);
-    //    line3->GetPointIds()->SetId(1, 0);
-
-    //    vtkSmartPointer<vtkCellArray> lines = vtkSmartPointer<vtkCellArray>::New();
-    //    lines->InsertNextCell(line1);
-    //    lines->InsertNextCell(line2);
-    //    lines->InsertNextCell(line3);
-
-    //    vtkSmartPointer<vtkPolyData> face_polydata = vtkSmartPointer<vtkPolyData>::New();
-    //    face_polydata->SetPoints(points);
-    //    face_polydata->SetLines(lines);
-    //    vtkSmartPointer<vtkPolyDataMapper> face_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-    //    face_mapper->SetInputData(face_polydata);
-    //    vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
-    //    actor->SetMapper(face_mapper);
-    //    m_renderer->AddActor(actor);
-    //}
-
-    SmoothMesh(*m_teeth_sm, modified_vertices_border, 1.0, 20);
+    SmoothMesh(*m_teeth_sm, modified_vertices_border, 1.5, 30);
     PMP::isotropic_remeshing(intersected_faces, 0.1, *m_teeth_sm);
 
     m_teeth_sm->collect_garbage();
