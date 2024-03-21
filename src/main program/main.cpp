@@ -1,4 +1,4 @@
-#include"stdafx.h"
+﻿#include"stdafx.h"
 #include"vtkRenderPipeline.h"
 #include"meshTransform.h"
 #include"simpleRender.h"
@@ -14,6 +14,30 @@ void LeftPress(vtkObject* caller, long unsigned int eventId, void* clientData, v
 void MouseMove(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
 	
+}
+
+std::string select_folder()
+{
+	BROWSEINFO  bi;
+	bi.hwndOwner = NULL;
+	bi.pidlRoot = CSIDL_DESKTOP; //�ļ��еĸ�Ŀ¼���˴�Ϊ����
+	bi.pszDisplayName = NULL;
+	bi.lpszTitle = NULL; //��ʾλ�ڶԻ������ϲ�����ʾ��Ϣ
+	bi.ulFlags = BIF_DONTGOBELOWDOMAIN | BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE; //���½��ļ��а�ť
+	bi.lpfn = NULL;
+	bi.iImage = 0;
+	LPITEMIDLIST pidl = SHBrowseForFolder(&bi); //����ѡ��Ի���
+	if (pidl == NULL)
+	{
+		std::cout << "û��ѡ��Ŀ¼" << std::endl;
+		return std::string();
+	}
+	TCHAR folder_tchar[MAX_PATH];
+	SHGetPathFromIDList(pidl, folder_tchar);
+	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+	std::string selected_folder = converter.to_bytes(folder_tchar);
+
+	return selected_folder;
 }
 
 void writePNG(SurfaceMesh sm,double3 dir)
@@ -146,6 +170,10 @@ void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData,
 int main()
 {
 	pipeline = new vtkRenderPipeline();
+
+	std::string selected_folder_path = select_folder();
+
+	std::cout << "selected_folder_path: " << selected_folder_path << std::endl;
 
 	CGAL::IO::read_polygon_mesh("data/test.stl",mesh);
 	RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(mesh), pipeline->Renderer,1,1,1,1);
