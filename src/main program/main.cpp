@@ -105,10 +105,20 @@ void writePNG(SurfaceMesh sm,double3 dir)
 			}
 			else
 			{
-				unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x, z, 0));
-				pixel[0] = 255 - static_cast<int>(depth[x][z] / depth_max * 255); 
-				pixel[1] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);   
-				pixel[2] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);   
+				if (255 - static_cast<int>(depth[x][z] / depth_max * 255) > 100) 
+				{
+					unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x, z, 0));
+					pixel[0] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);
+					pixel[1] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);
+					pixel[2] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);
+				}
+				else
+				{
+					unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x, z, 0));
+					pixel[0] = 0;
+					pixel[1] = 0;
+					pixel[2] = 0;
+				}
 			}
 		}
 	}
