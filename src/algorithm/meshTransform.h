@@ -70,31 +70,7 @@ int SurfaceMeshToPolyData(SurfaceMesh& mesh, vtkSmartPointer<vtkPolyData>& polyD
 
 }
 
-int PolyDataToSurfaceMesh(vtkPolyData* polyData, SurfaceMesh& surfaceMesh)
+void RotateMesh()
 {
-	vtkPoints* points = polyData->GetPoints();
-	int numberOfPoints = polyData->GetNumberOfPoints();
 
-	if (0 == numberOfPoints || points == NULL)
-		return -1;
-
-	for (int i = 0; i < numberOfPoints; i++)
-	{
-		double point[3];
-		points->GetPoint(i, point);
-		surfaceMesh.add_vertex(Kernel::Point_3(point[0], point[1], point[2]));
-	}
-
-	vtkCellArray* triangles = polyData->GetPolys();
-	triangles->InitTraversal();
-
-	//vtkIdType npts = 3, * cell;
-	vtkIdType npts;               // 存储单元的点数
-	vtkIdType* cell;         // 存储单元的点索引数组
-	while (triangles->GetNextCell(npts, cell))
-	{
-		surfaceMesh.add_face(CGAL::SM_Vertex_index(cell[0]), CGAL::SM_Vertex_index(cell[1]), CGAL::SM_Vertex_index(cell[2]));
-	}
-
-	return 0;
 }

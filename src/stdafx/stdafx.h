@@ -49,6 +49,7 @@
 #include <vtkTriangle.h>
 #include <vtkMath.h>
 #include <vtkCellData.h>
+#include <vtkCoordinate.h>
 #include <vtkImageData.h>
 #include <vtkPNGWriter.h>
 #include <vtkFloatArray.h>
@@ -88,8 +89,15 @@
 
 #include <boost/optional.hpp>
 
+#include <Windows.h>
+#include <shlobj.h>
+#include <locale>
+#include <codecvt>
+
 #include "vectorAlgorithm.h"
+
 #include "Timer.hpp"
+#include "Rotation.h"
 VTK_MODULE_INIT(vtkRenderingOpenGL2)
 VTK_MODULE_INIT(vtkInteractionStyle)
 VTK_MODULE_INIT(vtkRenderingFreeType)
@@ -132,6 +140,8 @@ namespace PMP = CGAL::Polygon_mesh_processing;
 typedef Kernel::Segment_2															Segment_2;
 typedef Kernel::Segment_3															Segment_3;
 typedef Kernel::Plane_3																Plane_3;
+typedef Kernel::Point_3																Point_3;
+typedef Kernel::Point_2																Point_2;
 typedef CGAL::AABB_face_graph_triangle_primitive<SurfaceMesh>						FacePrimitive;
 typedef CGAL::AABB_traits<Kernel, FacePrimitive>									FaceTraits;
 typedef CGAL::AABB_tree<FaceTraits>														FaceTree;
@@ -152,6 +162,6 @@ typedef boost::property_map<SurfaceMesh, CGAL::vertex_point_t>::type				VPMap;
 typedef SurfaceMesh::template Property_map<vertex_descriptor, Vector_3>				VNMap;
 typedef SurfaceMesh::template Property_map<face_descriptor, Vector_3>				FNMap;
 typedef SurfaceMesh::template Property_map<vertex_descriptor, double>				VLMap;
-typedef CGAL::Surface_mesh_deformation<SurfaceMesh, CGAL::Default, CGAL::Default, CGAL::SRE_ARAP>	Surface_mesh_deformation;
+//typedef CGAL::Surface_mesh_deformation<SurfaceMesh, CGAL::Default, CGAL::Default, CGAL::SRE_ARAP>	Surface_mesh_deformation;
 
 namespace PMP = CGAL::Polygon_mesh_processing;
