@@ -1,5 +1,5 @@
 # VisualLab
-### An MSVC project especially designed for rapid deployment for VTK, CGAL, Libigl with Qt.
+### An MSVC project especially designed for rapid deployment for VTK, CGAL, Libigl, Eigen3 with Qt.
 
 ## Instructions for deployment (Only Windows and MSVC supported)
 
