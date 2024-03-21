@@ -9,6 +9,7 @@ TeethWrapper::TeethWrapper() :
     m_teeth_sm(nullptr),
     m_bite_sm(nullptr),
     m_cut_sm(nullptr),
+    m_arch_sm(nullptr),
     m_bite_tree_ptr(nullptr),
     m_cut_tree_ptr(nullptr),
     m_teeth_halfedge_tree_ptr(nullptr),
@@ -1636,8 +1637,8 @@ void TeethWrapper::AdjustCuspHeight()
 
     double cusp_min_distance = std::numeric_limits<double>::max();
     double cusp_distance_sum = 0.0;
-    //Surface_mesh_deformation deform_mesh(*m_teeth_sm);
-    //deform_mesh.insert_roi_vertices(m_teeth_sm->vertices_begin(), m_teeth_sm->vertices_end());
+    Surface_mesh_deformation deform_mesh(*m_teeth_sm);
+    deform_mesh.insert_roi_vertices(m_teeth_sm->vertices_begin(), m_teeth_sm->vertices_end());
 
     std::unordered_set<face_descriptor> modified_faces;
     std::unordered_set<vertex_descriptor> modified_vertices;
@@ -1742,16 +1743,50 @@ void TeethWrapper::AdjustCuspHeight()
         }
         //target_offset /= total_weight;
         //std::cout << "Target offset: " << target_offset << '\n';
-        //deform_mesh.insert_control_vertex(offset_v);
-        //deform_mesh.set_target_position(offset_v, m_teeth_sm->point(offset_v) + target_offset);
+        deform_mesh.insert_control_vertex(offset_v);
+        deform_mesh.set_target_position(offset_v, m_teeth_sm->point(offset_v) + target_offset);
     }
 
-    //deform_mesh.preprocess();
-    //deform_mesh.deform(1000, 1e-3);
+    deform_mesh.preprocess();
+    deform_mesh.deform(1000, 1e-3);
     (*m_teeth_sm).collect_garbage();
     //PMP::isotropic_remeshing(modified_faces, 0.05, *m_teeth_sm);
 }
 
+/**
+ * @brief Performs occlusion shaving on the teeth surface mesh.
+ *
+ * This method adjusts the vertices of the teeth surface mesh based on occlusion analysis.
+ * It casts rays from vertices along the projection direction, and if an intersection is found
+ * inside the bite tree (which indicates occlusion), it moves the vertex back by 'offset' along
+ * the projection direction to reduce the occlusion. The affected vertices are then remeshed with
+ * isotropic remeshing to maintain mesh quality.
+ *
+ * @note This function expects 'm_bite_tree_ptr' to be non-null and 'm_teeth_sm' to be a valid
+ * surface mesh. If 'm_bite_tree_ptr' is not set, it will log an error to stderr and the function
+ * will return early.
+ *
+ * @param offset The distance by which the occluded vertices are to be moved back along the
+ * projection direction to reduce occlusion.
+ *
+ * @pre 'm_bite_tree_ptr' should be initialized and point to a valid AABB tree representing the
+ * bite occlusion.
+ * @pre 'm_teeth_sm' should be a valid pointer to a surface mesh representing the teeth.
+ *
+ * @post The vertices found to be occluded will be moved, potentially altering their positions in
+ * the mesh. The mesh will be remeshed locally around the changed vertices.
+ *
+ * @par Algorithm:
+ * 1. Clears the set of intersected vertices 'm_intersected_v_set'.
+ * 2. Initializes a set 'm_changed_v_set' to keep track of moved vertices.
+ * 3. Loops through each vertex in the teeth surface mesh:
+ *    a. Casts a ray from the vertex along the projection direction.
+ *    b. If an odd number of intersections is found, indicating occlusion, it records the vertex.
+ *    c. Moves the occluded vertex back by 'offset' along the projection direction.
+ * 4. Collects faces that have at least one vertex that was moved.
+ * 5. Applies isotropic remeshing to the collected faces to maintain mesh quality.
+ * 6. Cleans up any unused elements in the mesh.
+ */
 void TeethWrapper::OcclusionShaving(double offset)
 {
     if (!m_bite_tree_ptr)
@@ -1817,6 +1852,33 @@ void TeethWrapper::OcclusionShaving(double offset)
     m_teeth_sm->collect_garbage();
 }
 
+/**
+ * @brief Perform proximal shaving on teeth mesh.
+ *
+ * This function applies a proximal shaving algorithm on the teeth mesh represented by the class.
+ * It uses the offset value to determine how much to shave. The algorithm also takes into account
+ * border vertices and ensures that the shaving does not affect the morphology of the teeth near
+ * the borders. It performs several iterations of smoothing and remeshing to achieve the final result.
+ *
+ * @param offset The distance to offset the teeth vertices inward (negative value) or outward (positive value).
+ *               The offset is applied only to vertices that are not near the borders as defined by the
+ *               protected_threshold and gradual_threshold parameters within the function.
+ *
+ * @pre m_adjacent_teeth_face_tree_ptr must be initialized and point to a valid AABB tree representing
+ *      the adjacent teeth surfaces.
+ * @pre m_teeth_sm must be a valid pointer to a SurfaceMesh that represents the teeth to be shaved.
+ *
+ * @note The function may output to std::cerr if m_adjacent_teeth_face_tree_ptr is not set and will return early.
+ *       The function does not return any value but modifies the member SurfaceMesh m_teeth_sm in place.
+ *       It also writes the modified mesh to "teeth_after_proximal_shaving.ply".
+ *       Modifies the vertex property maps "v:vertical_intersection", "v:chosen_point", and "v:offset" in m_teeth_sm.
+ *       The function uses CGAL functions for geometric computations and PMP for mesh processing.
+ *       It assumes that the mesh and the AABB tree are in the same coordinate space.
+ *
+ * @warning This function assumes that the input mesh is a manifold and has valid geometry.
+ *          It may produce unexpected results or fail if the mesh is not well-formed.
+ *          The function may also produce std::cout debug output.
+ */
 void TeethWrapper::ProximalShaving(double offset)
 {
     if (!m_adjacent_teeth_face_tree_ptr)
@@ -1877,7 +1939,6 @@ void TeethWrapper::ProximalShaving(double offset)
         offset_map = m_teeth_sm->add_property_map<vertex_descriptor, double>("v:offset", 0.0).first;
 
         {
-            //for (auto v : (*m_teeth_sm).vertices())
             for (auto v : m_teeth_sm->vertices())
             {
                 if (vertical_intersection_map[v])
@@ -1886,22 +1947,6 @@ void TeethWrapper::ProximalShaving(double offset)
                     Point_3 origin_point = (*m_teeth_sm).point(v);
                     Point_3 a = origin_point;
                     Point_3 b = origin_point - 5.0 * n;
-
-                    /*vtkSmartPointer<vtkLineSource> line_source = vtkSmartPointer<vtkLineSource>::New();
-                    line_source->SetPoint1(a.x(), a.y(), a.z());
-                    line_source->SetPoint2(b.x(), b.y(), b.z());
-                    line_source->Update();
-
-                    vtkSmartPointer<vtkPolyDataMapper> line_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-                    line_mapper->SetInputData(line_source->GetOutput());
-                    line_mapper->Update();
-
-                    vtkSmartPointer<vtkActor> line_actor = vtkSmartPointer<vtkActor>::New();
-                    line_actor->SetMapper(line_mapper);
-                    line_actor->GetProperty()->SetColor(1, 1, 0);
-                    line_actor->GetProperty()->SetLineWidth(1);
-                    m_renderer->AddActor(line_actor);*/
-
                     Segment_3 segment_query(a, b);
 
                     // computes first encountered intersection with segment query
@@ -1982,7 +2027,6 @@ void TeethWrapper::ProximalShaving(double offset)
     {
         offset_map = m_teeth_sm->add_property_map<vertex_descriptor, double>("v:offset", 0.0).first;
         {
-            //for (auto v : (*m_teeth_sm).vertices())
             for (auto v : m_teeth_sm->vertices())
             {
                 if (vertical_intersection_map[v])
@@ -1991,22 +2035,6 @@ void TeethWrapper::ProximalShaving(double offset)
                     Point_3 origin_point = (*m_teeth_sm).point(v);
                     Point_3 a = origin_point;
                     Point_3 b = origin_point - 5.0 * n;
-
-                    /*vtkSmartPointer<vtkLineSource> line_source = vtkSmartPointer<vtkLineSource>::New();
-                    line_source->SetPoint1(a.x(), a.y(), a.z());
-                    line_source->SetPoint2(b.x(), b.y(), b.z());
-                    line_source->Update();
-
-                    vtkSmartPointer<vtkPolyDataMapper> line_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-                    line_mapper->SetInputData(line_source->GetOutput());
-                    line_mapper->Update();
-
-                    vtkSmartPointer<vtkActor> line_actor = vtkSmartPointer<vtkActor>::New();
-                    line_actor->SetMapper(line_mapper);
-                    line_actor->GetProperty()->SetColor(1, 1, 0);
-                    line_actor->GetProperty()->SetLineWidth(1);
-                    m_renderer->AddActor(line_actor);*/
-
                     Segment_3 segment_query(a, b);
 
                     // computes first encountered intersection with segment query
@@ -2079,15 +2107,6 @@ void TeethWrapper::ProximalShaving(double offset)
             }
         }
     }
-    //PMP::compute_vertex_normals(*m_teeth_sm, teeth_vertices_normal);
-    //for (auto v : (*m_teeth_sm).vertices())
-    //{
-    //    if (chosen_point_map[v] && !(*m_teeth_sm).is_border(v))
-    //    {
-    //        auto offset_vector = get(teeth_vertices_normal, v) * offset;
-    //        (*m_teeth_sm).point(v) -= offset_vector;
-    //    }
-    //}
     std::set<face_descriptor> intersected_faces;
     for (auto& vd : modified_vertices) 
     {
