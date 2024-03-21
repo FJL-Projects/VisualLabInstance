@@ -4,7 +4,10 @@
 #include"simpleRender.h"
 
 vtkRenderPipeline* pipeline;
-SurfaceMesh mesh;
+SurfaceMesh toothmesh0;
+SurfaceMesh toothmesh1;
+SurfaceMesh crownmesh;
+SurfaceMesh bitemesh;
 
 void LeftPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
@@ -20,16 +23,16 @@ std::string select_folder()
 {
 	BROWSEINFO  bi;
 	bi.hwndOwner = NULL;
-	bi.pidlRoot = CSIDL_DESKTOP; //�ļ��еĸ�Ŀ¼���˴�Ϊ����
+	bi.pidlRoot = CSIDL_DESKTOP; 
 	bi.pszDisplayName = NULL;
-	bi.lpszTitle = NULL; //��ʾλ�ڶԻ������ϲ�����ʾ��Ϣ
-	bi.ulFlags = BIF_DONTGOBELOWDOMAIN | BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE; //���½��ļ��а�ť
+	bi.lpszTitle = NULL; 
+	bi.ulFlags = BIF_DONTGOBELOWDOMAIN | BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE; 
 	bi.lpfn = NULL;
 	bi.iImage = 0;
-	LPITEMIDLIST pidl = SHBrowseForFolder(&bi); //����ѡ��Ի���
+	LPITEMIDLIST pidl = SHBrowseForFolder(&bi); 
 	if (pidl == NULL)
 	{
-		std::cout << "û��ѡ��Ŀ¼" << std::endl;
+		std::cout << "" << std::endl;
 		return std::string();
 	}
 	TCHAR folder_tchar[MAX_PATH];
@@ -40,7 +43,7 @@ std::string select_folder()
 	return selected_folder;
 }
 
-void writePNG(SurfaceMesh sm,double3 dir)
+void writePNG(SurfaceMesh sm,double3 dir,std::string path)
 {
 	dir = -dir;
 	dir.normalize();
@@ -129,29 +132,40 @@ void writePNG(SurfaceMesh sm,double3 dir)
 			}
 			else
 			{
-				if (255 - static_cast<int>(depth[x][z] / depth_max * 255) > 100) 
-				{
+
 					unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x, z, 0));
 					pixel[0] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);
 					pixel[1] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);
 					pixel[2] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);
-				}
-				else
-				{
-					unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x, z, 0));
-					pixel[0] = 0;
-					pixel[1] = 0;
-					pixel[2] = 0;
-				}
+
 			}
 		}
 	}
 	vtkSmartPointer<vtkPNGWriter> writer = vtkSmartPointer<vtkPNGWriter>::New();
-	writer->SetFileName("output.png");
+	writer->SetFileName(path.c_str());
 	writer->SetInputData(image);
 	writer->Write();
 }
 
+void checkfloder(std::string path)
+{
+	// Attempt to create the directory.
+	if (CreateDirectoryA(path.c_str(), NULL)) {
+		printf("Directory created successfully.\n");
+	}
+	else {
+		// If the directory could not be created, print an error message.
+		if (GetLastError() == ERROR_ALREADY_EXISTS) {
+			printf("Directory already exists.\n");
+		}
+		else {
+			printf("Failed to create directory. Error code: %ld\n", GetLastError());
+		}
+	}
+}
+
+std::string output_folder_path = "D:/data/output/";
+int cur_folder = 0;
 
 void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
@@ -160,29 +174,60 @@ void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData,
 	coordinate->SetValue(pipeline->RenderWindow->GetSize()[0] / 2, pipeline->RenderWindow->GetSize()[1] / 2, 0);
 	double3 dir(coordinate->GetComputedWorldValue(pipeline->Renderer));
 	dir = dir - double3(pipeline->Renderer->GetActiveCamera()->GetPosition());
-	writePNG(mesh,dir);
+
+	checkfloder(output_folder_path + std::to_string(cur_folder));
+
+	writePNG(toothmesh0,dir, output_folder_path+std::to_string(cur_folder)+"/toothmesh.png");
+	writePNG(toothmesh1,dir, output_folder_path + std::to_string(cur_folder) + "/toothmesh1.png");
+	writePNG(crownmesh,dir, output_folder_path + std::to_string(cur_folder) + "/crownmesh.png");
+	writePNG(bitemesh,dir, output_folder_path + std::to_string(cur_folder) + "/bitemesh.png");
 }
-
-
-
 
 
 int main()
 {
-	pipeline = new vtkRenderPipeline();
 
 	std::string selected_folder_path = select_folder();
 
 	std::cout << "selected_folder_path: " << selected_folder_path << std::endl;
+	int num_folders = 35;
 
-	CGAL::IO::read_polygon_mesh("data/test.stl",mesh);
-	RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(mesh), pipeline->Renderer,1,1,1,1);
-	
-	pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
-	pipeline->Renderer->ResetCamera();
-	pipeline->addObserver(vtkCommand::LeftButtonPressEvent, LeftPress);
-	pipeline->addObserver(vtkCommand::MouseMoveEvent, MouseMove);
-	pipeline->addObserver(vtkCommand::LeftButtonReleaseEvent, LeftRelease);
+	for (int i = 1; i <= num_folders; i++)
+	{
+		cur_folder = i;
+		std::string folder_path;
+		if(i<10)
+			folder_path = selected_folder_path + "/000" + std::to_string(i);
+		else
+			folder_path = selected_folder_path + "/00" + std::to_string(i);
 
-	pipeline->RenderWindowInteractor->Start();
+
+		std::string m1 = folder_path + "/m2.stl";
+		std::string crown = folder_path + "/c.stl";
+		std::string bite = folder_path + "/b.stl";
+		std::string m0 = folder_path + "/m1.stl";
+
+		pipeline = new vtkRenderPipeline();
+		toothmesh0.clear();
+		toothmesh1.clear();
+		crownmesh.clear();
+		bitemesh.clear();
+
+		CGAL::IO::read_STL(m0, toothmesh0);
+		std::cout<<toothmesh0.number_of_vertices()<<std::endl;
+		CGAL::IO::read_polygon_mesh(m1, toothmesh1);
+		CGAL::IO::read_polygon_mesh(crown, crownmesh);
+		CGAL::IO::read_polygon_mesh(bite, bitemesh);
+		RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(toothmesh0), pipeline->Renderer, 1, 1, 1, 1);
+		RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(toothmesh1), pipeline->Renderer, 1, 1, 1, 1);
+
+		pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
+		pipeline->Renderer->ResetCamera();
+		pipeline->addObserver(vtkCommand::LeftButtonPressEvent, LeftPress);
+		pipeline->addObserver(vtkCommand::MouseMoveEvent, MouseMove);
+		pipeline->addObserver(vtkCommand::LeftButtonReleaseEvent, LeftRelease);
+
+		pipeline->RenderWindowInteractor->Start();
+		delete pipeline;
+	}
 }
