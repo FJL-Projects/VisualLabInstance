@@ -205,7 +205,7 @@ int main()
 		std::string m1 = folder_path + "/m2.stl";
 		std::string crown = folder_path + "/c.stl";
 		std::string bite = folder_path + "/b.stl";
-		std::string m0 = folder_path + "/m1.stl";
+		std::string m0 = folder_path + "/m1.ply";
 
 		pipeline = new vtkRenderPipeline();
 		toothmesh0.clear();
@@ -213,8 +213,8 @@ int main()
 		crownmesh.clear();
 		bitemesh.clear();
 
-		CGAL::IO::read_STL(m0, toothmesh0);
-		std::cout<<toothmesh0.number_of_vertices()<<std::endl;
+		bool success=CGAL::IO::read_polygon_mesh(m0, toothmesh0);
+		std::cout<< success <<toothmesh0.number_of_vertices()<<std::endl;
 		CGAL::IO::read_polygon_mesh(m1, toothmesh1);
 		CGAL::IO::read_polygon_mesh(crown, crownmesh);
 		CGAL::IO::read_polygon_mesh(bite, bitemesh);

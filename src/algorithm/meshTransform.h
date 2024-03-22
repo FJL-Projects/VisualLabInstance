@@ -69,8 +69,3 @@ int SurfaceMeshToPolyData(SurfaceMesh& mesh, vtkSmartPointer<vtkPolyData>& polyD
 	return 0;
 
 }
-
-void RotateMesh()
-{
-
-}
