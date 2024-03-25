@@ -16,6 +16,50 @@ double3 centroid;
 void LeftPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
 	//cout<<"Left Press" << endl;
+	vtkSmartPointer<vtkCamera> camera = pipeline->Renderer->GetActiveCamera();
+	double3 camera_orientation = camera->GetOrientation();
+	std::cout << "Camera orientation angles: " << camera_orientation[0] << ", " << camera_orientation[1] << ", " << camera_orientation[2] << std::endl;
+	double angle_x = -camera_orientation[0] * CGAL_PI / 180;
+	double angle_y = -camera_orientation[1] * CGAL_PI / 180;
+	double angle_z = -camera_orientation[2] * CGAL_PI / 180;
+
+	vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
+	transform->RotateX(-camera_orientation[0]);
+	transform->RotateY(-camera_orientation[1]);
+	transform->RotateZ(-camera_orientation[2]);
+
+	vtkSmartPointer<vtkTransformPolyDataFilter> transform_filter = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+	vtkSmartPointer<vtkPolyData> tooth_polydata = CGAL_Surface_Mesh2VTK_PolyData(toothmesh0);
+	transform_filter->SetInputData(tooth_polydata);
+	transform_filter->SetTransform(transform);
+	transform_filter->Update();
+	vtkSmartPointer<vtkPolyData> transformed_tooth_polydata = transform_filter->GetOutput();
+	vtkSmartPointer<vtkPLYWriter> writer = vtkSmartPointer<vtkPLYWriter>::New();
+	writer->SetFileName("rotated_toothmesh.ply");
+	writer->SetInputData(transformed_tooth_polydata);
+	writer->Write();
+	//Eigen::Matrix3d rotation_matrix;
+	//rotation_matrix = Eigen::AngleAxisd(-angle_z, Eigen::Vector3d::UnitX())
+	//	* Eigen::AngleAxisd(-angle_y, Eigen::Vector3d::UnitY())
+	//	* Eigen::AngleAxisd(-angle_x, Eigen::Vector3d::UnitZ());
+
+	//auto rotate_mesh = [&rotation_matrix](SurfaceMesh sm) -> SurfaceMesh
+	//	{
+	//		for (auto& v : sm.vertices())
+	//		{
+	//			Point_3& p = sm.point(v);
+	//			Eigen::Vector3d vec(p.x(), p.y(), p.z());
+	//			vec = rotation_matrix * vec;
+	//			p = Point_3(vec.x(), vec.y(), vec.z());
+	//		}
+
+	//		return sm;
+	//	};
+	//
+	//CGAL::IO::write_PLY("rotated_toothmesh.ply", rotate_mesh(toothmesh0));
+	//CGAL::IO::write_PLY("rotated_toothmesh1.ply", rotate_mesh(toothmesh1));
+	//CGAL::IO::write_PLY("rotated_crownmesh.ply", rotate_mesh(crownmesh));
+	//CGAL::IO::write_PLY("rotated_bitemesh.ply", rotate_mesh(bitemesh));
 }
 
 void MouseMove(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
@@ -156,6 +200,8 @@ SurfaceMesh writePNG(SurfaceMesh sm, double3 dir, std::string path, int x_dim, i
 {
 	dir = -dir;
 	dir.normalize();
+	std::cout << dir[0] << " " << dir[1] << " " << dir[2] << std::endl;
+
 	double3 x(1, 0, 0);
 	double3 y(0, 1, 0);
 	double3 z(0, 0, 1);
@@ -163,13 +209,13 @@ SurfaceMesh writePNG(SurfaceMesh sm, double3 dir, std::string path, int x_dim, i
 	axis_y.normalize();
 	axis_y = axis_y * acos(double3::dotProduct(dir, y));
 
-	double3 axis_z = double3::crossProduct(dir, z);
-	axis_z.normalize();
-	axis_z = axis_z * acos(double3::dotProduct(dir, z));
+	//double3 axis_z = double3::crossProduct(dir, z);
+	//axis_z.normalize();
+	//axis_z = axis_z * acos(double3::dotProduct(dir, z));
 
-	double3 axis_x = double3::crossProduct(dir, x);
-	axis_x.normalize();
-	axis_x = axis_x * acos(double3::dotProduct(dir, x));
+	//double3 axis_x = double3::crossProduct(dir, x);
+	//axis_x.normalize();
+	//axis_x = axis_x * acos(double3::dotProduct(dir, x));
 
 	double3 center(0, 0, 0);
 	//for (auto v : sm.vertices())
@@ -180,8 +226,8 @@ SurfaceMesh writePNG(SurfaceMesh sm, double3 dir, std::string path, int x_dim, i
 		double3 pt(sm.point(v).x(), sm.point(v).y(), sm.point(v).z());
 		pt -= centroid;
 		AngleAxisRotatePoint(axis_y.data, pt.data, pt.data);
-		AngleAxisRotatePoint(axis_x.data, pt.data, pt.data);
-		AngleAxisRotatePoint(axis_z.data, pt.data, pt.data);
+		//AngleAxisRotatePoint(axis_x.data, pt.data, pt.data);
+		//AngleAxisRotatePoint(axis_z.data, pt.data, pt.data);
 
 		pt += centroid;
 		sm.point(v) = Point_3(pt[0], pt[1], pt[2]);
@@ -427,10 +473,10 @@ void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData,
 
 	checkfloder(output_folder_path + std::to_string(cur_folder));
 
-	CGAL::IO::write_PLY("rotated_toothmesh.ply", writePNG(toothmesh0, dir, output_folder_path + std::to_string(cur_folder) + "/toothmesh.png", x_dim, z_dim, centroid));
+	/*CGAL::IO::write_PLY("rotated_toothmesh.ply", writePNG(toothmesh0, dir, output_folder_path + std::to_string(cur_folder) + "/toothmesh.png", x_dim, z_dim, centroid));
 	CGAL::IO::write_PLY("rotated_toothmesh1.ply", writePNG(toothmesh1, dir, output_folder_path + std::to_string(cur_folder) + "/toothmesh1.png", x_dim, z_dim, centroid));
 	CGAL::IO::write_PLY("rotated_crownmesh.ply", writePNG(crownmesh, dir, output_folder_path + std::to_string(cur_folder) + "/crownmesh.png", x_dim, z_dim, centroid));
-	CGAL::IO::write_PLY("rotated_bitemesh.ply", writePNG(bitemesh, dir, output_folder_path + std::to_string(cur_folder) + "/bitemesh.png", x_dim, z_dim, centroid));
+	CGAL::IO::write_PLY("rotated_bitemesh.ply", writePNG(bitemesh, dir, output_folder_path + std::to_string(cur_folder) + "/bitemesh.png", x_dim, z_dim, centroid));*/
 }
 
 

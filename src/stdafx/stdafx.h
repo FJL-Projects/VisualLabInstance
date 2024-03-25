@@ -58,6 +58,7 @@
 #include <vtkAxesActor.h>
 #include <vtkTextProperty.h>
 #include <vtkCaptionActor2D.h>
+#include <vtkTransform.h>
 #include <CGAL/Polygon_mesh_processing/triangulate_hole.h>
 #include <CGAL/Polygon_mesh_processing/corefinement.h>
 #include <CGAL/IO/write_ply_points.h>
@@ -137,8 +138,6 @@ typedef CGAL::AABB_traits<K, Primitive> AABB_triangle_traits;
 typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
 
 namespace PMP = CGAL::Polygon_mesh_processing;
-
-
 
 typedef Kernel::Segment_2															Segment_2;
 typedef Kernel::Segment_3															Segment_3;
