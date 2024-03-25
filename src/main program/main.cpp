@@ -64,6 +64,7 @@ void writePNG(SurfaceMesh sm,double3 dir,std::string path)
 		double3 pt(sm.point(v).x(), sm.point(v).y(), sm.point(v).z());
 		pt = pt - center;
 		AngleAxisRotatePoint(axis.data, pt.data, pt.data);
+		pt = pt + center;
 		sm.point(v) = Point_3(pt[0] , pt[1] , pt[2] );
 	}
 	
@@ -151,14 +152,25 @@ void writePNG(SurfaceMesh sm,double3 dir,std::string path)
 	writer->Write();
 }
 
-void writePNG(SurfaceMesh sm, double3 dir, std::string path, int x_dim, int z_dim, double3 centroid)
+SurfaceMesh writePNG(SurfaceMesh sm, double3 dir, std::string path, int x_dim, int z_dim, double3 centroid)
 {
 	dir = -dir;
 	dir.normalize();
+	double3 x(1, 0, 0);
 	double3 y(0, 1, 0);
-	double3 axis = double3::crossProduct(dir, y);
-	axis.normalize();
-	axis = axis * acos(double3::dotProduct(dir, y));
+	double3 z(0, 0, 1);
+	double3 axis_y = double3::crossProduct(dir, y);
+	axis_y.normalize();
+	axis_y = axis_y * acos(double3::dotProduct(dir, y));
+
+	double3 axis_z = double3::crossProduct(dir, z);
+	axis_z.normalize();
+	axis_z = axis_z * acos(double3::dotProduct(dir, z));
+
+	double3 axis_x = double3::crossProduct(dir, x);
+	axis_x.normalize();
+	axis_x = axis_x * acos(double3::dotProduct(dir, x));
+
 	double3 center(0, 0, 0);
 	//for (auto v : sm.vertices())
 	//	center = center + double3(sm.point(v).x(), sm.point(v).y(), sm.point(v).z());
@@ -166,8 +178,11 @@ void writePNG(SurfaceMesh sm, double3 dir, std::string path, int x_dim, int z_di
 	for (auto v : sm.vertices())
 	{
 		double3 pt(sm.point(v).x(), sm.point(v).y(), sm.point(v).z());
-		pt -= pt - centroid;
-		AngleAxisRotatePoint(axis.data, pt.data, pt.data);
+		pt -= centroid;
+		AngleAxisRotatePoint(axis_y.data, pt.data, pt.data);
+		AngleAxisRotatePoint(axis_x.data, pt.data, pt.data);
+		AngleAxisRotatePoint(axis_z.data, pt.data, pt.data);
+
 		pt += centroid;
 		sm.point(v) = Point_3(pt[0], pt[1], pt[2]);
 	}
@@ -200,9 +215,9 @@ void writePNG(SurfaceMesh sm, double3 dir, std::string path, int x_dim, int z_di
 	image->GetDimensions(dim);
 	cout << dim[0] << " " << dim[1] << " " << dim[2] << endl;
 	std::vector<std::vector<double>> depth(dim[0], std::vector<double>(dim[1], 0));
-	for (int x = x_min; x < x_max; x++)
+	for (int x = 0; x < dim[0]; x++)
 	{
-		for (int z = z_min; z < z_max; z++)
+		for (int z = 0; z < dim[1]; z++)
 		{
 			double x_ = x_min + (x_max - x_min) * x / dim[0];
 			double z_ = z_min + (z_max - z_min) * z / dim[1];
@@ -255,7 +270,132 @@ void writePNG(SurfaceMesh sm, double3 dir, std::string path, int x_dim, int z_di
 	writer->SetFileName(path.c_str());
 	writer->SetInputData(image);
 	writer->Write();
+
+	return sm;
 }
+
+SurfaceMesh rotate_sm(SurfaceMesh sm, double3 dir, std::string path, int x_dim, int z_dim, double3 centroid)
+{
+	dir = -dir;
+	dir.normalize();
+	double3 x(1, 0, 0);
+	double3 y(0, 1, 0);
+	double3 z(0, 0, 1);
+	double3 axis_y = double3::crossProduct(dir, y);
+	axis_y.normalize();
+	axis_y = axis_y * acos(double3::dotProduct(dir, y));
+
+	double3 axis_z = double3::crossProduct(dir, z);
+	axis_z.normalize();
+	axis_z = axis_z * acos(double3::dotProduct(dir, z));
+
+	double3 axis_x = double3::crossProduct(dir, x);
+	axis_x.normalize();
+	axis_x = axis_x * acos(double3::dotProduct(dir, x));
+
+	double3 center(0, 0, 0);
+	//for (auto v : sm.vertices())
+	//	center = center + double3(sm.point(v).x(), sm.point(v).y(), sm.point(v).z());
+	//center = center / sm.number_of_vertices();
+	for (auto v : sm.vertices())
+	{
+		double3 pt(sm.point(v).x(), sm.point(v).y(), sm.point(v).z());
+		pt -= centroid;
+		AngleAxisRotatePoint(axis_y.data, pt.data, pt.data);
+		AngleAxisRotatePoint(axis_x.data, pt.data, pt.data);
+		AngleAxisRotatePoint(axis_z.data, pt.data, pt.data);
+
+		pt += centroid;
+		sm.point(v) = Point_3(pt[0], pt[1], pt[2]);
+	}
+
+	Tree tree(faces(sm).first, faces(sm).second, sm);
+	double x_min = std::numeric_limits<double>::max();
+	double x_max = std::numeric_limits<double>::min();
+	double z_min = std::numeric_limits<double>::max();
+	double z_max = std::numeric_limits<double>::min();
+	double y_max = std::numeric_limits<double>::min();
+	for (auto v : sm.vertices())
+	{
+		Point_3 p = sm.point(v);
+		x_min = std::min(x_min, p.x());
+		x_max = std::max(x_max, p.x());
+		z_min = std::min(z_min, p.z());
+		z_max = std::max(z_max, p.z());
+		y_max = std::max(y_max, p.y());
+	}
+	double max;
+	if ((x_max - x_min) > (z_max - z_min))
+		max = x_max - x_min;
+	else
+		max = z_max - z_min;
+
+	vtkSmartPointer< vtkImageData> image = vtkSmartPointer< vtkImageData>::New();
+	image->SetDimensions(x_dim, z_dim, 1);
+	image->AllocateScalars(VTK_UNSIGNED_CHAR, 3);
+	int dim[3];
+	image->GetDimensions(dim);
+	cout << dim[0] << " " << dim[1] << " " << dim[2] << endl;
+	std::vector<std::vector<double>> depth(dim[0], std::vector<double>(dim[1], 0));
+	for (int x = 0; x < dim[0]; x++)
+	{
+		for (int z = 0; z < dim[1]; z++)
+		{
+			double x_ = x_min + (x_max - x_min) * x / dim[0];
+			double z_ = z_min + (z_max - z_min) * z / dim[1];
+			Ray_3 ray_query(Point_3(x_, y_max, z_), Vector_3(0, -1, 0));
+			//Ray_3 ray_query(Point_3(x, y_max, z), Vector_3(0, -1, 0));
+			auto intersection = tree.first_intersection(ray_query);
+			const Point_3* p;
+			if (intersection && boost::get<Point_3>(&(intersection->first)))
+			{
+				p = boost::get<Point_3>(&(intersection->first));
+				depth[x][z] = y_max - p->y();
+			}
+			else
+			{
+				depth[x][z] = 0;
+			}
+		}
+	}
+	double depth_max = 0;
+	for (int x = 0; x < x_dim; x++)
+	{
+		for (int z = 0; z < z_dim; z++)
+		{
+			depth_max = std::max(depth_max, depth[x][z]);
+		}
+	}
+	for (int x = 0; x < x_dim; x++)
+	{
+		for (int z = 0; z < z_dim; z++)
+		{
+			if (depth[x][z] == 0)
+			{
+				unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x, z, 0));
+				pixel[0] = static_cast<int>(depth[x][z] / depth_max * 255);
+				pixel[1] = static_cast<int>(depth[x][z] / depth_max * 255);
+				pixel[2] = static_cast<int>(depth[x][z] / depth_max * 255);
+			}
+			else
+			{
+
+				unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x, z, 0));
+				pixel[0] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);
+				pixel[1] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);
+				pixel[2] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);
+
+			}
+		}
+	}
+	vtkSmartPointer<vtkPNGWriter> writer = vtkSmartPointer<vtkPNGWriter>::New();
+	writer->SetFileName(path.c_str());
+	writer->SetInputData(image);
+	writer->Write();
+
+	return sm;
+}
+
 
 void checkfloder(std::string path)
 {
@@ -274,7 +414,7 @@ void checkfloder(std::string path)
 	}
 }
 
-std::string output_folder_path = "D:/data/output/";
+std::string output_folder_path = "F:/.tmp/output/";
 int cur_folder = 0;
 
 void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
@@ -287,10 +427,10 @@ void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData,
 
 	checkfloder(output_folder_path + std::to_string(cur_folder));
 
-	writePNG(toothmesh0, dir, output_folder_path+std::to_string(cur_folder)+"/toothmesh.png", x_dim, z_dim, centroid);
-	writePNG(toothmesh1, dir, output_folder_path + std::to_string(cur_folder) + "/toothmesh1.png", x_dim, z_dim, centroid);
-	writePNG(crownmesh, dir, output_folder_path + std::to_string(cur_folder) + "/crownmesh.png", x_dim, z_dim, centroid);
-	writePNG(bitemesh, dir, output_folder_path + std::to_string(cur_folder) + "/bitemesh.png", x_dim, z_dim, centroid);
+	CGAL::IO::write_PLY("rotated_toothmesh.ply", writePNG(toothmesh0, dir, output_folder_path + std::to_string(cur_folder) + "/toothmesh.png", x_dim, z_dim, centroid));
+	CGAL::IO::write_PLY("rotated_toothmesh1.ply", writePNG(toothmesh1, dir, output_folder_path + std::to_string(cur_folder) + "/toothmesh1.png", x_dim, z_dim, centroid));
+	CGAL::IO::write_PLY("rotated_crownmesh.ply", writePNG(crownmesh, dir, output_folder_path + std::to_string(cur_folder) + "/crownmesh.png", x_dim, z_dim, centroid));
+	CGAL::IO::write_PLY("rotated_bitemesh.ply", writePNG(bitemesh, dir, output_folder_path + std::to_string(cur_folder) + "/bitemesh.png", x_dim, z_dim, centroid));
 }
 
 
@@ -332,6 +472,18 @@ int main()
 		CGAL::IO::read_polygon_mesh(bite, bitemesh);
 		RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(toothmesh0), pipeline->Renderer, 1, 1, 1, 1);
 		RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(toothmesh1), pipeline->Renderer, 1, 1, 1, 1);
+		
+		vtkSmartPointer<vtkAxesActor> axes = vtkSmartPointer<vtkAxesActor>::New();
+		axes->SetTotalLength(10.0, 10.0, 10.0);
+
+		vtkSmartPointer<vtkTextProperty> text_prop = vtkSmartPointer<vtkTextProperty>::New();
+		text_prop->SetFontSize(1);
+
+		axes->GetXAxisCaptionActor2D()->SetCaptionTextProperty(text_prop);
+		axes->GetYAxisCaptionActor2D()->SetCaptionTextProperty(text_prop);
+		axes->GetZAxisCaptionActor2D()->SetCaptionTextProperty(text_prop);
+
+		pipeline->Renderer->AddActor(axes);
 
 		pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
 		pipeline->Renderer->ResetCamera();
