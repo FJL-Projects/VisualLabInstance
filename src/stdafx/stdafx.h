@@ -55,6 +55,9 @@
 #include <vtkFloatArray.h>
 #include <vtkLookupTable.h>
 #include <vtkAutoInit.h>
+#include <vtkAxesActor.h>
+#include <vtkTextProperty.h>
+#include <vtkCaptionActor2D.h>
 #include <CGAL/Polygon_mesh_processing/triangulate_hole.h>
 #include <CGAL/Polygon_mesh_processing/corefinement.h>
 #include <CGAL/IO/write_ply_points.h>
@@ -88,7 +91,7 @@
 #include <CGAL/Polygon_mesh_processing/remesh.h>
 
 #include <boost/optional.hpp>
-
+#include <Eigen/Geometry>
 #include <Windows.h>
 #include <shlobj.h>
 #include <locale>

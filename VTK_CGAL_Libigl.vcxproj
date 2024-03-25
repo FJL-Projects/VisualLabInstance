@@ -140,7 +140,7 @@
       <ConformanceMode>false</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)src\rendering pipeline\;$(ProjectDir)src\algorithm\;$(ProjectDir)src\main program\;$(ProjectDir)src\stdafx\;$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <Optimization>MaxSpeed</Optimization>
-      <UseStandardPreprocessor>true</UseStandardPreprocessor>
+      <UseStandardPreprocessor>false</UseStandardPreprocessor>
       <OpenMPSupport>true</OpenMPSupport>
       <PrecompiledHeader>Use</PrecompiledHeader>
     </ClCompile>
