@@ -97,11 +97,13 @@
 #include <shlobj.h>
 #include <locale>
 #include <codecvt>
+#include <iomanip>
 
 #include "vectorAlgorithm.h"
-
 #include "Timer.hpp"
 #include "Rotation.h"
+#include "IniIO.h"
+
 VTK_MODULE_INIT(vtkRenderingOpenGL2)
 VTK_MODULE_INIT(vtkInteractionStyle)
 VTK_MODULE_INIT(vtkRenderingFreeType)
