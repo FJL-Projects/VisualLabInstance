@@ -168,5 +168,4 @@ inline void AngleAxisRotatePoint(const T angle_axis[3], const T pt[3], T result[
         result[2] = pt[2] + w_cross_pt[2];
     }
 }
-
 #endif
