@@ -60,3 +60,6 @@ _NCrunch_*
 *.opendb
 *.db
 *.FileListAbsolute.txt
+
+# Ignore Temp files
+*.ini

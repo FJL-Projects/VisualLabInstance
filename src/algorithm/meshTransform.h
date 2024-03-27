@@ -70,7 +70,27 @@ int SurfaceMeshToPolyData(SurfaceMesh& mesh, vtkSmartPointer<vtkPolyData>& polyD
 
 }
 
-void RotateMesh()
+/**
+	 Converts a VTK PolyData object to a CGAL surface mesh.
+	 @param P The VTK PolyData object to convert.
+	 @return The converted CGAL surface mesh.
+ */
+SurfaceMesh VTK_PolyData2CGAL_Surface_Mesh(const vtkSmartPointer<vtkPolyData>& P)
 {
+	// Check input validity
+	if (!P || P->GetNumberOfPoints() == 0 || P->GetNumberOfCells() == 0) return SurfaceMesh();
 
+	SurfaceMesh M;
+	// List of vertex indices for CGAL mesh
+	std::vector< SurfaceMesh::Vertex_index> vlist;
+
+	// Add vertices
+	for (int i = 0; i < P->GetNumberOfPoints(); i++)
+		vlist.push_back(M.add_vertex(Kernel::Point_3(P->GetPoints()->GetPoint(i)[0], P->GetPoints()->GetPoint(i)[1], P->GetPoints()->GetPoint(i)[2])));
+
+	// Add faces
+	for (int i = 0; i < P->GetNumberOfCells(); i++)
+		M.add_face(vlist[P->GetCell(i)->GetPointId(0)], vlist[P->GetCell(i)->GetPointId(1)], vlist[P->GetCell(i)->GetPointId(2)]);
+
+	return M;
 }
