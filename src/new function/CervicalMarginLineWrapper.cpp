@@ -479,7 +479,7 @@ void CervicalMarginLineWrapper::Init()
 	}
     if (m_projection_direction == Vector_3(0, 0, 0))
     {
-        std::cerr << "Render window is not set." << std::endl;
+        std::cerr << "Projection direction is not set." << std::endl;
         return;
     }
     if (m_min_curvature_threshold == std::numeric_limits<double>::max() || m_mean_curvature_threshold == std::numeric_limits<double>::max())
@@ -951,7 +951,7 @@ void CervicalMarginLineWrapper::GenerateCervicalMarginLine()
     MeshSplineExpander mesh_spline_expander(
         m_abutment_edge_spline->vtCtrlPoints,
         *m_arch_sm,
-        m_expansion_distance,
+        3,
         1,
         is_clockwise,
         m_abutment_edge_spline->vtEquidistantSpline,
@@ -961,10 +961,22 @@ void CervicalMarginLineWrapper::GenerateCervicalMarginLine()
         m_hemap,
         m_uv_map
     );
+    //MeshSplineExpander mesh_spline_expander(
+    //    m_abutment_edge_spline->vtCtrlPoints,
+    //    *m_arch_sm,
+    //    2,
+    //    is_clockwise,
+    //    m_abutment_edge_spline->vtEquidistantSpline,
+    //    m_fmap,
+    //    m_vmap,
+    //    m_emap,
+    //    m_hemap,
+    //    m_uv_map
+    //);
     mesh_spline_expander.SetRenderer(m_renderer);
     mesh_spline_expander.SetRenderWin(m_render_win);
     bool success = mesh_spline_expander.ExpandSpline();
-
+    //bool success = mesh_spline_expander.ExpandToLowestCurvature();
     //std::vector<ClosedMeshSpline> expanded_splines = mesh_spline_expander.GetExpandedSplines();
     //for (auto expanded_spline : expanded_splines)
     //{

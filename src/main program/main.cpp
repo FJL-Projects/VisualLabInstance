@@ -6,7 +6,7 @@
 
 #include "CervicalMarginLineWrapper.h"
 #include "ClosedSplineDesignInteractorStyle.h"
-
+#include "TeethDataInitialization.h"
 
 vtkRenderPipeline* pipeline;
 
@@ -63,17 +63,44 @@ int main()
 {
 	pipeline = new vtkRenderPipeline();
 
+
+	const std::string FILE_NAME("13067.vtp");
+	std::map<std::string, int> filename_teeth_id_map;
+	filename_teeth_id_map["5410.vtp"] = 5;
+	filename_teeth_id_map["4746.vtp"] = 6;
+	filename_teeth_id_map["4422.vtp"] = 6;
+	filename_teeth_id_map["1900.vtp"] = 2;
+	filename_teeth_id_map["1826.vtp"] = 3;
+	filename_teeth_id_map["11737.vtp"] = 2;
+	filename_teeth_id_map["2310.vtp"] = 3;
+	filename_teeth_id_map["3383.vtp"] = 7;
+	filename_teeth_id_map["1773.vtp"] = 3;
+	filename_teeth_id_map["1781.vtp"] = 6;
+
+	filename_teeth_id_map["13067.vtp"] = 6;
+
+
+	int selected_id = filename_teeth_id_map.at(FILE_NAME);
+
+	std::string file_path = "data/" + FILE_NAME;
 	vtkSmartPointer<vtkPolyData> arch_pd = vtkSmartPointer<vtkPolyData>::New();
 	vtkSmartPointer<vtkXMLPolyDataReader> reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
-	reader->SetFileName("data/1.vtp");
+	reader->SetFileName(file_path.c_str());
 	reader->Update();
 	arch_pd = reader->GetOutput();
-
+	
+	RenderPolydata(arch_pd, pipeline->Renderer, 1, 1, 1, 0.8);
 	SurfaceMesh arch_sm = VTK_PolyData2CGAL_Surface_Mesh(arch_pd);
 	
+
+	TeethDataInitialization teeth_data_initialization(arch_pd, arch_sm);
+	teeth_data_initialization.SetRenderer(pipeline->Renderer);
+	teeth_data_initialization.SetRenderWindow(pipeline->RenderWindow);
+	teeth_data_initialization.Execute();
+	double3 projection_direction_d3 = teeth_data_initialization.GetAverageOcclusal();
+	Vector_3 projection_direction_v3(projection_direction_d3.x(), projection_direction_d3.y(), projection_direction_d3.z());
+
 	vtkSmartPointer<vtkActor> colored_actor = vtkSmartPointer<vtkActor>::New();
-
-
 	ClosedSplineDesignInteractorStyle closed_spline_design_interactor_style;
 	closed_spline_design_interactor_style.setSurfaceMesh(&arch_sm);
 	closed_spline_design_interactor_style.setPolyData(arch_pd);
@@ -91,10 +118,9 @@ int main()
 	cervical_margin_line_wrapper.SetMeanCurvatureThreshold(0.2);
 	cervical_margin_line_wrapper.SetCervicalMarginLineInteractorStyle(&closed_spline_design_interactor_style);
 
-	cervical_margin_line_wrapper.SetAbutmentPolyData(teeth_polydata);
+	cervical_margin_line_wrapper.SetAbutmentPolyData(teeth_data_initialization.m_labeledPolyData[selected_id]);
 	cervical_margin_line_wrapper.SetSelectedId(selected_id);
 	cervical_margin_line_wrapper.SetProjectionDirection(projection_direction_v3);
-
 	cervical_margin_line_wrapper.Init();
 
 	cervical_margin_line_wrapper.ExtractAbutmentSurfaceMesh();
