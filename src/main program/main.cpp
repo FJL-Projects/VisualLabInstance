@@ -121,11 +121,31 @@ int main()
 	cervical_margin_line_wrapper.SetAbutmentPolyData(teeth_data_initialization.m_labeledPolyData[selected_id]);
 	cervical_margin_line_wrapper.SetSelectedId(selected_id);
 	cervical_margin_line_wrapper.SetProjectionDirection(projection_direction_v3);
+	cervical_margin_line_wrapper.SetExpansionDistance(2.5);
 	cervical_margin_line_wrapper.Init();
 
 	cervical_margin_line_wrapper.ExtractAbutmentSurfaceMesh();
 	cervical_margin_line_wrapper.GenerateAbutmentEdgeSpline();
 	cervical_margin_line_wrapper.GenerateCervicalMarginLine();
+
+	CervicalMarginLineWrapper improved_margin_line_wrapper;
+	improved_margin_line_wrapper.SetRenderer(pipeline->Renderer);
+	improved_margin_line_wrapper.SetRenderWindow(pipeline->RenderWindow);
+	improved_margin_line_wrapper.SetArchSurfaceMesh(&arch_sm);
+	improved_margin_line_wrapper.SetArchPolyData(arch_pd);
+	improved_margin_line_wrapper.SetMinCurvatureThreshold(0.2);
+	improved_margin_line_wrapper.SetMeanCurvatureThreshold(0.2);
+	improved_margin_line_wrapper.SetCervicalMarginLineInteractorStyle(&closed_spline_design_interactor_style);
+
+	improved_margin_line_wrapper.SetAbutmentPolyData(teeth_data_initialization.m_labeledPolyData[selected_id]);
+	improved_margin_line_wrapper.SetSelectedId(selected_id);
+	improved_margin_line_wrapper.SetProjectionDirection(projection_direction_v3);
+	cervical_margin_line_wrapper.SetExpansionDistance(0.6);
+	improved_margin_line_wrapper.Init();
+
+	improved_margin_line_wrapper.ExtractAbutmentSurfaceMesh();
+	improved_margin_line_wrapper.GenerateAbutmentEdgeSpline();
+	improved_margin_line_wrapper.GenerateImprovedMarginLine();
 
 	// Set up the camera and interactor.
 	pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);

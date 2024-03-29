@@ -113,14 +113,14 @@ private:
 
 	void CGALSurfaceMeshToEigen(const SurfaceMesh& sm, Eigen::MatrixXd& V, Eigen::MatrixXi& F);
 	bool BFSMeanCurvatureExtraction(
-		const SurfaceMesh& mesh,
+		SurfaceMesh& mesh,
 		vertex_descriptor start_vd,
 		std::vector<vertex_descriptor>& extracted_vertices,
 		std::set<vertex_descriptor>& difference_vertices,
 		const double& threshold
 	);
 	void BFSMinCurvatureExtraction(
-		const SurfaceMesh& mesh,
+		SurfaceMesh& mesh,
 		vertex_descriptor start_vd,
 		std::vector<vertex_descriptor>& extracted_vertices,
 		std::set<vertex_descriptor>& difference_vertices,
@@ -172,6 +172,7 @@ public:
 	void ExtractAbutmentSurfaceMesh();
 	void GenerateAbutmentEdgeSpline();
 	void GenerateCervicalMarginLine();
+	void GenerateImprovedMarginLine();
 
 	void SetRenderer(vtkSmartPointer<vtkRenderer> renderer);
 	void SetRenderWindow(vtkSmartPointer<vtkRenderWindow> render_win);
