@@ -44,7 +44,7 @@ private:
     std::map<unsigned int, vertex_descriptor> m_vmap;
     std::map<unsigned int, edge_descriptor> m_emap;
     std::map<unsigned int, halfedge_descriptor> m_hemap;
-    SurfaceMesh::Property_map<vertex_descriptor, Point_2> m_uv_map;
+
     std::vector<ClosedMeshSpline> m_expanded_splines; ///< Collection of expanded splines
     std::vector<std::vector<MeshPoint>> m_expanded_splines_mp; ///< Collection of MeshPoints of each expanded splines
     bool m_is_clockwise; ///< Whether the base spline is clockwise
@@ -70,8 +70,7 @@ public:
         const std::map<unsigned int, face_descriptor>& fmap,
         const std::map<unsigned int, vertex_descriptor>& vmap,
         const std::map<unsigned int, edge_descriptor>& emap,
-        const std::map<unsigned int, halfedge_descriptor>& hemap,
-        const SurfaceMesh::Property_map<vertex_descriptor, Point_2>& uv_map
+        const std::map<unsigned int, halfedge_descriptor>& hemap
     );
 
     // Constructor for single cervical margin spline
@@ -84,8 +83,7 @@ public:
         const std::map<unsigned int, face_descriptor>& fmap,
         const std::map<unsigned int, vertex_descriptor>& vmap,
         const std::map<unsigned int, edge_descriptor>& emap,
-        const std::map<unsigned int, halfedge_descriptor>& hemap,
-        const SurfaceMesh::Property_map<vertex_descriptor, Point_2>& uv_map
+        const std::map<unsigned int, halfedge_descriptor>& hemap
     );
     // Setters
     void SetBaseSpline(const std::vector<MeshPoint>& base_spline);

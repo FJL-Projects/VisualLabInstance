@@ -8,6 +8,8 @@
 #include "ClosedSplineDesignInteractorStyle.h"
 #include "TeethDataInitialization.h"
 
+#include <CGAL/IO/Color.h>
+
 vtkRenderPipeline* pipeline;
 
 /**
@@ -64,7 +66,7 @@ int main()
 	pipeline = new vtkRenderPipeline();
 
 
-	const std::string FILE_NAME("13067.vtp");
+	const std::string FILE_NAME("5410.vtp");
 	std::map<std::string, int> filename_teeth_id_map;
 	filename_teeth_id_map["5410.vtp"] = 5;
 	filename_teeth_id_map["4746.vtp"] = 6;
@@ -78,6 +80,7 @@ int main()
 	filename_teeth_id_map["1781.vtp"] = 6;
 
 	filename_teeth_id_map["13067.vtp"] = 6;
+	filename_teeth_id_map["19486.vtp"] = 4;
 
 
 	int selected_id = filename_teeth_id_map.at(FILE_NAME);
@@ -121,7 +124,12 @@ int main()
 	cervical_margin_line_wrapper.SetAbutmentPolyData(teeth_data_initialization.m_labeledPolyData[selected_id]);
 	cervical_margin_line_wrapper.SetSelectedId(selected_id);
 	cervical_margin_line_wrapper.SetProjectionDirection(projection_direction_v3);
-	cervical_margin_line_wrapper.SetExpansionDistance(2.5);
+	cervical_margin_line_wrapper.SetExpansionDistance(0.6);
+	cervical_margin_line_wrapper.SetMarginLineColor(CGAL::yellow());
+	cervical_margin_line_wrapper.SetMarginLineOpacity(0.5);
+	cervical_margin_line_wrapper.SetCtrlPointColor(CGAL::orange());
+	cervical_margin_line_wrapper.SetCtrlPointOpacity(0.5);
+	cervical_margin_line_wrapper.SetCtrlPtDensityCoefficient(1.2);
 	cervical_margin_line_wrapper.Init();
 
 	cervical_margin_line_wrapper.ExtractAbutmentSurfaceMesh();
@@ -140,7 +148,12 @@ int main()
 	improved_margin_line_wrapper.SetAbutmentPolyData(teeth_data_initialization.m_labeledPolyData[selected_id]);
 	improved_margin_line_wrapper.SetSelectedId(selected_id);
 	improved_margin_line_wrapper.SetProjectionDirection(projection_direction_v3);
-	cervical_margin_line_wrapper.SetExpansionDistance(0.6);
+	improved_margin_line_wrapper.SetMaxDetectionDistance(1.5);
+	improved_margin_line_wrapper.SetMarginLineColor(CGAL::violet());
+	improved_margin_line_wrapper.SetMarginLineOpacity(0.5);
+	improved_margin_line_wrapper.SetCtrlPointColor(CGAL::red());
+	improved_margin_line_wrapper.SetCtrlPointOpacity(0.5);
+	improved_margin_line_wrapper.SetCtrlPtDensityCoefficient(1.0);
 	improved_margin_line_wrapper.Init();
 
 	improved_margin_line_wrapper.ExtractAbutmentSurfaceMesh();

@@ -50,6 +50,11 @@ void CervicalMarginLineWrapper::SetExpansionDistance(const double distance)
     m_expansion_distance = distance;
 }
 
+void CervicalMarginLineWrapper::SetMaxDetectionDistance(const double distance)
+{
+    m_max_detection_distance = distance;
+}
+
 void CervicalMarginLineWrapper::SetSelectedId(const int selected_id)
 {
     m_selected_id = selected_id;
@@ -58,6 +63,42 @@ void CervicalMarginLineWrapper::SetSelectedId(const int selected_id)
 void CervicalMarginLineWrapper::SetCtrlPtDensityCoefficient(const double coefficient)
 {
 	m_ctrl_pt_density_coefficient = coefficient;
+}
+
+void CervicalMarginLineWrapper::SetMarginLineColor(const CGAL::Color& color)
+{
+    m_margin_line_color = color;
+}
+
+void CervicalMarginLineWrapper::SetMarginLineColor(const double r, const double g, const double b)
+{
+    auto double_to_color = [](double value) -> unsigned char {
+		return static_cast<unsigned char>(value * 255);
+	};
+    m_margin_line_color = CGAL::Color(double_to_color(r), double_to_color(g), double_to_color(b));
+}
+
+void CervicalMarginLineWrapper::SetCtrlPointColor(const CGAL::Color& color)
+{
+    m_ctrl_point_color = color;
+}
+
+void CervicalMarginLineWrapper::SetCtrlPointColor(const double r, const double g, const double b)
+{
+    auto double_to_color = [](double value) -> unsigned char {
+		return static_cast<unsigned char>(value * 255);
+	};
+	m_ctrl_point_color = CGAL::Color(double_to_color(r), double_to_color(g), double_to_color(b));
+}
+
+void CervicalMarginLineWrapper::SetMarginLineOpacity(const double opacity)
+{
+    m_margin_line_opacity = opacity;
+}
+
+void CervicalMarginLineWrapper::SetCtrlPointOpacity(const double opacity)
+{
+    m_ctrl_point_opacity = opacity;
 }
 
 void CervicalMarginLineWrapper::SetMinCurvatureThreshold(const double threshold)
@@ -378,6 +419,7 @@ std::map<Point_2, vertex_descriptor> CervicalMarginLineWrapper::ProjectToPlane(c
 std::vector<vertex_descriptor> CervicalMarginLineWrapper::EquallyDistributeVertices(const SurfaceMesh& mesh, const std::vector<vertex_descriptor>& input_vertices)
 {
     std::vector<vertex_descriptor> output_vertices;
+    output_vertices.push_back(input_vertices[0]);
     double total_distance = 0.0;
 
     for (int i = 0; i < input_vertices.size(); ++i)
@@ -391,18 +433,20 @@ std::vector<vertex_descriptor> CervicalMarginLineWrapper::EquallyDistributeVerti
 
     double min_interval = m_ctrl_pt_density_coefficient * total_distance / input_vertices.size();
 
+    double distance = 0.0;
     for (int i = 0; i < input_vertices.size(); ++i)
     {
         Point_3 point_a = mesh.point(input_vertices[i]);
         Point_3 point_b = mesh.point(input_vertices[(i + 1) % input_vertices.size()]);
-        double distance = std::sqrt(CGAL::squared_distance(point_a, point_b));
+        distance += std::sqrt(CGAL::squared_distance(point_a, point_b));
 
-        if (distance < min_interval)
+        if (distance < 1.5)
         {
-            //std::cout << "Skipping vertice " << i << " with distance " << distance << std::endl;
+            //std::cout << "Skipping vertex " << i << " with distance " << distance << std::endl;
             continue;
         }
-        output_vertices.push_back(input_vertices[i]);
+        output_vertices.push_back(input_vertices[(i + 1) % input_vertices.size()]);
+        distance = 0.0;
     }
 
     return output_vertices;
@@ -509,17 +553,19 @@ void CervicalMarginLineWrapper::Init()
     int halfedge_index = 0;
     for (auto he : m_arch_sm->halfedges()) m_hemap[halfedge_index++] = he;
     // Check if the "h:uv" property map exists
+
+    SurfaceMesh::Property_map<vertex_descriptor, Point_2> uv_map;
     bool found;
-    boost::tie(m_uv_map, found) = m_arch_sm->property_map<vertex_descriptor, Point_2>("h:uv");
+    boost::tie(uv_map, found) = m_arch_sm->property_map<vertex_descriptor, Point_2>("h:uv");
     // If it doesn't exist, add the property map
     if (!found) 
     {
-        m_uv_map = m_arch_sm->add_property_map<vertex_descriptor, Point_2>("h:uv").first;
+        uv_map = m_arch_sm->add_property_map<vertex_descriptor, Point_2>("h:uv").first;
     }
-    CGAL::Surface_mesh_parameterization::parameterize(*m_arch_sm, bhd, m_uv_map);
+    CGAL::Surface_mesh_parameterization::parameterize(*m_arch_sm, bhd, uv_map);
 
     m_abutment_edge_spline = new ClosedMeshSpline;
-    m_abutment_edge_spline->initial(m_arch_sm, m_fmap, m_vmap, m_emap, m_hemap, m_uv_map);
+    m_abutment_edge_spline->initial(m_arch_sm, m_fmap, m_vmap, m_emap, m_hemap, uv_map);
 
     m_is_initialed = true;
 }
@@ -554,7 +600,7 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
 
     using namespace Eigen;
 
-    m_expanded_abutment_sm = *AreaExpander(*m_arch_sm, m_arch_pd, m_selected_id, m_expanded_face_map, 100);
+    m_expanded_abutment_sm = *AreaExpander(*m_arch_sm, m_arch_pd, m_selected_id, m_expanded_to_arch_fd_map, m_expanded_to_arch_vd_map, 100);
 
     CGAL::IO::write_PLY("expanded_abutment.ply", m_expanded_abutment_sm);
     // Convert the arch surface mesh to Eigen matrices
@@ -598,7 +644,7 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
 
     auto mean_curvature = m_expanded_abutment_sm.add_property_map<vertex_descriptor, double>("v:mean_curvature", 0.0).first;
     auto min_curvature = m_expanded_abutment_sm.add_property_map<vertex_descriptor, double>("v:min_curvature", 0.0).first;
-
+    auto arch_min_curvature = m_arch_sm->add_property_map<vertex_descriptor, double>("v:min_curvature", 0.0).first;
     MatrixXd HN;
     SparseMatrix<double> L, M, Minv;
     igl::cotmatrix(m_V, m_F, L);
@@ -681,11 +727,19 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
         H10[vd.idx()] = h10_sum / h10_count;
         H15[vd.idx()] = h15_sum / h15_count;
     }
-
     for (vertex_descriptor& vd : m_expanded_abutment_sm.vertices())
     {
-        min_curvature[vd] = std::min(std::min(H5[vd.idx()], H10[vd.idx()]), H15[vd.idx()]);
-        mean_curvature[vd] = H15[vd.idx()];
+        try
+        {
+            // Save the curvature of m_expanded_abutment_sm to m_arch_sm
+            vertex_descriptor origin_vd = m_expanded_to_arch_vd_map.at(vd);
+            arch_min_curvature[origin_vd] = min_curvature[vd] = std::min(std::min(H5[vd.idx()], H10[vd.idx()]), H15[vd.idx()]);
+            mean_curvature[vd] = H15[vd.idx()];
+        }
+        catch (const std::out_of_range& e)
+		{
+			//std::cerr << "Error: Vertex descriptor: " << vd.idx()  << " not found in the mapping!" << std::endl;
+		}
     }
 
     std::vector<vertex_descriptor> extracted_vertices;
@@ -768,27 +822,37 @@ void CervicalMarginLineWrapper::GenerateAbutmentEdgeSpline()
     border_vertices_ofs.close();
     std::cout << "Abutment border vertices(cleansed): " << m_abutment_border.size() << std::endl;
 
-    std::vector<Point_2> projected_points;
-    std::vector<Point_2> convex_hull_points;
-    std::vector<vertex_descriptor> convex_hull_vertices;
-
-    // Project the border vertices to the plane and find the convex hull
-    std::map<Point_2, vertex_descriptor> point2_vd_map = ProjectToPlane(m_expanded_abutment_sm, m_abutment_border, projected_points);
-    CGAL::convex_hull_2(projected_points.begin(), projected_points.end(), std::back_inserter(convex_hull_points));
-
-    // Map the convex hull points to the original mesh
-    for (const auto& point : convex_hull_points)
+    std::ofstream cleansed_border_vertices_ofs("cleansed_border_vertices.xyz");
+    for (const auto& vd : m_abutment_border)
     {
-        if (point2_vd_map.find(point) == point2_vd_map.end())
-        {
-            continue;
-        }
-        vertex_descriptor vd = point2_vd_map.at(point);
-        convex_hull_vertices.push_back(vd);
+        cleansed_border_vertices_ofs << m_expanded_abutment_sm.point(vd) << "\n";
     }
-    std::cout << "Convex hull vertices: " << convex_hull_vertices.size() << std::endl;
+    cleansed_border_vertices_ofs.close();
+
+    //std::vector<Point_2> projected_points;
+    //std::vector<Point_2> convex_hull_points;
+    //std::vector<vertex_descriptor> convex_hull_vertices;
+
+    //// Project the border vertices to the plane and find the convex hull
+    //std::map<Point_2, vertex_descriptor> point2_vd_map = ProjectToPlane(m_expanded_abutment_sm, m_abutment_border, projected_points);
+    //CGAL::convex_hull_2(projected_points.begin(), projected_points.end(), std::back_inserter(convex_hull_points));
+
+    //// Map the convex hull points to the original mesh
+    //for (const auto& point : convex_hull_points)
+    //{
+    //    if (point2_vd_map.find(point) == point2_vd_map.end())
+    //    {
+    //        continue;
+    //    }
+    //    vertex_descriptor vd = point2_vd_map.at(point);
+    //    convex_hull_vertices.push_back(vd);
+    //}
+    //std::cout << "Convex hull vertices: " << convex_hull_vertices.size() << std::endl;
     // Filter the convex_hull_vertices to avoid zigzagging spline cause by proximal vertices
-    std::vector<vertex_descriptor> equally_distributed_vertices = EquallyDistributeVertices(m_expanded_abutment_sm, convex_hull_vertices);
+    //std::vector<vertex_descriptor> equally_distributed_vertices = EquallyDistributeVertices(m_expanded_abutment_sm, convex_hull_vertices);
+    std::vector<vertex_descriptor> equally_distributed_vertices = EquallyDistributeVertices(m_expanded_abutment_sm, m_abutment_border);
+    //std::vector<vertex_descriptor> equally_distributed_vertices = convex_hull_vertices;
+    
     std::cout << "Equally distributed vertices: " << equally_distributed_vertices.size() << std::endl;
 
     auto weighted_point = [](Point_3& p1, Point_3& p2, Point_3& p3, double w1, double w2, double w3) -> Point_3
@@ -804,7 +868,7 @@ void CervicalMarginLineWrapper::GenerateAbutmentEdgeSpline()
     {
         //std::cout << "vd: " << vd.idx() << std::endl;
         face_descriptor fd = FindAdjacentFace(m_expanded_abutment_sm, vd);
-        //std::cout << "fd: " << fd.idx() << std::endl;
+        //std::cout << "fd_new: " << fd_new.idx() << std::endl;
 
         halfedge_descriptor hd = halfedge(fd, m_expanded_abutment_sm);
         //std::cout << "hd: " << hd.idx() << std::endl;
@@ -880,9 +944,9 @@ void CervicalMarginLineWrapper::GenerateAbutmentEdgeSpline()
             actor->SetMapper(face_mapper);
             Renderer->AddActor(actor);*/
 
-            //std::cout << "Add ctrl pt: face_descriptor: " << fd.idx() << std::endl;
+            //std::cout << "Add ctrl pt: face_descriptor: " << fd_new.idx() << std::endl;
 
-            m_abutment_edge_spline->add(m_expanded_face_map.at(face_descriptor(ctrl_pt.nTriId)).idx(), ctrl_pt.xyz);
+            m_abutment_edge_spline->add(m_expanded_to_arch_fd_map.at(face_descriptor(ctrl_pt.nTriId)).idx(), ctrl_pt.xyz);
             /*vtkSmartPointer<vtkPolyDataNormals> vtkNormal = vtkSmartPointer<vtkPolyDataNormals>::New();
             vtkNormal->SetInputConnection(abutment_edge_spline.CtrlPointSphere.back()->GetOutputPort());
             vtkNormal->SetComputePointNormals(1);
@@ -944,6 +1008,9 @@ void CervicalMarginLineWrapper::GenerateCervicalMarginLine()
     Timer timer("Generate cervical margin line");
 #endif
     std::cout << "Abutment Edge Spline size: " << m_abutment_edge_spline->uvSpline.size() << std::endl;
+
+    double margin_line_color[3] = { m_margin_line_color.r() / 255.0, m_margin_line_color.g() / 255.0, m_margin_line_color.b() / 255.0 };
+    double ctrl_point_color[3] = { m_ctrl_point_color.r() / 255.0, m_ctrl_point_color.g() / 255.0, m_ctrl_point_color.b() / 255.0 };
     Polygon_2 polygon(m_abutment_edge_spline->uvSpline.begin(), m_abutment_edge_spline->uvSpline.end());
 
     bool is_clockwise = polygon.is_clockwise_oriented();
@@ -959,8 +1026,7 @@ void CervicalMarginLineWrapper::GenerateCervicalMarginLine()
         m_fmap,
         m_vmap,
         m_emap,
-        m_hemap,
-        m_uv_map
+        m_hemap
     );
     //MeshSplineExpander mesh_spline_expander(
     //    m_abutment_edge_spline->vtCtrlPoints,
@@ -972,7 +1038,7 @@ void CervicalMarginLineWrapper::GenerateCervicalMarginLine()
     //    m_vmap,
     //    m_emap,
     //    m_hemap,
-    //    m_uv_map
+    //    uv_map
     //);
     mesh_spline_expander.SetRenderer(m_renderer);
     mesh_spline_expander.SetRenderWin(m_render_win);
@@ -999,12 +1065,12 @@ void CervicalMarginLineWrapper::GenerateCervicalMarginLine()
         mp_mapper->SetInputConnection(mp_normal->GetOutputPort());
         mp_mapper->Update();
         m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->SetMapper(mp_mapper);
-        m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetColor(0, 0, 1);
+        m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetColor(ctrl_point_color);
         m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetAmbient(0.5);
         m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetSpecularPower(100);
         m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetSpecular(0.5);
         m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetDiffuse(0.5);
-        m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetOpacity(1.0);
+        m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetOpacity(m_ctrl_point_opacity);
         m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->PickableOn();
         m_renderer->AddActor(m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back());
     }
@@ -1035,12 +1101,12 @@ void CervicalMarginLineWrapper::GenerateCervicalMarginLine()
     margin_line_tube_writer->Write();
 
     m_cervical_margin_line_interactor_style->spline->SplineActor->SetMapper(abutment_line_tube_mapper);
-    m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetColor(1, 1, 0);
+    m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetColor(margin_line_color);
     m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetAmbient(0.5);
     m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetSpecularPower(100);
     m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetSpecular(0.5);
     m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetDiffuse(0.5);
-    m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetOpacity(1.0);
+    m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetOpacity(m_margin_line_opacity);
     m_cervical_margin_line_interactor_style->spline->SplineActor->PickableOff();
 
     m_renderer->AddActor(m_cervical_margin_line_interactor_style->spline->SplineActor);
@@ -1063,26 +1129,15 @@ void CervicalMarginLineWrapper::GenerateImprovedMarginLine()
     MeshSplineExpander mesh_spline_expander(
         m_abutment_edge_spline->vtCtrlPoints,
         *m_arch_sm,
-        2.5,
+        m_max_detection_distance,
         is_clockwise,
         m_abutment_edge_spline->vtEquidistantSpline,
         m_fmap,
         m_vmap,
         m_emap,
-        m_hemap,
-        m_uv_map
+        m_hemap
     );
 
-    SurfaceMesh::Property_map<vertex_descriptor, double> min_curvature;
-    bool success_get;
-    boost::tie(min_curvature, success_get) = m_arch_sm->property_map<vertex_descriptor, double>("v:min_curvature");
-    //auto mean_curvature = m_arch_sm->property_map<vertex_descriptor, double>("v:mean_curvature").first;
-    std::cout << "Fetched min_curvature property map: " << success_get << std::endl;
-    for (auto& vd : m_arch_sm->vertices())
-    {
-        std::cout << min_curvature[vd] << std::endl;
-
-    }
     mesh_spline_expander.SetRenderer(m_renderer);
     mesh_spline_expander.SetRenderWin(m_render_win);
     bool success = mesh_spline_expander.ExpandToLowestCurvature();
@@ -1352,7 +1407,7 @@ bool CervicalMarginLineWrapper::BFSMeanCurvatureExtraction(
     return true;
 }
 
-    /**
+/**
  * @brief Extracts vertices with minimum curvature above a threshold using BFS.
  *
  * This function performs a breadth-first search (BFS) starting from a given vertex, extracting
@@ -1498,17 +1553,25 @@ int CervicalMarginLineWrapper::PolyDataToSurfaceMesh(vtkPolyData* polyData, Surf
  * This function works by first marking faces of the input mesh that correspond to a specific label
  * from a vtkPolyData object. It then iteratively expands the selection by adding adjacent faces.
  * After expansion, a new mesh is created containing only the selected faces. A mapping between
- * the faces of the new mesh and the faces of the original mesh is also provided.
+ * the faces of the new mesh and the faces of the original mesh is also provided, as well as a
+ * mapping between the vertices of the new mesh and the vertices of the original mesh.
  *
  * @param mesh The input mesh from which the area will be expanded.
  * @param pd A vtkSmartPointer to a vtkPolyData object that contains cell labels.
  * @param n The label indicating the initial area to expand from.
  * @param[out] face_map An unordered_map mapping faces in the new mesh to the corresponding faces in the input mesh.
+ * @param[out] vertex_map An unordered_map mapping vertices in the new mesh to the corresponding vertices in the input mesh.
  * @param[in] expansion_level The number of iterations for the expansion process.
- * 
+ *
  * @return Returns a pointer to a new SurfaceMesh object that contains only the expanded selection of faces.
- */
-SurfaceMesh* CervicalMarginLineWrapper::AreaExpander(SurfaceMesh& mesh, const vtkSmartPointer<vtkPolyData> pd, int n, std::unordered_map<face_descriptor, face_descriptor>& face_map, unsigned expansion_level = 50)
+ */SurfaceMesh* CervicalMarginLineWrapper::AreaExpander(
+    SurfaceMesh& mesh,
+    const vtkSmartPointer<vtkPolyData> pd,
+    int n,
+    std::unordered_map<face_descriptor, face_descriptor>& face_map = std::unordered_map<face_descriptor, face_descriptor>(),
+    std::unordered_map<vertex_descriptor, vertex_descriptor>& vertex_map = std::unordered_map<vertex_descriptor, vertex_descriptor>(),
+    unsigned expansion_level = 50
+)
 {
     auto selection = mesh.add_property_map<face_descriptor, bool>("f:select", false).first;
     vtkSmartPointer<vtkDataArray> labels = pd->GetCellData()->GetArray("Label");
@@ -1577,8 +1640,11 @@ SurfaceMesh* CervicalMarginLineWrapper::AreaExpander(SurfaceMesh& mesh, const vt
             {
                 v2_new = vertex_descriptor(visit[v2.idx()]);
             }
-            auto fd = sm_new->add_face(v0_new, v1_new, v2_new);
-            face_map[fd] = f;
+            auto fd_new = sm_new->add_face(v0_new, v1_new, v2_new);
+            face_map[fd_new] = f;
+            vertex_map[v0_new] = v0;
+            vertex_map[v1_new] = v1;
+            vertex_map[v2_new] = v2;
         }
     }
 

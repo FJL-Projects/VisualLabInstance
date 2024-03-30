@@ -13,11 +13,11 @@ void ClosedSplineDesignInteractorStyle::setPolyData(vtkSmartPointer<vtkPolyData>
 void ClosedSplineDesignInteractorStyle::Init()
 {
 	halfedge_descriptor bhd = CGAL::Polygon_mesh_processing::longest_border(*sm).first;
-	int verIndex = 0;
+	unsigned verIndex = 0;
 	for (auto v : sm->vertices()) vmap[verIndex++] = v;
-	int faceIndex = 0;
+	unsigned faceIndex = 0;
 	for (auto f : sm->faces()) fmap[faceIndex++] = f;
-	int halfedgeIndex = 0;
+	unsigned halfedgeIndex = 0;
 	for (auto he : sm->halfedges()) hemap[halfedgeIndex++] = he;
 	SurfaceMesh::Property_map<vertex_descriptor, Point_2> uv_map = sm->add_property_map<vertex_descriptor, Point_2>("h:uv").first;
 	CGAL::Surface_mesh_parameterization::parameterize(*sm, bhd, uv_map);

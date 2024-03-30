@@ -13,10 +13,9 @@ MeshSplineExpander::MeshSplineExpander(
 	const std::map<unsigned int, face_descriptor>& fmap,
 	const std::map<unsigned int, vertex_descriptor>& vmap,
 	const std::map<unsigned int, edge_descriptor>& emap,
-	const std::map<unsigned int, halfedge_descriptor>& hemap,
-	const SurfaceMesh::Property_map<vertex_descriptor, Point_2>& uv_map
+	const std::map<unsigned int, halfedge_descriptor>& hemap
 ) : m_base_spline(base_spline), m_sm(sm), m_interval(interval), m_splines_quota(splines_quota), m_is_clockwise(is_clockwise), m_equal_distance_spline(equal_distance_spline),
-	m_fmap(fmap), m_vmap(vmap), m_emap(emap), m_hemap(hemap), m_uv_map(uv_map)
+	m_fmap(fmap), m_vmap(vmap), m_emap(emap), m_hemap(hemap)
 {}
 
 MeshSplineExpander::MeshSplineExpander(
@@ -28,12 +27,10 @@ MeshSplineExpander::MeshSplineExpander(
 	const std::map<unsigned int, face_descriptor>& fmap,
 	const std::map<unsigned int, vertex_descriptor>& vmap,
 	const std::map<unsigned int, edge_descriptor>& emap,
-	const std::map<unsigned int, halfedge_descriptor>& hemap,
-	const SurfaceMesh::Property_map<vertex_descriptor, Point_2>& uv_map
+	const std::map<unsigned int, halfedge_descriptor>& hemap
 ) : m_base_spline(base_spline), m_sm(sm), m_max_distance(max_distance), m_splines_quota(1), m_is_clockwise(is_clockwise), m_equal_distance_spline(equal_distance_spline),
-m_fmap(fmap), m_vmap(vmap), m_emap(emap), m_hemap(hemap), m_uv_map(uv_map)
-{
-}
+m_fmap(fmap), m_vmap(vmap), m_emap(emap), m_hemap(hemap)
+{}
 
 // SetBaseSpline member function
 void MeshSplineExpander::SetBaseSpline(const std::vector<MeshPoint>& base_spline) 
@@ -500,9 +497,14 @@ bool MeshSplineExpander::ExpandSpline()
 {
 	bool success = false;
 
+	SurfaceMesh::Property_map<vertex_descriptor, Point_2> uv_map;
 	bool is_initialized = false;
-	boost::tie(m_uv_map, is_initialized) = m_sm.property_map<vertex_descriptor, Point_2>("h:uv");
-	assert(is_initialized && "uv_map is not initialized!");
+	boost::tie(uv_map, is_initialized) = m_sm.property_map<vertex_descriptor, Point_2>("h:uv");
+	if (!is_initialized)
+	{
+		std::cerr << "uv_map is not initialized!" << std::endl;
+		return false;
+	}
 
 	CalculateSplineExpansionDirections();
 
@@ -626,7 +628,7 @@ bool MeshSplineExpander::ExpandSpline()
 	m_expanded_splines_mp.resize(m_splines_quota);
 	for (size_t i = 0; i < m_splines_quota; ++i)
 	{
-		m_expanded_splines[i].initial(&m_sm, m_fmap, m_vmap, m_emap, m_hemap, m_uv_map);
+		m_expanded_splines[i].initial(&m_sm, m_fmap, m_vmap, m_emap, m_hemap, uv_map);
 		for (size_t j = 0; j < m_base_spline.size(); ++j)
 		{
 			if (m_linked_points_vec[j].size() < m_splines_quota)
@@ -674,15 +676,21 @@ bool MeshSplineExpander::ExpandToLowestCurvature()
 
 	bool is_initialized = false;
 
-	boost::tie(m_uv_map, is_initialized) = m_sm.property_map<vertex_descriptor, Point_2>("h:uv");
-	auto & min_curvature = m_sm.property_map<vertex_descriptor, double>("v:min_curvature").first;
-
-	assert(is_initialized && "uv_map is not initialized!");
-
-	for (vertex_descriptor& vd : m_sm.vertices())
+	SurfaceMesh::Property_map<vertex_descriptor, Point_2> uv_map;
+	boost::tie(uv_map, is_initialized) = m_sm.property_map<vertex_descriptor, Point_2>("h:uv");
+	if (!is_initialized)
 	{
-		//std::cout << vd.idx() << " " << m_uv_map[vd] << std::endl;
-		std::cout << vd.idx() << " " << min_curvature[vd] << std::endl;
+		std::cerr << "uv_map is not initialized!" << std::endl;
+		return false;
+	}
+
+	bool min_curvature_is_initialized = false;
+	SurfaceMesh::Property_map<vertex_descriptor, double> min_curvature;
+	boost::tie(min_curvature, min_curvature_is_initialized) = m_sm.property_map<vertex_descriptor, double>("v:min_curvature");
+	if (!min_curvature_is_initialized)
+	{
+		std::cerr << "min_curvature is not initialized!" << std::endl;
+		return false;
 	}
 
 	CalculateSplineExpansionDirections();
@@ -806,18 +814,18 @@ bool MeshSplineExpander::ExpandToLowestCurvature()
 		}
 		m_linked_points_vec.push_back(equal_distance_points_vec);
 		m_edge_points_vec.push_back(edge_points_vec);
-		std::cout << i << " edge_points_vec.size(): " << edge_points_vec.size() << std::endl;
+		//std::cout << i << " edge_points_vec.size(): " << edge_points_vec.size() << std::endl;
 	}
 
 
 
-	//m_expanded_splines[0].initial(&m_sm, m_fmap, m_vmap, m_emap, m_hemap, m_uv_map);
+	//m_expanded_splines[0].initial(&m_sm, m_fmap, m_vmap, m_emap, m_hemap, uv_map);
 
 	std::vector<std::pair<face_descriptor, double> > face_curvature_sum_vec;
 	for (size_t i = 0; i < m_base_spline.size(); ++i)
 	{
 		auto edge_points_vec = m_edge_points_vec[i];
-		std::cout << i << " edge_points_vec.size(): " << edge_points_vec.size() << std::endl;
+		//std::cout << i << " edge_points_vec.size(): " << edge_points_vec.size() << std::endl;
 		std::map<face_descriptor, double> face_curvature_sum;
 		double lowest_curvature = std::numeric_limits<double>::max();
 		face_descriptor lowest_curvature_fd;
@@ -825,7 +833,7 @@ bool MeshSplineExpander::ExpandToLowestCurvature()
 		{
 			halfedge_descriptor traversed_hd = edge_points_vec[j].he;
 			face_descriptor traversed_fd = m_sm.face(traversed_hd);
-			std::cout << traversed_hd.idx() << " " << traversed_fd.idx() << " " << edge_points_vec[j].nTriId << std::endl;
+			//std::cout << traversed_hd.idx() << " " << traversed_fd.idx() << " " << edge_points_vec[j].nTriId << std::endl;
 			double curvature_sum = 0;
 			if (face_curvature_sum.find(traversed_fd) == face_curvature_sum.end()) // Face is not included
 			{
@@ -860,8 +868,7 @@ bool MeshSplineExpander::ExpandToLowestCurvature()
 	{
 		const face_descriptor& fd = pair.first;
 		const double& curvature_sum = pair.second;
-
-		if (curvature_sum < std::numeric_limits<double>::epsilon())
+		if (std::fabs(curvature_sum) < std::numeric_limits<double>::epsilon())
 		{
 			continue;
 		}
@@ -880,11 +887,10 @@ bool MeshSplineExpander::ExpandToLowestCurvature()
 		double w3 = min_curvature[v3] / curvature_sum;
 
 		auto lowest_curvature_point = weighted_point(p1, p2, p3, w1, w2, w3);
-		
 		// Render a blue sphere at hte lowest curvature point
 		vtkSmartPointer<vtkSphereSource> sphere_source = vtkSmartPointer<vtkSphereSource>::New();
 		sphere_source->SetCenter(lowest_curvature_point.x(), lowest_curvature_point.y(), lowest_curvature_point.z());
-		sphere_source->SetRadius(0.05);
+		sphere_source->SetRadius(0.2);
 		sphere_source->SetPhiResolution(16);
 		sphere_source->SetThetaResolution(16);
 		sphere_source->Update();
@@ -894,7 +900,7 @@ bool MeshSplineExpander::ExpandToLowestCurvature()
 
 		vtkSmartPointer<vtkActor> sphere_actor = vtkSmartPointer<vtkActor>::New();
 		sphere_actor->SetMapper(sphere_mapper);
-		sphere_actor->GetProperty()->SetColor(0, 0, 1);
+		sphere_actor->GetProperty()->SetColor(0, 1, 1);
 		sphere_actor->GetProperty()->SetAmbient(0.5);
 		sphere_actor->GetProperty()->SetSpecularPower(100);
 		sphere_actor->GetProperty()->SetSpecular(0.5);
@@ -913,7 +919,7 @@ bool MeshSplineExpander::ExpandToLowestCurvature()
 	m_expanded_splines_mp.resize(m_splines_quota);
 	for (size_t i = 0; i < m_splines_quota; ++i)
 	{
-		m_expanded_splines[i].initial(&m_sm, m_fmap, m_vmap, m_emap, m_hemap, m_uv_map);
+		m_expanded_splines[i].initial(&m_sm, m_fmap, m_vmap, m_emap, m_hemap, uv_map);
 		for (size_t j = 0; j < m_base_spline.size(); ++j)
 		{
 			MeshPoint mp = m_linked_points_vec[j][i];
@@ -1084,6 +1090,7 @@ void MeshSplineExpander::ExtractPoint(const halfedge_descriptor& hd,
 	auto intersection = CGAL::intersection(cutting_plane, segment);
 	face_descriptor fd = m_sm.face(hd);
 	Vector_3 face_normal = PMP::compute_face_normal(fd, m_sm);
+	auto& uv_map = m_sm.property_map<vertex_descriptor, Point_2>("h:uv").first;
 
 	if (Point_3* edge_point = boost::get<Point_3>(&*intersection))
 	{
@@ -1094,7 +1101,7 @@ void MeshSplineExpander::ExtractPoint(const halfedge_descriptor& hd,
 			// 距离不够取得下一个等距点
 			remaining_interval -= distance;
 			double point_data[3] = { edge_point->x(), edge_point->y(), edge_point->z() };
-			MeshPoint mesh_point(static_cast<unsigned>(fd.idx()), GetPointUV(m_sm, m_uv_map, hd, *edge_point), point_data, hd);
+			MeshPoint mesh_point(static_cast<unsigned>(fd.idx()), GetPointUV(m_sm, uv_map, hd, *edge_point), point_data, hd);
 			edge_points_vec.push_back(mesh_point);
 			//std::cout << "Edge point: " << *edge_point << std::endl;
 
@@ -1120,7 +1127,7 @@ void MeshSplineExpander::ExtractPoint(const halfedge_descriptor& hd,
 			Point_3 destination_point = source_point + ray_direction * remaining_interval;
 
 			double point_data[3] = { destination_point.x(), destination_point.y(), destination_point.z() };
-			MeshPoint mesh_point(static_cast<unsigned>(fd.idx()), GetPointUV(m_sm, m_uv_map, hd, destination_point), point_data, hd);
+			MeshPoint mesh_point(static_cast<unsigned>(fd.idx()), GetPointUV(m_sm, uv_map, hd, destination_point), point_data, hd);
 			equal_distance_points_vec.push_back(mesh_point);
 			//std::cout << "Point added: " << destination_point << std::endl;
 

@@ -9,6 +9,7 @@
 #include <CGAL/Segment_3.h>
 #include <CGAL/Ray_3.h>
 #include <CGAL/convex_hull_2.h>
+#include <CGAL/IO/Color.h>
 
 #include <vtkPolyData.h>
 #include <vtkSphereSource.h>
@@ -41,6 +42,7 @@
 #include <string>
 #include <utility>
 #include <limits>
+#include <exception>
 
 #include "ClosedSplineDesignInteractorStyle.h"
 #include "MeshSplineExpander.h"
@@ -73,7 +75,7 @@ typedef boost::optional<Tree::Intersection_and_primitive_id<Segment_3>::Type>	Se
  *
  * The CervicalMarginLineWrapper class provides functionality to extract the abutment surface mesh from a dental model,
  * generate a spline along the abutment edge, and produce a cervical margin line by expanding the boundary of the abutment.
- * It integrates with VTK for rendering and allows for various customization options such as expansi
+ * It integrates with VTK for rendering and allows for various customization options such as expansion.
  *
  */
 class CervicalMarginLineWrapper
@@ -86,13 +88,15 @@ private:
 	std::unordered_map<vertex_descriptor, vertex_descriptor>	m_abutment_to_arch_vd_map; ///< Map from abutment vertices to arch vertices.
 	SurfaceMesh													m_expanded_abutment_sm; ///< Expanded abutment surface mesh.
 	vtkSmartPointer<vtkPolyData>								m_expanded_abutment_pd; ///< PolyData of the expanded abutment.
-	std::unordered_map<face_descriptor, face_descriptor>		m_expanded_face_map; ///< Map of expanded abutment faces.
+	std::unordered_map<face_descriptor, face_descriptor>		m_expanded_to_arch_fd_map; ///< Map of expanded abutment faces.
+	std::unordered_map<vertex_descriptor, vertex_descriptor>	m_expanded_to_arch_vd_map; ///< Map of expanded abutment vertices.
 	std::vector<vertex_descriptor>								m_abutment_border; ///< Vertices of the original mesh at the abutment border.
 	std::vector<vertex_descriptor>								m_abutment_convex_hull_border; ///< Convex hull vertices on the abutment border.
 	double														m_expansion_distance = 0.6; ///< Distance to expand the abutment border to create the margin line.
+	double														m_max_detection_distance = 2.0; ///< Maximum detection distance for margin line expansion.
 	Vector_3													m_projection_direction; ///< Projection direction for the margin line.
 	int															m_selected_id = 0; ///< Selected identifier for internal use.
-
+	
 	vtkSmartPointer<vtkRenderer>								m_renderer; ///< VTK renderer for visualization.
 	vtkSmartPointer<vtkRenderWindow>							m_render_win; ///< VTK render window for visualization.
 
@@ -102,7 +106,7 @@ private:
 	std::map<unsigned int, vertex_descriptor>					m_vmap; ///< Vertex map for internal use.
 	std::map<unsigned int, edge_descriptor>						m_emap; ///< Edge map for internal use.
 	std::map<unsigned int, halfedge_descriptor>					m_hemap; ///< Half-edge map for internal use.
-	SurfaceMesh::Property_map<vertex_descriptor, Point_2>		m_uv_map; ///< UV map for texture mapping.
+
 	ClosedSplineDesignInteractorStyle*							m_cervical_margin_line_interactor_style; ///< Interactor style for margin line design.
 	ClosedMeshSpline*											m_abutment_edge_spline; ///< Spline along the abutment edge.
 	vertex_descriptor											m_bfs_start_vd; ///< Starting vertex descriptor for BFS operations.
@@ -110,7 +114,11 @@ private:
 	Eigen::MatrixXd												m_V; ///< Eigen matrix for vertices.
 	Eigen::MatrixXi												m_F; ///< Eigen matrix for faces.
 	bool														m_is_initialed; ///< Flag indicating if the wrapper has been initialized.
-
+	CGAL::Color													m_margin_line_color = CGAL::yellow(); ///< Color of the margin line.
+	CGAL::Color 												m_ctrl_point_color = CGAL::blue(); ///< Color of the control points.
+	double                                                      m_margin_line_opacity = 1.0; ///< Opacity of the margin line.
+	double 													    m_ctrl_point_opacity = 1.0; ///< Opacity of the control points.
+	
 	void CGALSurfaceMeshToEigen(const SurfaceMesh& sm, Eigen::MatrixXd& V, Eigen::MatrixXi& F);
 	bool BFSMeanCurvatureExtraction(
 		SurfaceMesh& mesh,
@@ -153,7 +161,14 @@ private:
 	);
 
 	int PolyDataToSurfaceMesh(vtkPolyData* polyData, SurfaceMesh& surfaceMesh);
-	SurfaceMesh* AreaExpander(SurfaceMesh& mesh, const vtkSmartPointer<vtkPolyData> pd, int n, std::unordered_map<face_descriptor, face_descriptor>& face_map, unsigned expansion_level);
+	SurfaceMesh* AreaExpander(
+		SurfaceMesh& mesh,
+		const vtkSmartPointer<vtkPolyData> pd,
+		int n,
+		std::unordered_map<face_descriptor,face_descriptor>& face_map,
+		std::unordered_map<vertex_descriptor, vertex_descriptor>& vertex_map,
+		unsigned expansion_level
+	);
 
 public:
 	CervicalMarginLineWrapper();
@@ -165,8 +180,15 @@ public:
 	void SetMeanCurvatureThreshold(const double threshold);
 	void SetCervicalMarginLineInteractorStyle(ClosedSplineDesignInteractorStyle* cervical_margin_line_interactor_style);
 	void SetExpansionDistance(const double distance);
+	void SetMaxDetectionDistance(const double distance);
 	void SetSelectedId(const int selected_id);
 	void SetCtrlPtDensityCoefficient(const double coefficient);
+	void SetMarginLineColor(const CGAL::Color& color);
+	void SetMarginLineColor(const double r, const double g, const double b);
+	void SetCtrlPointColor(const CGAL::Color& color);
+	void SetCtrlPointColor(const double r, const double g, const double b);
+	void SetMarginLineOpacity(const double opacity);
+	void SetCtrlPointOpacity(const double opacity);
 	void Init();
 
 	void ExtractAbutmentSurfaceMesh();
