@@ -66,7 +66,7 @@ int main()
 	pipeline = new vtkRenderPipeline();
 
 
-	const std::string FILE_NAME("5410.vtp");
+	const std::string FILE_NAME("19486.vtp");
 	std::map<std::string, int> filename_teeth_id_map;
 	filename_teeth_id_map["5410.vtp"] = 5;
 	filename_teeth_id_map["4746.vtp"] = 6;
@@ -81,6 +81,7 @@ int main()
 
 	filename_teeth_id_map["13067.vtp"] = 6;
 	filename_teeth_id_map["19486.vtp"] = 4;
+	filename_teeth_id_map["34554.vtp"] = 5;
 
 
 	int selected_id = filename_teeth_id_map.at(FILE_NAME);
@@ -112,29 +113,29 @@ int main()
 	closed_spline_design_interactor_style.setPolydataActor(colored_actor);
 	closed_spline_design_interactor_style.Init();
 
-	CervicalMarginLineWrapper cervical_margin_line_wrapper;
-	cervical_margin_line_wrapper.SetRenderer(pipeline->Renderer);
-	cervical_margin_line_wrapper.SetRenderWindow(pipeline->RenderWindow);
-	cervical_margin_line_wrapper.SetArchSurfaceMesh(&arch_sm);
-	cervical_margin_line_wrapper.SetArchPolyData(arch_pd);
-	cervical_margin_line_wrapper.SetMinCurvatureThreshold(0.2);
-	cervical_margin_line_wrapper.SetMeanCurvatureThreshold(0.2);
-	cervical_margin_line_wrapper.SetCervicalMarginLineInteractorStyle(&closed_spline_design_interactor_style);
+	//CervicalMarginLineWrapper cervical_margin_line_wrapper;
+	//cervical_margin_line_wrapper.SetRenderer(pipeline->Renderer);
+	//cervical_margin_line_wrapper.SetRenderWindow(pipeline->RenderWindow);
+	//cervical_margin_line_wrapper.SetArchSurfaceMesh(&arch_sm);
+	//cervical_margin_line_wrapper.SetArchPolyData(arch_pd);
+	//cervical_margin_line_wrapper.SetMinCurvatureThreshold(0.2);
+	//cervical_margin_line_wrapper.SetMeanCurvatureThreshold(0.2);
+	//cervical_margin_line_wrapper.SetCervicalMarginLineInteractorStyle(&closed_spline_design_interactor_style);
 
-	cervical_margin_line_wrapper.SetAbutmentPolyData(teeth_data_initialization.m_labeledPolyData[selected_id]);
-	cervical_margin_line_wrapper.SetSelectedId(selected_id);
-	cervical_margin_line_wrapper.SetProjectionDirection(projection_direction_v3);
-	cervical_margin_line_wrapper.SetExpansionDistance(0.6);
-	cervical_margin_line_wrapper.SetMarginLineColor(CGAL::yellow());
-	cervical_margin_line_wrapper.SetMarginLineOpacity(0.5);
-	cervical_margin_line_wrapper.SetCtrlPointColor(CGAL::orange());
-	cervical_margin_line_wrapper.SetCtrlPointOpacity(0.5);
-	cervical_margin_line_wrapper.SetCtrlPtDensityCoefficient(1.2);
-	cervical_margin_line_wrapper.Init();
+	//cervical_margin_line_wrapper.SetAbutmentPolyData(teeth_data_initialization.m_labeledPolyData[selected_id]);
+	//cervical_margin_line_wrapper.SetSelectedId(selected_id);
+	//cervical_margin_line_wrapper.SetProjectionDirection(projection_direction_v3);
+	//cervical_margin_line_wrapper.SetExpansionDistance(0.6);
+	//cervical_margin_line_wrapper.SetMarginLineColor(CGAL::yellow());
+	//cervical_margin_line_wrapper.SetMarginLineOpacity(0.5);
+	//cervical_margin_line_wrapper.SetCtrlPointColor(CGAL::orange());
+	//cervical_margin_line_wrapper.SetCtrlPointOpacity(0.5);
+	//cervical_margin_line_wrapper.SetCtrlPtDensityCoefficient(1.2);
+	//cervical_margin_line_wrapper.Init();
 
-	cervical_margin_line_wrapper.ExtractAbutmentSurfaceMesh();
-	cervical_margin_line_wrapper.GenerateAbutmentEdgeSpline();
-	cervical_margin_line_wrapper.GenerateCervicalMarginLine();
+	//cervical_margin_line_wrapper.ExtractAbutmentSurfaceMesh();
+	//cervical_margin_line_wrapper.GenerateAbutmentEdgeSpline();
+	//cervical_margin_line_wrapper.GenerateCervicalMarginLine();
 
 	CervicalMarginLineWrapper improved_margin_line_wrapper;
 	improved_margin_line_wrapper.SetRenderer(pipeline->Renderer);

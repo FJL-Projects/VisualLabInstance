@@ -856,6 +856,8 @@ bool MeshSplineExpander::ExpandToLowestCurvature()
 		face_curvature_sum_vec.push_back(std::make_pair(lowest_curvature_fd, lowest_curvature));
 	}
 
+	std::vector<Point_3> lowest_curvature_points;
+
 	auto weighted_point = [](Point_3& p1, Point_3& p2, Point_3& p3, double w1, double w2, double w3) -> Point_3
 		{
 			assert((1.0 - w1 - w2 - w3) < 1E-3);
@@ -864,8 +866,10 @@ bool MeshSplineExpander::ExpandToLowestCurvature()
 				w1 * p1.z() + w2 * p2.z() + w3 * p3.z());
 		};
 
-	for (auto& pair : face_curvature_sum_vec)
+	for (size_t i = 0; i < face_curvature_sum_vec.size(); ++i)
 	{
+		auto pair = face_curvature_sum_vec[i];
+
 		const face_descriptor& fd = pair.first;
 		const double& curvature_sum = pair.second;
 		if (std::fabs(curvature_sum) < std::numeric_limits<double>::epsilon())
@@ -887,9 +891,28 @@ bool MeshSplineExpander::ExpandToLowestCurvature()
 		double w3 = min_curvature[v3] / curvature_sum;
 
 		auto lowest_curvature_point = weighted_point(p1, p2, p3, w1, w2, w3);
+		lowest_curvature_points.push_back(lowest_curvature_point);
+		
+	}
+
+	for (size_t i = 0; i < lowest_curvature_points.size(); ++i)
+	{
+		size_t prev_index = (i + face_curvature_sum_vec.size() - 1) % face_curvature_sum_vec.size();
+		size_t next_index = (i + 1) % face_curvature_sum_vec.size();
+
+		Point_3 prev_point = lowest_curvature_points[prev_index];
+		Point_3 curr_point = lowest_curvature_points[i];
+		Point_3 next_point = lowest_curvature_points[next_index];
+
+		Vector_3 curr_to_prev = Vector_3(curr_point, prev_point);
+		Vector_3 curr_to_next = Vector_3(curr_point, next_point);
+
+		double angle = CalculateAngleRad(curr_to_prev, curr_to_next) / CGAL_PI * 180;
+		std::cout << "Angle: " << angle << std::endl;
+
 		// Render a blue sphere at hte lowest curvature point
 		vtkSmartPointer<vtkSphereSource> sphere_source = vtkSmartPointer<vtkSphereSource>::New();
-		sphere_source->SetCenter(lowest_curvature_point.x(), lowest_curvature_point.y(), lowest_curvature_point.z());
+		sphere_source->SetCenter(curr_point.x(), curr_point.y(), curr_point.z());
 		sphere_source->SetRadius(0.2);
 		sphere_source->SetPhiResolution(16);
 		sphere_source->SetThetaResolution(16);
@@ -898,14 +921,26 @@ bool MeshSplineExpander::ExpandToLowestCurvature()
 		vtkSmartPointer<vtkPolyDataMapper> sphere_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 		sphere_mapper->SetInputConnection(sphere_source->GetOutputPort());
 
+		double r, g, b;
+		r = 0.0;
+		g = angle / 180;
+		b = g;
+
 		vtkSmartPointer<vtkActor> sphere_actor = vtkSmartPointer<vtkActor>::New();
 		sphere_actor->SetMapper(sphere_mapper);
-		sphere_actor->GetProperty()->SetColor(0, 1, 1);
+		if (angle < 125.0)
+		{
+			sphere_actor->GetProperty()->SetColor(1, 0, 0);
+		}
+		else
+		{
+			sphere_actor->GetProperty()->SetColor(r, g, b);
+		}
 		sphere_actor->GetProperty()->SetAmbient(0.5);
 		sphere_actor->GetProperty()->SetSpecularPower(100);
 		sphere_actor->GetProperty()->SetSpecular(0.5);
 		sphere_actor->GetProperty()->SetDiffuse(0.5);
-		sphere_actor->GetProperty()->SetOpacity(0.5);
+		sphere_actor->GetProperty()->SetOpacity(1.0);
 		sphere_actor->PickableOff();
 
 		m_renderer->AddActor(sphere_actor);
