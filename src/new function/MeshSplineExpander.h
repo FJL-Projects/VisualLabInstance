@@ -36,7 +36,9 @@ typedef Kernel::Plane_3 Plane_3;
 class MeshSplineExpander
 {
 private:
+    ClosedMeshSpline m_closed_mesh_spline; ///< Base closed mesh spline, including control points and spline
     std::vector<MeshPoint> m_base_spline; ///< Base closed mesh spline
+    std::vector<MeshPoint> m_equal_distance_spline; ///< Base closed mesh spline with equal distance of points
     SurfaceMesh m_sm; ///< Surface mesh data
     double m_interval = 0; ///< Interval between expanded splines
     size_t m_splines_quota = 0; ///< Number of splines to generate
@@ -54,19 +56,18 @@ private:
     vtkSmartPointer<vtkRenderer> m_renderer = vtkSmartPointer<vtkRenderer>::New();
     std::vector<Vector_3> m_spline_expand_directions;
     const double M_PI = 3.14159265358979323846;
-    std::vector<MeshPoint> m_equal_distance_spline;
+    // std::vector<MeshPoint> m_equal_distance_spline;
     face_descriptor m_last_fd = SurfaceMesh::null_face();
     double m_max_distance = 0.0;
 
 public:
     // Constructor for multiple splines with equal distance
     MeshSplineExpander(
-        const std::vector<MeshPoint>& base_spline,
+        const ClosedMeshSpline& closed_mesh_spline,
         const SurfaceMesh& sm,
         double interval,
         const size_t splines_quota,
         const bool is_clockwise,
-        const std::vector<MeshPoint> equal_distance_spline,
         const std::map<unsigned int, face_descriptor>& fmap,
         const std::map<unsigned int, vertex_descriptor>& vmap,
         const std::map<unsigned int, edge_descriptor>& emap,
@@ -75,25 +76,22 @@ public:
 
     // Constructor for single cervical margin spline
     MeshSplineExpander(
-        const std::vector<MeshPoint>& base_spline,
+        const ClosedMeshSpline& closed_mesh_spline,
         const SurfaceMesh& sm,
         const double max_distance,
         const bool is_clockwise,
-        const std::vector<MeshPoint> equal_distance_spline,
         const std::map<unsigned int, face_descriptor>& fmap,
         const std::map<unsigned int, vertex_descriptor>& vmap,
         const std::map<unsigned int, edge_descriptor>& emap,
         const std::map<unsigned int, halfedge_descriptor>& hemap
     );
     // Setters
-    void SetBaseSpline(const std::vector<MeshPoint>& base_spline);
     void SetSm(const SurfaceMesh& sm);
     void SetInterval(double interval);
     void SetSplinesQuota(size_t splines_quota);
     void SetIsClockwise(bool is_clockwise);
     void SetRenderWin(vtkSmartPointer<vtkRenderWindow> render_win);
     void SetRenderer(vtkSmartPointer<vtkRenderer> renderer);
-    void SetEqualDistanceSpline(const std::vector<MeshPoint>& equal_distance_spline);
 
     // Getters
     const std::vector<MeshPoint>& GetBaseSpline() const;

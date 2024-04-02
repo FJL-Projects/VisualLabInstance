@@ -66,7 +66,7 @@ int main()
 	pipeline = new vtkRenderPipeline();
 
 
-	const std::string FILE_NAME("19486.vtp");
+	const std::string FILE_NAME("38528.vtp");
 	std::map<std::string, int> filename_teeth_id_map;
 	filename_teeth_id_map["5410.vtp"] = 5;
 	filename_teeth_id_map["4746.vtp"] = 6;
@@ -82,6 +82,7 @@ int main()
 	filename_teeth_id_map["13067.vtp"] = 6;
 	filename_teeth_id_map["19486.vtp"] = 4;
 	filename_teeth_id_map["34554.vtp"] = 5;
+	filename_teeth_id_map["38528.vtp"] = 6;
 
 
 	int selected_id = filename_teeth_id_map.at(FILE_NAME);
@@ -142,8 +143,8 @@ int main()
 	improved_margin_line_wrapper.SetRenderWindow(pipeline->RenderWindow);
 	improved_margin_line_wrapper.SetArchSurfaceMesh(&arch_sm);
 	improved_margin_line_wrapper.SetArchPolyData(arch_pd);
-	improved_margin_line_wrapper.SetMinCurvatureThreshold(0.2);
-	improved_margin_line_wrapper.SetMeanCurvatureThreshold(0.2);
+	improved_margin_line_wrapper.SetMinCurvatureThreshold(0.15);
+	improved_margin_line_wrapper.SetMeanCurvatureThreshold(0.15);
 	improved_margin_line_wrapper.SetCervicalMarginLineInteractorStyle(&closed_spline_design_interactor_style);
 
 	improved_margin_line_wrapper.SetAbutmentPolyData(teeth_data_initialization.m_labeledPolyData[selected_id]);

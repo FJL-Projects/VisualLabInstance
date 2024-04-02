@@ -434,7 +434,7 @@ std::vector<vertex_descriptor> CervicalMarginLineWrapper::EquallyDistributeVerti
     double min_interval = m_ctrl_pt_density_coefficient * total_distance / input_vertices.size();
 
     double distance = 0.0;
-    for (int i = 0; i < input_vertices.size(); ++i)
+    for (int i = 0; i < input_vertices.size() - 1; ++i)
     {
         Point_3 point_a = mesh.point(input_vertices[i]);
         Point_3 point_b = mesh.point(input_vertices[(i + 1) % input_vertices.size()]);
@@ -442,10 +442,11 @@ std::vector<vertex_descriptor> CervicalMarginLineWrapper::EquallyDistributeVerti
 
         if (distance < 1.5)
         {
-            //std::cout << "Skipping vertex " << i << " with distance " << distance << std::endl;
             continue;
         }
-        output_vertices.push_back(input_vertices[(i + 1) % input_vertices.size()]);
+
+        vertex_descriptor next_vertex = input_vertices.at((i + 1) % input_vertices.size());
+        output_vertices.push_back(next_vertex);
         distance = 0.0;
     }
 
@@ -600,7 +601,7 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
 
     using namespace Eigen;
 
-    m_expanded_abutment_sm = *AreaExpander(*m_arch_sm, m_arch_pd, m_selected_id, m_expanded_to_arch_fd_map, m_expanded_to_arch_vd_map, 100);
+    m_expanded_abutment_sm = *AreaExpander(*m_arch_sm, m_arch_pd, m_selected_id, m_expanded_to_arch_fd_map, m_expanded_to_arch_vd_map, 130);
 
     CGAL::IO::write_PLY("expanded_abutment.ply", m_expanded_abutment_sm);
     // Convert the arch surface mesh to Eigen matrices
@@ -806,20 +807,20 @@ void CervicalMarginLineWrapper::GenerateAbutmentEdgeSpline()
 #endif
 
     CalculateEdgeBorder(m_abutment_sm, m_abutment_border);
-    std::cout << "Abutment border vertices: " << m_abutment_border.size() << std::endl;
-    std::ofstream border_vertices_ofs("border_vertices.xyz");
-    for (const auto& vd : m_abutment_border)
-    {
-        // m_abutment_to_arch_vd_map may not contain the vertex descriptor, so we need to check and drop it
-        if (m_abutment_to_arch_vd_map.find(vd) == m_abutment_to_arch_vd_map.end())
-        {
-            m_abutment_to_arch_vd_map.erase(vd);
-            continue;
-        }
-        vertex_descriptor origin_vd = m_abutment_to_arch_vd_map.at(vd);
-        border_vertices_ofs << m_expanded_abutment_sm.point(origin_vd) << "\n";
-    }
-    border_vertices_ofs.close();
+    //std::cout << "Abutment border vertices: " << m_abutment_border.size() << std::endl;
+    //std::ofstream border_vertices_ofs("border_vertices.xyz");
+    //for (const auto& vd : m_abutment_border)
+    //{
+    //    // m_abutment_to_arch_vd_map may not contain the vertex descriptor, so we need to check and drop it
+    //    if (m_abutment_to_arch_vd_map.find(vd) == m_abutment_to_arch_vd_map.end())
+    //    {
+    //        m_abutment_to_arch_vd_map.erase(vd);
+    //        continue;
+    //    }
+    //    vertex_descriptor origin_vd = m_abutment_to_arch_vd_map.at(vd);
+    //    border_vertices_ofs << m_expanded_abutment_sm.point(origin_vd) << "\n";
+    //}
+    //border_vertices_ofs.close();
     std::cout << "Abutment border vertices(cleansed): " << m_abutment_border.size() << std::endl;
 
     std::ofstream cleansed_border_vertices_ofs("cleansed_border_vertices.xyz");
@@ -855,9 +856,16 @@ void CervicalMarginLineWrapper::GenerateAbutmentEdgeSpline()
     
     std::cout << "Equally distributed vertices: " << equally_distributed_vertices.size() << std::endl;
 
+    std::ofstream equally_distributed_vertices_ofs("equally_distributed_vertices.xyz");
+    for (auto v : equally_distributed_vertices)
+    {
+        equally_distributed_vertices_ofs << m_expanded_abutment_sm.point(v) << std::endl;
+    }
+    equally_distributed_vertices_ofs.close();
+
     auto weighted_point = [](Point_3& p1, Point_3& p2, Point_3& p3, double w1, double w2, double w3) -> Point_3
         {
-            assert((1.0 - w1 - w2 - w3) < 1E-3);
+            assert(std::fabs(1.0 - w1 - w2 - w3) < 1E-3);
             return Point_3(w1 * p1.x() + w2 * p2.x() + w3 * p3.x(),
                 w1 * p1.y() + w2 * p2.y() + w3 * p3.y(),
                 w1 * p1.z() + w2 * p2.z() + w3 * p3.z());
@@ -946,6 +954,7 @@ void CervicalMarginLineWrapper::GenerateAbutmentEdgeSpline()
 
             //std::cout << "Add ctrl pt: face_descriptor: " << fd_new.idx() << std::endl;
 
+            //std::cout << m_expanded_to_arch_fd_map.at(face_descriptor(ctrl_pt.nTriId)).idx() << " " << ctrl_pt.xyz[0] << " " << ctrl_pt.xyz[1] << " " << ctrl_pt.xyz[2] << std::endl;
             m_abutment_edge_spline->add(m_expanded_to_arch_fd_map.at(face_descriptor(ctrl_pt.nTriId)).idx(), ctrl_pt.xyz);
             /*vtkSmartPointer<vtkPolyDataNormals> vtkNormal = vtkSmartPointer<vtkPolyDataNormals>::New();
             vtkNormal->SetInputConnection(abutment_edge_spline.CtrlPointSphere.back()->GetOutputPort());
@@ -1017,12 +1026,11 @@ void CervicalMarginLineWrapper::GenerateCervicalMarginLine()
     //uv_map = m_cervical_margin_line_interactor_style->uv_map;
     // Todo: Add the expansion distance adjustment
     MeshSplineExpander mesh_spline_expander(
-        m_abutment_edge_spline->vtCtrlPoints,
+        *m_abutment_edge_spline,
         *m_arch_sm,
         m_expansion_distance,
         1,
         is_clockwise,
-        m_abutment_edge_spline->vtEquidistantSpline,
         m_fmap,
         m_vmap,
         m_emap,
@@ -1127,12 +1135,11 @@ void CervicalMarginLineWrapper::GenerateImprovedMarginLine()
         //uv_map = m_cervical_margin_line_interactor_style->uv_map;
         // Todo: Add the expansion distance adjustment
         MeshSplineExpander mesh_spline_expander(
-            m_abutment_edge_spline->vtCtrlPoints,
+            *m_abutment_edge_spline,
             *m_arch_sm,
             m_expansion_distance,
             1,
             is_clockwise,
-            m_abutment_edge_spline->vtEquidistantSpline,
             m_fmap,
             m_vmap,
             m_emap,
@@ -1220,11 +1227,10 @@ void CervicalMarginLineWrapper::GenerateImprovedMarginLine()
 
         //SurfaceMesh::Property_map<vertex_descriptor, double> min_curvature = m_arch_sm->add_property_map<vertex_descriptor, double>("v:min_curvature", 0.0).first;
         MeshSplineExpander mesh_spline_expander(
-            m_abutment_edge_spline->vtCtrlPoints,
+            *m_abutment_edge_spline,
             *m_arch_sm,
             m_max_detection_distance,
             is_clockwise,
-            m_abutment_edge_spline->vtEquidistantSpline,
             m_fmap,
             m_vmap,
             m_emap,

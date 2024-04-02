@@ -4,39 +4,31 @@
 
 // Constructor
 MeshSplineExpander::MeshSplineExpander(
-	const std::vector<MeshPoint>& base_spline,
+	const ClosedMeshSpline& closed_mesh_spline,
 	const SurfaceMesh& sm,
 	double interval,
 	const size_t splines_quota,
 	const bool is_clockwise,
-	const std::vector<MeshPoint> equal_distance_spline,
 	const std::map<unsigned int, face_descriptor>& fmap,
 	const std::map<unsigned int, vertex_descriptor>& vmap,
 	const std::map<unsigned int, edge_descriptor>& emap,
 	const std::map<unsigned int, halfedge_descriptor>& hemap
-) : m_base_spline(base_spline), m_sm(sm), m_interval(interval), m_splines_quota(splines_quota), m_is_clockwise(is_clockwise), m_equal_distance_spline(equal_distance_spline),
-	m_fmap(fmap), m_vmap(vmap), m_emap(emap), m_hemap(hemap)
+) : m_closed_mesh_spline(closed_mesh_spline), m_sm(sm), m_interval(interval), m_splines_quota(splines_quota), m_is_clockwise(is_clockwise),
+	m_fmap(fmap), m_vmap(vmap), m_emap(emap), m_hemap(hemap), m_base_spline(closed_mesh_spline.vtCtrlPoints), m_equal_distance_spline(closed_mesh_spline.vtEquidistantSpline)
 {}
 
 MeshSplineExpander::MeshSplineExpander(
-	const std::vector<MeshPoint>& base_spline,
+	const ClosedMeshSpline& closed_mesh_spline,
 	const SurfaceMesh& sm,
 	const double max_distance,
 	const bool is_clockwise,
-	const std::vector<MeshPoint> equal_distance_spline,
 	const std::map<unsigned int, face_descriptor>& fmap,
 	const std::map<unsigned int, vertex_descriptor>& vmap,
 	const std::map<unsigned int, edge_descriptor>& emap,
 	const std::map<unsigned int, halfedge_descriptor>& hemap
-) : m_base_spline(base_spline), m_sm(sm), m_max_distance(max_distance), m_splines_quota(1), m_is_clockwise(is_clockwise), m_equal_distance_spline(equal_distance_spline),
-m_fmap(fmap), m_vmap(vmap), m_emap(emap), m_hemap(hemap)
+) : m_closed_mesh_spline(closed_mesh_spline), m_sm(sm), m_max_distance(max_distance), m_splines_quota(1), m_is_clockwise(is_clockwise),
+m_fmap(fmap), m_vmap(vmap), m_emap(emap), m_hemap(hemap), m_base_spline(closed_mesh_spline.vtCtrlPoints), m_equal_distance_spline(closed_mesh_spline.vtEquidistantSpline)
 {}
-
-// SetBaseSpline member function
-void MeshSplineExpander::SetBaseSpline(const std::vector<MeshPoint>& base_spline) 
-{
-    m_base_spline = base_spline;
-}
 
 // SetSm member function
 void MeshSplineExpander::SetSm(const SurfaceMesh& sm)
@@ -69,11 +61,6 @@ void MeshSplineExpander::SetRenderWin(vtkSmartPointer<vtkRenderWindow> render_wi
 void MeshSplineExpander::SetRenderer(vtkSmartPointer<vtkRenderer> renderer)
 {
 	m_renderer = renderer;
-}
-
-void MeshSplineExpander::SetEqualDistanceSpline(const std::vector<MeshPoint>& equal_distance_spline)
-{
-	m_equal_distance_spline = equal_distance_spline;
 }
 
 // GetBaseSpline member function
@@ -860,7 +847,7 @@ bool MeshSplineExpander::ExpandToLowestCurvature()
 
 	auto weighted_point = [](Point_3& p1, Point_3& p2, Point_3& p3, double w1, double w2, double w3) -> Point_3
 		{
-			assert((1.0 - w1 - w2 - w3) < 1E-3);
+			assert(std::fabs(1.0 - w1 - w2 - w3) < 1E-3);
 			return Point_3(w1 * p1.x() + w2 * p2.x() + w3 * p3.x(),
 				w1 * p1.y() + w2 * p2.y() + w3 * p3.y(),
 				w1 * p1.z() + w2 * p2.z() + w3 * p3.z());

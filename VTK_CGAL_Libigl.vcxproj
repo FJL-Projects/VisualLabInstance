@@ -139,7 +139,7 @@
       <PreprocessorDefinitions>CGAL_USE_VTK;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
       <AdditionalIncludeDirectories>$(ProjectDir)src\rendering pipeline\;$(ProjectDir)src\algorithm\;$(ProjectDir)src\main program\;$(ProjectDir)src\new function\;$(ProjectDir)src\stdafx\;$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <Optimization>MaxSpeed</Optimization>
+      <Optimization>MinSpace</Optimization>
       <UseStandardPreprocessor>false</UseStandardPreprocessor>
       <OpenMPSupport>true</OpenMPSupport>
       <PrecompiledHeader>Use</PrecompiledHeader>
