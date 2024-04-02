@@ -601,7 +601,7 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
 
     using namespace Eigen;
 
-    m_expanded_abutment_sm = *AreaExpander(*m_arch_sm, m_arch_pd, m_selected_id, m_expanded_to_arch_fd_map, m_expanded_to_arch_vd_map, 130);
+    m_expanded_abutment_sm = *AreaExpander(*m_arch_sm, m_arch_pd, m_selected_id, m_expanded_to_arch_fd_map, m_expanded_to_arch_vd_map, 100);
 
     CGAL::IO::write_PLY("expanded_abutment.ply", m_expanded_abutment_sm);
     // Convert the arch surface mesh to Eigen matrices
@@ -1034,20 +1034,10 @@ void CervicalMarginLineWrapper::GenerateCervicalMarginLine()
         m_fmap,
         m_vmap,
         m_emap,
-        m_hemap
+        m_hemap,
+        false
     );
-    //MeshSplineExpander mesh_spline_expander(
-    //    m_abutment_edge_spline->vtCtrlPoints,
-    //    *m_arch_sm,
-    //    2,
-    //    is_clockwise,
-    //    m_abutment_edge_spline->vtEquidistantSpline,
-    //    m_fmap,
-    //    m_vmap,
-    //    m_emap,
-    //    m_hemap,
-    //    uv_map
-    //);
+
     mesh_spline_expander.SetRenderer(m_renderer);
     mesh_spline_expander.SetRenderWin(m_render_win);
     bool success = mesh_spline_expander.ExpandSpline();
@@ -1126,6 +1116,16 @@ void CervicalMarginLineWrapper::GenerateImprovedMarginLine()
 #ifdef ENABLE_TIMER_H
     Timer timer("Generate cervical margin line");
 #endif
+    bool use_neighboring = true;
+    std::vector<Point_3> vertices;
+    vertices.reserve(m_abutment_sm.number_of_vertices());
+
+    for (auto v : m_abutment_sm.vertices()) {
+        vertices.push_back(m_abutment_sm.point(v));
+    }
+
+    Point_3 centroid = CGAL::centroid(vertices.begin(), vertices.end(), CGAL::Dimension_tag<0>());
+
     {
         double margin_line_color[3] = { m_margin_line_color.r() / 255.0, m_margin_line_color.g() / 255.0, m_margin_line_color.b() / 255.0 };
         double ctrl_point_color[3] = { m_ctrl_point_color.r() / 255.0, m_ctrl_point_color.g() / 255.0, m_ctrl_point_color.b() / 255.0 };
@@ -1143,8 +1143,10 @@ void CervicalMarginLineWrapper::GenerateImprovedMarginLine()
             m_fmap,
             m_vmap,
             m_emap,
-            m_hemap
+            m_hemap,
+            use_neighboring
         );
+        mesh_spline_expander.SetExpansionSourceCenter(centroid);
         mesh_spline_expander.SetRenderer(m_renderer);
         mesh_spline_expander.SetRenderWin(m_render_win);
         bool success = mesh_spline_expander.ExpandSpline();
@@ -1216,6 +1218,8 @@ void CervicalMarginLineWrapper::GenerateImprovedMarginLine()
 
         m_renderer->AddActor(m_cervical_margin_line_interactor_style->spline->SplineActor);
         m_cervical_margin_line_interactor_style->OnLeftButtonUp();
+
+        std::cout << "expanded_spline_mp size: " << expanded_spline_mp.size() << std::endl;
     }
     {
         //std::cout << "Abutment Edge Spline size: " << m_abutment_edge_spline->uvSpline.size() << std::endl;
@@ -1223,7 +1227,6 @@ void CervicalMarginLineWrapper::GenerateImprovedMarginLine()
 
         bool is_clockwise = polygon.is_clockwise_oriented();
         //uv_map = m_cervical_margin_line_interactor_style->uv_map;
-        // Todo: Add the expansion distance adjustment
 
         //SurfaceMesh::Property_map<vertex_descriptor, double> min_curvature = m_arch_sm->add_property_map<vertex_descriptor, double>("v:min_curvature", 0.0).first;
         MeshSplineExpander mesh_spline_expander(
@@ -1234,12 +1237,14 @@ void CervicalMarginLineWrapper::GenerateImprovedMarginLine()
             m_fmap,
             m_vmap,
             m_emap,
-            m_hemap
+            m_hemap,
+            use_neighboring
         );
-
+        mesh_spline_expander.SetExpansionSourceCenter(centroid);
         mesh_spline_expander.SetRenderer(m_renderer);
         mesh_spline_expander.SetRenderWin(m_render_win);
         bool success = mesh_spline_expander.ExpandToLowestCurvature();
+
         //bool success = mesh_spline_expander.ExpandToLowestCurvature();
         //std::vector<ClosedMeshSpline> expanded_splines = mesh_spline_expander.GetExpandedSplines();
         //for (auto expanded_spline : expanded_splines)

@@ -59,6 +59,8 @@ private:
     // std::vector<MeshPoint> m_equal_distance_spline;
     face_descriptor m_last_fd = SurfaceMesh::null_face();
     double m_max_distance = 0.0;
+    bool m_ctrl_pts_neighbor_direction = true; ///< Whether to use the direction of the neighboring control points or use the centroid of the points
+    Point_3 m_expansion_source_center;
 
 public:
     // Constructor for multiple splines with equal distance
@@ -71,7 +73,8 @@ public:
         const std::map<unsigned int, face_descriptor>& fmap,
         const std::map<unsigned int, vertex_descriptor>& vmap,
         const std::map<unsigned int, edge_descriptor>& emap,
-        const std::map<unsigned int, halfedge_descriptor>& hemap
+        const std::map<unsigned int, halfedge_descriptor>& hemap,
+        const bool ctrl_pts_neighbor_direction = true
     );
 
     // Constructor for single cervical margin spline
@@ -83,7 +86,8 @@ public:
         const std::map<unsigned int, face_descriptor>& fmap,
         const std::map<unsigned int, vertex_descriptor>& vmap,
         const std::map<unsigned int, edge_descriptor>& emap,
-        const std::map<unsigned int, halfedge_descriptor>& hemap
+        const std::map<unsigned int, halfedge_descriptor>& hemap,
+        const bool ctrl_pts_neighbor_direction = true
     );
     // Setters
     void SetSm(const SurfaceMesh& sm);
@@ -92,6 +96,7 @@ public:
     void SetIsClockwise(bool is_clockwise);
     void SetRenderWin(vtkSmartPointer<vtkRenderWindow> render_win);
     void SetRenderer(vtkSmartPointer<vtkRenderer> renderer);
+    void SetExpansionSourceCenter(const Point_3& expansion_source_center);
 
     // Getters
     const std::vector<MeshPoint>& GetBaseSpline() const;

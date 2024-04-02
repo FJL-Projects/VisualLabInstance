@@ -12,10 +12,23 @@ MeshSplineExpander::MeshSplineExpander(
 	const std::map<unsigned int, face_descriptor>& fmap,
 	const std::map<unsigned int, vertex_descriptor>& vmap,
 	const std::map<unsigned int, edge_descriptor>& emap,
-	const std::map<unsigned int, halfedge_descriptor>& hemap
+	const std::map<unsigned int, halfedge_descriptor>& hemap,
+	const bool ctrl_pts_neighbor_direction
 ) : m_closed_mesh_spline(closed_mesh_spline), m_sm(sm), m_interval(interval), m_splines_quota(splines_quota), m_is_clockwise(is_clockwise),
-	m_fmap(fmap), m_vmap(vmap), m_emap(emap), m_hemap(hemap), m_base_spline(closed_mesh_spline.vtCtrlPoints), m_equal_distance_spline(closed_mesh_spline.vtEquidistantSpline)
-{}
+	m_fmap(fmap), m_vmap(vmap), m_emap(emap), m_hemap(hemap), m_base_spline(closed_mesh_spline.vtCtrlPoints), m_equal_distance_spline(closed_mesh_spline.vtEquidistantSpline),
+	m_ctrl_pts_neighbor_direction(ctrl_pts_neighbor_direction)
+{
+	if (!m_ctrl_pts_neighbor_direction)
+	{
+		Vector_3 ctrl_pts_center = Vector_3(0, 0, 0);
+		for (size_t i = 0; i < m_base_spline.size(); ++i)
+		{
+			m_expansion_source_center += Vector_3(m_base_spline[i].xyz[0], m_base_spline[i].xyz[1], m_base_spline[i].xyz[2]);
+		}
+		ctrl_pts_center /= m_base_spline.size();
+		m_expansion_source_center = Point_3(ctrl_pts_center.x(), ctrl_pts_center.y(), ctrl_pts_center.z());
+	}
+}
 
 MeshSplineExpander::MeshSplineExpander(
 	const ClosedMeshSpline& closed_mesh_spline,
@@ -25,10 +38,23 @@ MeshSplineExpander::MeshSplineExpander(
 	const std::map<unsigned int, face_descriptor>& fmap,
 	const std::map<unsigned int, vertex_descriptor>& vmap,
 	const std::map<unsigned int, edge_descriptor>& emap,
-	const std::map<unsigned int, halfedge_descriptor>& hemap
+	const std::map<unsigned int, halfedge_descriptor>& hemap,
+	const bool ctrl_pts_neighbor_direction
 ) : m_closed_mesh_spline(closed_mesh_spline), m_sm(sm), m_max_distance(max_distance), m_splines_quota(1), m_is_clockwise(is_clockwise),
-m_fmap(fmap), m_vmap(vmap), m_emap(emap), m_hemap(hemap), m_base_spline(closed_mesh_spline.vtCtrlPoints), m_equal_distance_spline(closed_mesh_spline.vtEquidistantSpline)
-{}
+	m_fmap(fmap), m_vmap(vmap), m_emap(emap), m_hemap(hemap), m_base_spline(closed_mesh_spline.vtCtrlPoints), m_equal_distance_spline(closed_mesh_spline.vtEquidistantSpline),
+	m_ctrl_pts_neighbor_direction(ctrl_pts_neighbor_direction)
+{
+	if (!m_ctrl_pts_neighbor_direction)
+	{
+		Vector_3 ctrl_pts_center = Vector_3(0, 0, 0);
+		for (size_t i = 0; i < m_base_spline.size(); ++i)
+		{
+			m_expansion_source_center += Vector_3(m_base_spline[i].xyz[0], m_base_spline[i].xyz[1], m_base_spline[i].xyz[2]);
+		}
+		ctrl_pts_center /= m_base_spline.size();
+		m_expansion_source_center = Point_3(ctrl_pts_center.x(), ctrl_pts_center.y(), ctrl_pts_center.z());
+	}
+}
 
 // SetSm member function
 void MeshSplineExpander::SetSm(const SurfaceMesh& sm)
@@ -61,6 +87,11 @@ void MeshSplineExpander::SetRenderWin(vtkSmartPointer<vtkRenderWindow> render_wi
 void MeshSplineExpander::SetRenderer(vtkSmartPointer<vtkRenderer> renderer)
 {
 	m_renderer = renderer;
+}
+
+void MeshSplineExpander::SetExpansionSourceCenter(const Point_3& expansion_source_center)
+{
+	m_expansion_source_center = expansion_source_center;
 }
 
 // GetBaseSpline member function
@@ -211,37 +242,47 @@ void MeshSplineExpander::CalculateSplineExpansionDirections()
  */
 Vector_3 MeshSplineExpander::CalculateDirection(const MeshPoint& source_mesh_point, size_t curr_index, size_t prev_index, size_t next_index)
 {
-    const Point_3 source_point(source_mesh_point.xyz[0], source_mesh_point.xyz[1], source_mesh_point.xyz[2]);
-    const Point_3 prev_point(m_base_spline[prev_index].xyz[0], m_base_spline[prev_index].xyz[1], m_base_spline[prev_index].xyz[2]);
-    const Point_3 next_point(m_base_spline[next_index].xyz[0], m_base_spline[next_index].xyz[1], m_base_spline[next_index].xyz[2]);
+	Vector_3 direction = Vector_3(0, 0, 0);
 
-    Vector_3 source_to_prev = Vector_3(source_point, prev_point);
-    Vector_3 prev_to_source = -source_to_prev;
-    Vector_3 source_to_next = Vector_3(source_point, next_point);
-    Vector_3 prev_source_next_cross = CGAL::cross_product(prev_to_source, source_to_next);
+	if (!m_ctrl_pts_neighbor_direction)
+	{
+		const Point_3 dest_point(source_mesh_point.xyz[0], source_mesh_point.xyz[1], source_mesh_point.xyz[2]);
+		direction = Vector_3(m_expansion_source_center, dest_point);
+		direction /= std::sqrt(direction.squared_length());
+	}
+	else
+	{
+		const Point_3 source_point(source_mesh_point.xyz[0], source_mesh_point.xyz[1], source_mesh_point.xyz[2]);
+		const Point_3 prev_point(m_base_spline[prev_index].xyz[0], m_base_spline[prev_index].xyz[1], m_base_spline[prev_index].xyz[2]);
+		const Point_3 next_point(m_base_spline[next_index].xyz[0], m_base_spline[next_index].xyz[1], m_base_spline[next_index].xyz[2]);
 
-    source_to_prev /= source_to_prev.squared_length();
-    source_to_next /= source_to_next.squared_length();
+		Vector_3 source_to_prev = Vector_3(source_point, prev_point);
+		Vector_3 prev_to_source = -source_to_prev;
+		Vector_3 source_to_next = Vector_3(source_point, next_point);
+		Vector_3 prev_source_next_cross = CGAL::cross_product(prev_to_source, source_to_next);
 
-    Vector_3 direction = Vector_3(0, 0, 0);
-    // 计算面的法线
-    halfedge_descriptor hd = source_mesh_point.he;
-    face_descriptor fd = m_sm.face(hd);
-    Vector_3 face_normal = PMP::compute_face_normal(fd, m_sm);
+		source_to_prev /= source_to_prev.squared_length();
+		source_to_next /= source_to_next.squared_length();
 
-    if ((!m_is_clockwise && (prev_source_next_cross * face_normal < 0))
-        || (m_is_clockwise && (prev_source_next_cross * face_normal > 0)))
-    {
-        // 凹点处理逻辑
-		//std::cout << "凸点\n";
-        direction = CalculateConcavePointDirection(source_mesh_point, curr_index, source_point, source_to_prev, source_to_next, face_normal);
-    }
-    else
-    {
-        // 凸点处理逻辑
-		//std::cout << "凹点\n";
-        direction = CalculateConvexPointDirection(source_mesh_point, curr_index, source_point, source_to_prev, source_to_next, face_normal);
-    }
+		// 计算面的法线
+		halfedge_descriptor hd = source_mesh_point.he;
+		face_descriptor fd = m_sm.face(hd);
+		Vector_3 face_normal = PMP::compute_face_normal(fd, m_sm);
+
+		if ((!m_is_clockwise && (prev_source_next_cross * face_normal < 0))
+			|| (m_is_clockwise && (prev_source_next_cross * face_normal > 0)))
+		{
+			// 凹点处理逻辑
+			//std::cout << "凸点\n";
+			direction = CalculateConcavePointDirection(source_mesh_point, curr_index, source_point, source_to_prev, source_to_next, face_normal);
+		}
+		else
+		{
+			// 凸点处理逻辑
+			//std::cout << "凹点\n";
+			direction = CalculateConvexPointDirection(source_mesh_point, curr_index, source_point, source_to_prev, source_to_next, face_normal);
+		}
+	}
 
     return direction;
 }
@@ -881,7 +922,7 @@ bool MeshSplineExpander::ExpandToLowestCurvature()
 		lowest_curvature_points.push_back(lowest_curvature_point);
 		
 	}
-
+	std::cout << "lowest_curvature_points size: " << lowest_curvature_points.size() << std::endl;
 	for (size_t i = 0; i < lowest_curvature_points.size(); ++i)
 	{
 		size_t prev_index = (i + face_curvature_sum_vec.size() - 1) % face_curvature_sum_vec.size();
