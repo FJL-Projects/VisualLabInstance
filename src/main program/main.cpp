@@ -123,9 +123,10 @@ SurfaceMesh mesh;
 int main()
 {
 	std::map<std::string, std::pair<int, int> > file_name_map;  // file_name, checked_id, selected_id
-	file_name_map["1781.vtp"] = std::make_pair(1, 6);
+	//file_name_map["1781.vtp"] = std::make_pair(1, 6);
 	file_name_map["11737.vtp"] = std::make_pair(2, 7);
-	file_name_map["13067.vtp"] = std::make_pair(4, 6);
+	//file_name_map["13067.vtp"] = std::make_pair(4, 6);
+	file_name_map["33923.vtp"] = std::make_pair(1, 7);
 
 
 	for (auto& files : file_name_map)
@@ -483,128 +484,143 @@ int main()
 		next_center = Point_3(next_->GetCenter()[0], next_->GetCenter()[1], next_->GetCenter()[2]);
 		////////////////////////////////////////////////////////////////获取前后牙齿的中心点
 
-		SurfaceMesh source_mesh;
-		source_mesh = VTK_PolyData2CGAL_Surface_Mesh(source_polydata);
-
-		Tree target_tree(faces(mesh).first, faces(mesh).second, mesh);
-		Tree source_tree(faces(source_mesh).first, faces(source_mesh).second, source_mesh);
-
-		//五向十交点
-
-		std::vector<Point_3> start_pts;
-		start_pts.push_back(pre_center);
-		start_pts.push_back(next_center);
-
-		std::vector<Vector_3> Directions;
-		Directions.push_back(Vector_3(pre_center[0] - next_center[0], pre_center[1] - next_center[1], pre_center[2] - next_center[2]));
-		Directions.push_back(-Directions[0]);
-		Directions.push_back(Vector_3(target_normal[0], target_normal[1], target_normal[2]));
-		Directions.push_back(CGAL::cross_product(Directions[0], Directions[2]));
-		Directions.push_back(-Directions[3]);
-		Directions.push_back(-Directions[2]);
-		std::vector<Ray_3> rays;
-		for (int i = 0; i < start_pts.size(); i++)
+		for (int t = 0; t < 10; t++)
 		{
-			for (int j = 0; j < Directions.size(); j++)
-			{
-				rays.push_back(Ray_3(start_pts[i], Directions[j]));
-			}
-		}
-		std::vector<Point_3> target_5pts, source_5pts;
-		double offset = 0.0;
+			SurfaceMesh source_mesh;
+			source_mesh = VTK_PolyData2CGAL_Surface_Mesh(source_polydata);
 
-		for (int i = 0; i < rays.size(); i++)
-		{
-			auto ray = rays[i];
-			auto intersection1 = target_tree.first_intersection(ray);
-			auto intersection2 = source_tree.first_intersection(ray);
-			if (intersection1 && intersection2)
-			{
-				const Point_3* p = boost::get<Point_3>(&(intersection1->first));
+			Tree target_tree(faces(mesh).first, faces(mesh).second, mesh);
+			Tree source_tree(faces(source_mesh).first, faces(source_mesh).second, source_mesh);
 
-				//if (ray == rays[1])
-				//{
-				//	double3 d(Directions[1][0], Directions[1][1], Directions[1][2]);
-				//	d.normalize();
-				//	p = &Point_3(p->x() + d.data[0] * offset, p->y() + d.data[0] * offset, p->z() + d.data[0] * offset);
-				//}
-				//if (ray == rays[5])
-				//{
-				//	double3 d(Directions[0][0], Directions[0][1], Directions[0][2]);
-				//	d.normalize();
-				//	p = &Point_3(p->x() + d.data[0] * offset, p->y() + d.data[0] * offset, p->z() + d.data[0] * offset);
-				//}
-				//RenderSphere(*p, .25, Renderer, 0,1, 0, 1);
-				if (i < 6)
+			//五向十交点
+
+			std::vector<Point_3> start_pts;
+			start_pts.push_back(pre_center);
+			start_pts.push_back(next_center);
+
+			std::vector<Vector_3> Directions;
+			Directions.push_back(Vector_3(pre_center[0] - next_center[0], pre_center[1] - next_center[1], pre_center[2] - next_center[2]));
+			Directions.push_back(-Directions[0]);
+			Directions.push_back(Vector_3(target_normal[0], target_normal[1], target_normal[2]));
+			Directions.push_back(CGAL::cross_product(Directions[0], Directions[2]));
+			Directions.push_back(-Directions[3]);
+			Directions.push_back(-Directions[2]);
+			std::vector<Ray_3> rays;
+			for (int i = 0; i < start_pts.size(); i++)
+			{
+				for (int j = 0; j < Directions.size(); j++)
 				{
-					double3 d(Directions[0][0], Directions[0][1], Directions[0][2]);
-					d.normalize();
-					p = &Point_3(p->x() + d.data[0] * offset, p->y() + d.data[0] * offset, p->z() + d.data[0] * offset);
+					rays.push_back(Ray_3(start_pts[i], Directions[j]));
 				}
-				if (i >= 6)
-				{
-					double3 d(Directions[1][0], Directions[1][1], Directions[1][2]);
-					d.normalize();
-					p = &Point_3(p->x() + d.data[0] * offset, p->y() + d.data[0] * offset, p->z() + d.data[0] * offset);
-				}
-				target_5pts.push_back(*p);
-				//RenderSphere(*p, .25, Renderer, 1, 0, 0, 1);
 			}
+			std::vector<Point_3> target_5pts, source_5pts;
+			double offset = 0.4;
 
-			if (intersection1 && intersection2)
+			for (int i = 0; i < rays.size(); i++)
 			{
-				const Point_3* p = boost::get<Point_3>(&(intersection2->first));
-				//RenderSphere(*p, .25, Renderer, 0, 1, 0, 1);
-				source_5pts.push_back(*p);
+				auto ray = rays[i];
+				auto intersection1 = target_tree.first_intersection(ray);
+				auto intersection2 = source_tree.first_intersection(ray);
+				Point_3* p1 = new Point_3;  Point_3* p2 = new Point_3;
+				if (intersection1 && intersection2)
+				{
+					p1 = boost::get<Point_3>(&(intersection1->first));
+
+					//RenderSphere(*p, .25, Renderer, 0,1, 0, 1);
+					if (i < 6)
+					{
+						double3 d(Directions[0][0], Directions[0][1], Directions[0][2]);
+						d.normalize();
+						p1 = &Point_3(p1->x() + d.data[0] * offset, p1->y() + d.data[0] * offset, p1->z() + d.data[0] * offset);
+					}
+					if (i >= 6)
+					{
+						double3 d(Directions[1][0], Directions[1][1], Directions[1][2]);
+						d.normalize();
+						p1 = &Point_3(p1->x() + d.data[0] * offset, p1->y() + d.data[0] * offset, p1->z() + d.data[0] * offset);
+					}
+					//target_5pts.push_back(*p1);
+
+				}
+
+				if (intersection1 && intersection2)
+				{
+					p2 = boost::get<Point_3>(&(intersection2->first));
+
+					//cout << (p1->x() - p2->x()) * (p1->x() - p2->x()) + (p1->y() - p2->y()) * (p1->y() - p2->y()) + (p1->z() - p2->z()) * (p1->z() - p2->z()) <<endl;
+					if ((p1->x() - p2->x()) * (p1->x() - p2->x()) + (p1->y() - p2->y()) * (p1->y() - p2->y()) + (p1->z() - p2->z()) * (p1->z() - p2->z()) < 4.0)
+					{
+						target_5pts.push_back(*p1);
+						source_5pts.push_back(*p2);
+						RenderSphere(*p1, .25, pipeline->Renderer, 1, 0, 0, 1);
+						RenderSphere(*p2, .25, pipeline->Renderer, 0, 1, 0, 1);
+					}
+
+				}
+
+			}
+			//Renderer->AddActor(MakeActor(Crownpolydata, 0, 1, 0, 0.5));
+			vtkSmartPointer<vtkPoints> target_5pts_points = vtkSmartPointer<vtkPoints>::New();
+			for (int i = 0; i < target_5pts.size(); i++)
+			{
+				target_5pts_points->InsertNextPoint(target_5pts[i][0], target_5pts[i][1], target_5pts[i][2]);
+			}
+
+			vtkSmartPointer<vtkPoints> source_5pts_points = vtkSmartPointer<vtkPoints>::New();
+			for (int i = 0; i < source_5pts.size(); i++)
+			{
+				source_5pts_points->InsertNextPoint(source_5pts[i][0], source_5pts[i][1], source_5pts[i][2]);
+			}
+
+			//五向十交点
+			for (int i = 0; i < 1; i++)
+			{
+				vtkNew<vtkLandmarkTransform> icp;
+				icp->SetSourceLandmarks(source_5pts_points);
+				icp->SetTargetLandmarks(target_5pts_points);
+				icp->SetModeToRigidBody();
+				icp->Modified();
+				icp->Update();
+
+				vtkSmartPointer<vtkMatrix4x4> m1 = icp->GetMatrix();
+				std::cout << "The resulting matrix is: " << *m1 << std::endl;
+				//for (int j = 0; j < source_5pts_points->GetNumberOfPoints(); j++)
+				//{
+				//	double point[3];
+				//	source_5pts_points->GetPoint(j, point);
+				//	point[0] = m1->Element[0][0] * point[0] + m1->Element[0][1] * point[1] + m1->Element[0][2] * point[2] + m1->Element[0][3];
+				//	point[1] = m1->Element[1][0] * point[0] + m1->Element[1][1] * point[1] + m1->Element[1][2] * point[2] + m1->Element[1][3];
+				//	point[2] = m1->Element[2][0] * point[0] + m1->Element[2][1] * point[1] + m1->Element[2][2] * point[2] + m1->Element[2][3];
+				//	source_5pts_points->SetPoint(j, point);
+				//}
+				//source_5pts_points->Modified();
+				SourcePre2Next.data[0] = m1->Element[0][0] * SourcePre2Next[0] + m1->Element[0][1] * SourcePre2Next[1] + m1->Element[0][2] * SourcePre2Next[2];
+				SourcePre2Next.data[1] = m1->Element[1][0] * SourcePre2Next[0] + m1->Element[1][1] * SourcePre2Next[1] + m1->Element[1][2] * SourcePre2Next[2];
+				SourcePre2Next.data[2] = m1->Element[2][0] * SourcePre2Next[0] + m1->Element[2][1] * SourcePre2Next[1] + m1->Element[2][2] * SourcePre2Next[2];
+				SourcePre2Next.normalize();
+				vtkNew<vtkTransformPolyDataFilter> icpTransformFilter1;
+				icpTransformFilter1->SetInputData(source_polydata);
+				icpTransformFilter1->SetTransform(icp);
+				icpTransformFilter1->Update();
+
+				source_polydata = icpTransformFilter1->GetOutput();
+
+				vtkNew<vtkTransformPolyDataFilter> icpTransformFilter11;
+				icpTransformFilter11->SetInputData(Crownpolydata);
+				icpTransformFilter11->SetTransform(icp);
+				icpTransformFilter11->Update();
+
+
+				Crownpolydata = icpTransformFilter11->GetOutput();
+
 			}
 		}
-		//Renderer->AddActor(MakeActor(Crownpolydata, 0, 1, 0, 0.5));
-		vtkSmartPointer<vtkPoints> target_5pts_points = vtkSmartPointer<vtkPoints>::New();
-		for (int i = 0; i < target_5pts.size(); i++)
-		{
-			target_5pts_points->InsertNextPoint(target_5pts[i][0], target_5pts[i][1], target_5pts[i][2]);
-		}
 
-		vtkSmartPointer<vtkPoints> source_5pts_points = vtkSmartPointer<vtkPoints>::New();
-		for (int i = 0; i < source_5pts.size(); i++)
-		{
-			source_5pts_points->InsertNextPoint(source_5pts[i][0], source_5pts[i][1], source_5pts[i][2]);
-		}
-
-		//五向十交点
-		for (int i = 0; i < 3; i++)
-		{
-			vtkNew<vtkLandmarkTransform> icp;
-			icp->SetSourceLandmarks(source_5pts_points);
-			icp->SetTargetLandmarks(target_5pts_points);
-			icp->SetModeToRigidBody();
-			icp->Update();
-
-			vtkSmartPointer<vtkMatrix4x4> m1 = icp->GetMatrix();
-			std::cout << "The resulting matrix is: " << *m1 << std::endl;
-			SourcePre2Next.data[0] = m1->Element[0][0] * SourcePre2Next[0] + m1->Element[0][1] * SourcePre2Next[1] + m1->Element[0][2] * SourcePre2Next[2];
-			SourcePre2Next.data[1] = m1->Element[1][0] * SourcePre2Next[0] + m1->Element[1][1] * SourcePre2Next[1] + m1->Element[1][2] * SourcePre2Next[2];
-			SourcePre2Next.data[2] = m1->Element[2][0] * SourcePre2Next[0] + m1->Element[2][1] * SourcePre2Next[1] + m1->Element[2][2] * SourcePre2Next[2];
-			SourcePre2Next.normalize();
-			vtkNew<vtkTransformPolyDataFilter> icpTransformFilter1;
-			icpTransformFilter1->SetInputData(source_polydata);
-			icpTransformFilter1->SetTransform(icp);
-			icpTransformFilter1->Update();
-
-			source_polydata = icpTransformFilter1->GetOutput();
-
-			vtkNew<vtkTransformPolyDataFilter> icpTransformFilter11;
-			icpTransformFilter11->SetInputData(Crownpolydata);
-			icpTransformFilter11->SetTransform(icp);
-			icpTransformFilter11->Update();
-
-			Crownpolydata = icpTransformFilter11->GetOutput();
-		}
 
 
 		//////////////////////////////////////////////////以下为测试代码和渲染部分 无需整合
 
-		auto crown_center = CGAL::midpoint(target_5pts[1], target_5pts[6]);
+		//auto crown_center = CGAL::midpoint(target_5pts[1], target_5pts[6]);
 
 
 
@@ -612,11 +628,11 @@ int main()
 
 
 
-		std::cout << file_path << std::endl;
-		std::cout << "checked_id: " << checked_id << ", selected_id: " << selected_id << std::endl;
+		//std::cout << file_path << std::endl;
+		//std::cout << "checked_id: " << checked_id << ", selected_id: " << selected_id << std::endl;
 
-		SurfaceMesh crown_mesh;
-		crown_mesh = VTK_PolyData2CGAL_Surface_Mesh(Crownpolydata);
+		//SurfaceMesh crown_mesh;
+		//crown_mesh = VTK_PolyData2CGAL_Surface_Mesh(Crownpolydata);
 		//CGAL::Polygon_mesh_slicer<SurfaceMesh, K> slicer1(crown_mesh);
 		//Polylines polyline1;
 		//slicer1(K::Plane_3(crown_center, K::Vector_3(TargetPre2Next.data[0], TargetPre2Next.data[1], TargetPre2Next.data[2])), std::back_inserter(polyline1));
