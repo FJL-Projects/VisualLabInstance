@@ -1221,99 +1221,99 @@ void CervicalMarginLineWrapper::GenerateImprovedMarginLine()
 
         std::cout << "expanded_spline_mp size: " << expanded_spline_mp.size() << std::endl;
     }
-    {
-        //std::cout << "Abutment Edge Spline size: " << m_abutment_edge_spline->uvSpline.size() << std::endl;
-        Polygon_2 polygon(m_abutment_edge_spline->uvSpline.begin(), m_abutment_edge_spline->uvSpline.end());
+    //{
+    //    //std::cout << "Abutment Edge Spline size: " << m_abutment_edge_spline->uvSpline.size() << std::endl;
+    //    Polygon_2 polygon(m_abutment_edge_spline->uvSpline.begin(), m_abutment_edge_spline->uvSpline.end());
 
-        bool is_clockwise = polygon.is_clockwise_oriented();
-        //uv_map = m_cervical_margin_line_interactor_style->uv_map;
+    //    bool is_clockwise = polygon.is_clockwise_oriented();
+    //    //uv_map = m_cervical_margin_line_interactor_style->uv_map;
 
-        //SurfaceMesh::Property_map<vertex_descriptor, double> min_curvature = m_arch_sm->add_property_map<vertex_descriptor, double>("v:min_curvature", 0.0).first;
-        MeshSplineExpander mesh_spline_expander(
-            *m_abutment_edge_spline,
-            *m_arch_sm,
-            m_max_detection_distance,
-            is_clockwise,
-            m_fmap,
-            m_vmap,
-            m_emap,
-            m_hemap,
-            use_neighboring
-        );
-        mesh_spline_expander.SetExpansionSourceCenter(centroid);
-        mesh_spline_expander.SetRenderer(m_renderer);
-        mesh_spline_expander.SetRenderWin(m_render_win);
-        bool success = mesh_spline_expander.ExpandToLowestCurvature();
+    //    //SurfaceMesh::Property_map<vertex_descriptor, double> min_curvature = m_arch_sm->add_property_map<vertex_descriptor, double>("v:min_curvature", 0.0).first;
+    //    MeshSplineExpander mesh_spline_expander(
+    //        *m_abutment_edge_spline,
+    //        *m_arch_sm,
+    //        m_max_detection_distance,
+    //        is_clockwise,
+    //        m_fmap,
+    //        m_vmap,
+    //        m_emap,
+    //        m_hemap,
+    //        use_neighboring
+    //    );
+    //    mesh_spline_expander.SetExpansionSourceCenter(centroid);
+    //    mesh_spline_expander.SetRenderer(m_renderer);
+    //    mesh_spline_expander.SetRenderWin(m_render_win);
+    //    bool success = mesh_spline_expander.ExpandToLowestCurvature();
 
-        //bool success = mesh_spline_expander.ExpandToLowestCurvature();
-        //std::vector<ClosedMeshSpline> expanded_splines = mesh_spline_expander.GetExpandedSplines();
-        //for (auto expanded_spline : expanded_splines)
-        //{
-        //    Renderer->AddActor(expanded_spline.SplineActor);
-        //}
-        //std::vector<MeshPoint> expanded_spline_mp = mesh_spline_expander.GetExpandedSplinesMP()[0];
-        //for (MeshPoint& mp : expanded_spline_mp)
-        //{
-        //    m_cervical_margin_line_interactor_style->spline->add(mp.nTriId, mp.xyz);
-        //    vtkSmartPointer<vtkPolyDataNormals> mp_normal = vtkSmartPointer<vtkPolyDataNormals>::New();
-        //    mp_normal->SetInputConnection(m_cervical_margin_line_interactor_style->spline->CtrlPointSphere.back()->GetOutputPort());
-        //    mp_normal->SetComputePointNormals(1);
-        //    mp_normal->SetComputeCellNormals(1);
-        //    mp_normal->SetAutoOrientNormals(1);
-        //    mp_normal->SetSplitting(0);
-        //    mp_normal->FlipNormalsOff();
-        //    mp_normal->Update();
-        //    vtkSmartPointer<vtkPolyDataMapper> mp_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-        //    mp_mapper->SetInputConnection(mp_normal->GetOutputPort());
-        //    mp_mapper->Update();
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->SetMapper(mp_mapper);
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetColor(0, 0, 1);
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetAmbient(0.5);
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetSpecularPower(100);
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetSpecular(0.5);
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetDiffuse(0.5);
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetOpacity(1.0);
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->PickableOn();
-        //    m_renderer->AddActor(m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back());
-        //}
-        //m_cervical_margin_line_interactor_style->spline->bClosed = true;
-        //m_cervical_margin_line_interactor_style->spline->UpdateSpline(m_cervical_margin_line_interactor_style->spline->vtEquidistantSpline);
+    //    //bool success = mesh_spline_expander.ExpandToLowestCurvature();
+    //    //std::vector<ClosedMeshSpline> expanded_splines = mesh_spline_expander.GetExpandedSplines();
+    //    //for (auto expanded_spline : expanded_splines)
+    //    //{
+    //    //    Renderer->AddActor(expanded_spline.SplineActor);
+    //    //}
+    //    //std::vector<MeshPoint> expanded_spline_mp = mesh_spline_expander.GetExpandedSplinesMP()[0];
+    //    //for (MeshPoint& mp : expanded_spline_mp)
+    //    //{
+    //    //    m_cervical_margin_line_interactor_style->spline->add(mp.nTriId, mp.xyz);
+    //    //    vtkSmartPointer<vtkPolyDataNormals> mp_normal = vtkSmartPointer<vtkPolyDataNormals>::New();
+    //    //    mp_normal->SetInputConnection(m_cervical_margin_line_interactor_style->spline->CtrlPointSphere.back()->GetOutputPort());
+    //    //    mp_normal->SetComputePointNormals(1);
+    //    //    mp_normal->SetComputeCellNormals(1);
+    //    //    mp_normal->SetAutoOrientNormals(1);
+    //    //    mp_normal->SetSplitting(0);
+    //    //    mp_normal->FlipNormalsOff();
+    //    //    mp_normal->Update();
+    //    //    vtkSmartPointer<vtkPolyDataMapper> mp_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    //    //    mp_mapper->SetInputConnection(mp_normal->GetOutputPort());
+    //    //    mp_mapper->Update();
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->SetMapper(mp_mapper);
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetColor(0, 0, 1);
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetAmbient(0.5);
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetSpecularPower(100);
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetSpecular(0.5);
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetDiffuse(0.5);
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetOpacity(1.0);
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->PickableOn();
+    //    //    m_renderer->AddActor(m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back());
+    //    //}
+    //    //m_cervical_margin_line_interactor_style->spline->bClosed = true;
+    //    //m_cervical_margin_line_interactor_style->spline->UpdateSpline(m_cervical_margin_line_interactor_style->spline->vtEquidistantSpline);
 
-        //vtkSmartPointer<vtkTubeFilter> margin_line_tube_filter = vtkSmartPointer<vtkTubeFilter>::New();
-        //margin_line_tube_filter->SetInputData(m_cervical_margin_line_interactor_style->spline->SplinePolydata);
-        //margin_line_tube_filter->SetRadius(0.025);
-        //margin_line_tube_filter->SetNumberOfSides(16);
-        //margin_line_tube_filter->Update();
-        //vtkSmartPointer<vtkPolyDataNormals> margin_line_tube_normal = vtkSmartPointer<vtkPolyDataNormals>::New();
-        //margin_line_tube_normal->SetInputConnection(margin_line_tube_filter->GetOutputPort());
-        //margin_line_tube_normal->SetComputePointNormals(1);
-        //margin_line_tube_normal->SetComputeCellNormals(1);
-        //margin_line_tube_normal->SetAutoOrientNormals(1);
-        //margin_line_tube_normal->SetSplitting(0);
-        //margin_line_tube_normal->FlipNormalsOff();
-        //margin_line_tube_normal->Update();
-        //vtkSmartPointer<vtkPolyDataMapper> abutment_line_tube_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-        //abutment_line_tube_mapper->SetInputConnection(margin_line_tube_normal->GetOutputPort());
-        //abutment_line_tube_mapper->Update();
+    //    //vtkSmartPointer<vtkTubeFilter> margin_line_tube_filter = vtkSmartPointer<vtkTubeFilter>::New();
+    //    //margin_line_tube_filter->SetInputData(m_cervical_margin_line_interactor_style->spline->SplinePolydata);
+    //    //margin_line_tube_filter->SetRadius(0.025);
+    //    //margin_line_tube_filter->SetNumberOfSides(16);
+    //    //margin_line_tube_filter->Update();
+    //    //vtkSmartPointer<vtkPolyDataNormals> margin_line_tube_normal = vtkSmartPointer<vtkPolyDataNormals>::New();
+    //    //margin_line_tube_normal->SetInputConnection(margin_line_tube_filter->GetOutputPort());
+    //    //margin_line_tube_normal->SetComputePointNormals(1);
+    //    //margin_line_tube_normal->SetComputeCellNormals(1);
+    //    //margin_line_tube_normal->SetAutoOrientNormals(1);
+    //    //margin_line_tube_normal->SetSplitting(0);
+    //    //margin_line_tube_normal->FlipNormalsOff();
+    //    //margin_line_tube_normal->Update();
+    //    //vtkSmartPointer<vtkPolyDataMapper> abutment_line_tube_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    //    //abutment_line_tube_mapper->SetInputConnection(margin_line_tube_normal->GetOutputPort());
+    //    //abutment_line_tube_mapper->Update();
 
-        //vtkSmartPointer<vtkPolyData> margin_line_tube = abutment_line_tube_mapper->GetInput();
-        //vtkSmartPointer<vtkPLYWriter> margin_line_tube_writer = vtkSmartPointer<vtkPLYWriter>::New();
-        //margin_line_tube_writer->SetFileName("margin_line.ply");
-        //margin_line_tube_writer->SetInputData(margin_line_tube);
-        //margin_line_tube_writer->Write();
+    //    //vtkSmartPointer<vtkPolyData> margin_line_tube = abutment_line_tube_mapper->GetInput();
+    //    //vtkSmartPointer<vtkPLYWriter> margin_line_tube_writer = vtkSmartPointer<vtkPLYWriter>::New();
+    //    //margin_line_tube_writer->SetFileName("margin_line.ply");
+    //    //margin_line_tube_writer->SetInputData(margin_line_tube);
+    //    //margin_line_tube_writer->Write();
 
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->SetMapper(abutment_line_tube_mapper);
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetColor(1, 1, 0);
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetAmbient(0.5);
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetSpecularPower(100);
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetSpecular(0.5);
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetDiffuse(0.5);
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetOpacity(1.0);
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->PickableOff();
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->SetMapper(abutment_line_tube_mapper);
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetColor(1, 1, 0);
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetAmbient(0.5);
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetSpecularPower(100);
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetSpecular(0.5);
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetDiffuse(0.5);
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetOpacity(1.0);
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->PickableOff();
 
-        //m_renderer->AddActor(m_cervical_margin_line_interactor_style->spline->SplineActor);
-        //m_cervical_margin_line_interactor_style->OnLeftButtonUp();
-    }
+    //    //m_renderer->AddActor(m_cervical_margin_line_interactor_style->spline->SplineActor);
+    //    //m_cervical_margin_line_interactor_style->OnLeftButtonUp();
+    //}
 }
 
 void CervicalMarginLineWrapper::SetArchSurfaceMesh(SurfaceMesh* arch_sm)

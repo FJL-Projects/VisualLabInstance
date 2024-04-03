@@ -155,9 +155,9 @@ int main()
 		improved_margin_line_wrapper.SetSelectedId(selected_id);
 		improved_margin_line_wrapper.SetProjectionDirection(projection_direction_v3);
 		improved_margin_line_wrapper.SetMaxDetectionDistance(1.5);
-		improved_margin_line_wrapper.SetMarginLineColor(CGAL::violet());
+		improved_margin_line_wrapper.SetMarginLineColor(CGAL::yellow());
 		improved_margin_line_wrapper.SetMarginLineOpacity(0.5);
-		improved_margin_line_wrapper.SetCtrlPointColor(CGAL::red());
+		improved_margin_line_wrapper.SetCtrlPointColor(CGAL::blue());
 		improved_margin_line_wrapper.SetCtrlPointOpacity(0.5);
 		improved_margin_line_wrapper.SetCtrlPtDensityCoefficient(1.0);
 		improved_margin_line_wrapper.Init();
