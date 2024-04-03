@@ -54,13 +54,13 @@ private:
     std::vector<std::vector<MeshPoint> > m_edge_points_vec;
     vtkSmartPointer<vtkRenderWindow> m_render_win = vtkSmartPointer<vtkRenderWindow>::New();
     vtkSmartPointer<vtkRenderer> m_renderer = vtkSmartPointer<vtkRenderer>::New();
-    std::vector<Vector_3> m_spline_expand_directions;
+    std::vector<Vector_3> m_spline_expand_directions;  ///< Directions for spline expansion
     const double M_PI = 3.14159265358979323846;
     // std::vector<MeshPoint> m_equal_distance_spline;
     face_descriptor m_last_fd = SurfaceMesh::null_face();
-    double m_max_distance = 0.0;
+    double m_max_distance = 0.0;  ///< Maximum distance for lowest curvature expansion detection
     bool m_ctrl_pts_neighbor_direction = true; ///< Whether to use the direction of the neighboring control points or use the centroid of the points
-    Point_3 m_expansion_source_center;
+    Point_3 m_expansion_source_center; ///< Center of the expansion model
 
 public:
     // Constructor for multiple splines with equal distance

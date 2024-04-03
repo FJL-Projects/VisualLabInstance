@@ -181,10 +181,14 @@ bool MeshSplineExpander::GetBary(Point_3& v0, Point_3& v1, Point_3& v2, const Po
 /**
  * @brief Computes and updates the expansion tangential vector directions for each control point on the base spline.
  *
- * This function is responsible for calculating the direction in which each control point on the base spline should be expanded.
- * It starts by clearing and resizing the container that stores the tangential vectors' directions. Then, it iterates over each control point
- * on the base spline. For each control point, it computes the indices of the previous and next control points in order to calculate the current
- * control point's expansion direction. Once the calculation is complete, the direction is saved in the member variable `m_spline_expand_directions`.
+ * This function calculates the direction in which each control point on the base spline should be expanded based on a specified strategy.
+ * If `m_ctrl_pts_neighbor_direction` is true, it uses the neighboring control points to determine the expansion direction.
+ * Otherwise, it directly calculates the direction from the mesh's centroid to the control point. It then normalizes this direction
+ * and saves it in the member variable `m_spline_expand_directions`.
+ * Initially, it clears and resizes the `m_spline_expand_directions` container to match the number of control points on the base spline.
+ * For each control point, the function either calls `CalculateDirection()` with the indices of the neighboring control points to compute the direction,
+ * or it computes the direction as a normalized vector from the mesh's centroid to the control point. The computed direction is then stored in the
+ * `m_spline_expand_directions` array at the corresponding index.
  *
  * @date 2024-02-26
  * @param None
@@ -201,8 +205,17 @@ void MeshSplineExpander::CalculateSplineExpansionDirections()
         int next_index = (i + 1) % m_base_spline.size();
 
         // 计算方向
-        Vector_3 direction = CalculateDirection(source_mesh_point, i, prev_index, next_index);
-
+		Vector_3 direction(0, 0, 0);
+		if (m_ctrl_pts_neighbor_direction)
+		{
+			direction = CalculateDirection(source_mesh_point, i, prev_index, next_index);
+		}
+		else
+		{
+			const Point_3 dest_point(source_mesh_point.xyz[0], source_mesh_point.xyz[1], source_mesh_point.xyz[2]);
+			direction = Vector_3(m_expansion_source_center, dest_point);
+			direction /= std::sqrt(direction.squared_length());
+		}
         // 设置方向
         m_spline_expand_directions[i] = direction;
 
@@ -242,46 +255,36 @@ void MeshSplineExpander::CalculateSplineExpansionDirections()
  */
 Vector_3 MeshSplineExpander::CalculateDirection(const MeshPoint& source_mesh_point, size_t curr_index, size_t prev_index, size_t next_index)
 {
-	Vector_3 direction = Vector_3(0, 0, 0);
+	Vector_3 direction(0, 0, 0);
+	const Point_3 source_point(source_mesh_point.xyz[0], source_mesh_point.xyz[1], source_mesh_point.xyz[2]);
+	const Point_3 prev_point(m_base_spline[prev_index].xyz[0], m_base_spline[prev_index].xyz[1], m_base_spline[prev_index].xyz[2]);
+	const Point_3 next_point(m_base_spline[next_index].xyz[0], m_base_spline[next_index].xyz[1], m_base_spline[next_index].xyz[2]);
 
-	if (!m_ctrl_pts_neighbor_direction)
+	Vector_3 source_to_prev = Vector_3(source_point, prev_point);
+	Vector_3 prev_to_source = -source_to_prev;
+	Vector_3 source_to_next = Vector_3(source_point, next_point);
+	Vector_3 prev_source_next_cross = CGAL::cross_product(prev_to_source, source_to_next);
+
+	source_to_prev /= source_to_prev.squared_length();
+	source_to_next /= source_to_next.squared_length();
+
+	// 计算面的法线
+	halfedge_descriptor hd = source_mesh_point.he;
+	face_descriptor fd = m_sm.face(hd);
+	Vector_3 face_normal = PMP::compute_face_normal(fd, m_sm);
+
+	if ((!m_is_clockwise && (prev_source_next_cross * face_normal < 0))
+		|| (m_is_clockwise && (prev_source_next_cross * face_normal > 0)))
 	{
-		const Point_3 dest_point(source_mesh_point.xyz[0], source_mesh_point.xyz[1], source_mesh_point.xyz[2]);
-		direction = Vector_3(m_expansion_source_center, dest_point);
-		direction /= std::sqrt(direction.squared_length());
+		// 凹点处理逻辑
+		//std::cout << "凸点\n";
+		direction = CalculateConcavePointDirection(source_mesh_point, curr_index, source_point, source_to_prev, source_to_next, face_normal);
 	}
 	else
 	{
-		const Point_3 source_point(source_mesh_point.xyz[0], source_mesh_point.xyz[1], source_mesh_point.xyz[2]);
-		const Point_3 prev_point(m_base_spline[prev_index].xyz[0], m_base_spline[prev_index].xyz[1], m_base_spline[prev_index].xyz[2]);
-		const Point_3 next_point(m_base_spline[next_index].xyz[0], m_base_spline[next_index].xyz[1], m_base_spline[next_index].xyz[2]);
-
-		Vector_3 source_to_prev = Vector_3(source_point, prev_point);
-		Vector_3 prev_to_source = -source_to_prev;
-		Vector_3 source_to_next = Vector_3(source_point, next_point);
-		Vector_3 prev_source_next_cross = CGAL::cross_product(prev_to_source, source_to_next);
-
-		source_to_prev /= source_to_prev.squared_length();
-		source_to_next /= source_to_next.squared_length();
-
-		// 计算面的法线
-		halfedge_descriptor hd = source_mesh_point.he;
-		face_descriptor fd = m_sm.face(hd);
-		Vector_3 face_normal = PMP::compute_face_normal(fd, m_sm);
-
-		if ((!m_is_clockwise && (prev_source_next_cross * face_normal < 0))
-			|| (m_is_clockwise && (prev_source_next_cross * face_normal > 0)))
-		{
-			// 凹点处理逻辑
-			//std::cout << "凸点\n";
-			direction = CalculateConcavePointDirection(source_mesh_point, curr_index, source_point, source_to_prev, source_to_next, face_normal);
-		}
-		else
-		{
-			// 凸点处理逻辑
-			//std::cout << "凹点\n";
-			direction = CalculateConvexPointDirection(source_mesh_point, curr_index, source_point, source_to_prev, source_to_next, face_normal);
-		}
+		// 凸点处理逻辑
+		//std::cout << "凹点\n";
+		direction = CalculateConvexPointDirection(source_mesh_point, curr_index, source_point, source_to_prev, source_to_next, face_normal);
 	}
 
     return direction;
@@ -698,6 +701,23 @@ bool MeshSplineExpander::ExpandSpline()
 	return true;
 }
 
+/**
+ * @brief Expand a spline by cutting a SurfaceMesh to generate equidistant points considering neighboring curvature.
+ *
+ * This function extends the functionality of ExpandSpline() by incorporating information about the neighboring curvature
+ * of each control point on the base spline. It calculates the direction of spline expansion while considering the
+ * curvature of neighboring points. For each control point on m_base_spline, a cutting plane is defined based on the
+ * curvature information of neighboring points, and it is intersected with the triangles of the SurfaceMesh.
+ * During the intersection process, the sum of polyline segment lengths is computed.
+ * If the sum reaches the preset m_interval, the point is recorded as an equidistant point, and the intersection points
+ * on the triangle edges are also recorded. If equidistant points cannot be successfully obtained for any control point,
+ * the function returns false. If successful, a visualization pipeline is constructed using the VTK library,
+ * and the spline display is updated accordingly. The function returns a boolean value indicating whether the expansion
+ * operation was entirely successful.
+ *
+ * @date 2024-04-03
+ * @return bool True if the spline expansion considering neighboring curvature was successful, false otherwise.
+ */
 bool MeshSplineExpander::ExpandToLowestCurvature()
 {
 	bool success = false;
@@ -844,8 +864,6 @@ bool MeshSplineExpander::ExpandToLowestCurvature()
 		m_edge_points_vec.push_back(edge_points_vec);
 		//std::cout << i << " edge_points_vec.size(): " << edge_points_vec.size() << std::endl;
 	}
-
-
 
 	//m_expanded_splines[0].initial(&m_sm, m_fmap, m_vmap, m_emap, m_hemap, uv_map);
 
