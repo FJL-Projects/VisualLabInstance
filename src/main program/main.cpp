@@ -3,9 +3,10 @@
 #include "meshTransform.h"
 #include "simpleRender.h"
 #include "IOManip.hpp"
+#include "PolygonMovementInteractor.h"
 
 vtkRenderPipeline* pipeline;
-
+PolygonMovementInteractorStyle generated_crown_scale_interactor;
 /**
  * @brief Generate a 4-digit number string with leading zeros.
  *
@@ -59,9 +60,16 @@ int main()
 {
 	pipeline = new vtkRenderPipeline();
 
+	SurfaceMesh teeth_sm;
+	CGAL::IO::read_PLY("data/teeth.ply", teeth_sm);
+
+	vtkSmartPointer<vtkPolyData> teeth_pd = CGAL_Surface_Mesh2VTK_PolyData(teeth_sm);
+
+	RenderPolydata(teeth_pd, pipeline->m_renderer);
+
 	// Set up the camera and interactor.
-	pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
-	pipeline->Renderer->ResetCamera();
+	pipeline->m_renderer->GetActiveCamera()->SetParallelProjection(1);
+	pipeline->m_renderer->ResetCamera();
 	// Set up the callback functions for mouse events.
 	pipeline->addObserver(vtkCommand::LeftButtonPressEvent, LeftPress);
 	pipeline->addObserver(vtkCommand::MouseMoveEvent, MouseMove);

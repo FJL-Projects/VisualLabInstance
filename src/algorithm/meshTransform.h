@@ -71,8 +71,8 @@ int SurfaceMeshToPolyData(SurfaceMesh& mesh, vtkSmartPointer<vtkPolyData>& polyD
 }
 
 /**
-	 Converts a VTK PolyData object to a CGAL surface mesh.
-	 @param P The VTK PolyData object to convert.
+	 Converts a VTK m_polydata object to a CGAL surface mesh.
+	 @param P The VTK m_polydata object to convert.
 	 @return The converted CGAL surface mesh.
  */
 SurfaceMesh VTK_PolyData2CGAL_Surface_Mesh(const vtkSmartPointer<vtkPolyData>& P)

@@ -25,6 +25,18 @@ inline void CrossProduct(const T x[3], const T y[3], T result[3])
 }
 
 template<typename T>
+inline T DotProduct(const std::array<T, 3>& a, const std::array<T, 3>& b) {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+template<typename T>
+inline void CrossProduct(const std::array<T, 3>& a, const std::array<T, 3>& b, std::array<T, 3>& result) {
+    result[0] = a[1] * b[2] - a[2] * b[1];
+    result[1] = a[2] * b[0] - a[0] * b[2];
+    result[2] = a[0] * b[1] - a[1] * b[0];
+}
+
+template<typename T>
 inline void Normalize(T* vec)
 {
     T length = sqrt(DotProduct(vec, vec));
@@ -161,6 +173,39 @@ inline void AngleAxisRotatePoint(const T angle_axis[3], const T pt[3], T result[
                                   angle_axis[2] * pt[0] - angle_axis[0] * pt[2],
                                   angle_axis[0] * pt[1] - angle_axis[1] * pt[0] };*/
         T w_cross_pt[3];
+        CrossProduct(angle_axis, pt, w_cross_pt);
+
+        result[0] = pt[0] + w_cross_pt[0];
+        result[1] = pt[1] + w_cross_pt[1];
+        result[2] = pt[2] + w_cross_pt[2];
+    }
+}
+
+template<typename T>
+void AngleAxisRotatePoint(const std::array<T, 3>& angle_axis, const std::array<T, 3>& pt, std::array<T, 3>& result) {
+    const T theta2 = DotProduct(angle_axis, angle_axis);
+    if (theta2 > T(std::numeric_limits<double>::epsilon()))
+    {
+        const T theta = sqrt(theta2);
+        const T costheta = cos(theta);
+        const T sintheta = sin(theta);
+        const T theta_inverse = T(1) / theta;
+
+        std::array<T, 3> w = { angle_axis[0] * theta_inverse,
+                                angle_axis[1] * theta_inverse,
+                                angle_axis[2] * theta_inverse };
+        std::array<T, 3> w_cross_pt;
+        CrossProduct(w, pt, w_cross_pt);
+
+        const T tmp = DotProduct(w, pt) * (T(1) - costheta);
+
+        result[0] = pt[0] * costheta + w_cross_pt[0] * sintheta + w[0] * tmp;
+        result[1] = pt[1] * costheta + w_cross_pt[1] * sintheta + w[1] * tmp;
+        result[2] = pt[2] * costheta + w_cross_pt[2] * sintheta + w[2] * tmp;
+    }
+    else
+    {
+        std::array<T, 3> w_cross_pt;
         CrossProduct(angle_axis, pt, w_cross_pt);
 
         result[0] = pt[0] + w_cross_pt[0];

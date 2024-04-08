@@ -25,17 +25,17 @@ class vtkRenderPipeline
 public:
     vtkRenderPipeline()
     {
-		this->RenderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-		this->Renderer = vtkSmartPointer<vtkRenderer>::New();
-		this->CellPicker = vtkSmartPointer<vtkCellPicker>::New();
-		this->Renderer->SetBackground(0.41, 0.41, 0.41);
-		this->RenderWindow->AddRenderer(this->Renderer);
-		this->RenderWindow->SetSize(1920, 1080);
-		//this->RenderWindow->Render();
+		this->m_render_window = vtkSmartPointer<vtkRenderWindow>::New();
+		this->m_renderer = vtkSmartPointer<vtkRenderer>::New();
+		this->m_cell_picker = vtkSmartPointer<vtkCellPicker>::New();
+		this->m_renderer->SetBackground(0.41, 0.41, 0.41);
+		this->m_render_window->AddRenderer(this->m_renderer);
+		this->m_render_window->SetSize(1920, 1080);
+		//this->m_render_window->Render();
 		this->InteractorStyle = vtkSmartPointer<DesignInteractorStyle>::New();
 		this->RenderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
 		this->RenderWindowInteractor->SetInteractorStyle(this->InteractorStyle);
-		this->RenderWindowInteractor->SetRenderWindow(this->RenderWindow);
+		this->RenderWindowInteractor->SetRenderWindow(this->m_render_window);
 	}
     void addObserver(unsigned long event,void (*f)(vtkObject* caller, unsigned long eid,void* clientdata, void* calldata))
     {
@@ -45,9 +45,9 @@ public:
 		this->RenderWindowInteractor->AddObserver(event, callback);
 	}
 
-    vtkSmartPointer<vtkRenderWindow> RenderWindow;
-    vtkSmartPointer<vtkRenderer> Renderer;
-    vtkSmartPointer<vtkCellPicker> CellPicker;
+    vtkSmartPointer<vtkRenderWindow> m_render_window;
+    vtkSmartPointer<vtkRenderer> m_renderer;
+    vtkSmartPointer<vtkCellPicker> m_cell_picker;
     vtkSmartPointer<DesignInteractorStyle> InteractorStyle;
     vtkSmartPointer<vtkRenderWindowInteractor> RenderWindowInteractor;
 };
