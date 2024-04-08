@@ -1,4 +1,3 @@
-#include"stdafx.h"
 #include "TeethWrapper.h"
 
 /**
@@ -402,30 +401,30 @@ double TeethWrapper::GetProjectionDistanceFromBite(vertex_descriptor v)
     m_bite_tree_ptr->all_intersected_primitives(projection_ray, std::back_inserter(intersections));
     if (intersections.size() > 0)
     {
-		auto intersection = m_bite_tree_ptr->first_intersection(projection_ray);
+        auto intersection = m_bite_tree_ptr->first_intersection(projection_ray);
         if (intersection)
         {
-             if (const Point_3* intersected_point = boost::get<Point_3>(&(intersection->first)))
-             {
-				return sqrt(CGAL::squared_distance(origin_point, *intersected_point));
-			 }
-		}
-	}
-	else
-	{
-		m_bite_tree_ptr->all_intersected_primitives(reversed_projection_ray, std::back_inserter(intersections));
+            if (const Point_3* intersected_point = boost::get<Point_3>(&(intersection->first)))
+            {
+                return sqrt(CGAL::squared_distance(origin_point, *intersected_point));
+            }
+        }
+    }
+    else
+    {
+        m_bite_tree_ptr->all_intersected_primitives(reversed_projection_ray, std::back_inserter(intersections));
         if (intersections.size() > 0)
         {
-			auto intersection = m_bite_tree_ptr->first_intersection(reversed_projection_ray);
+            auto intersection = m_bite_tree_ptr->first_intersection(reversed_projection_ray);
             if (intersection)
             {
                 if (const Point_3* intersected_point = boost::get<Point_3>(&(intersection->first)))
                 {
-					return -sqrt(CGAL::squared_distance(origin_point, *intersected_point));
-				}
-			}
-		}   
-	}
+                    return -sqrt(CGAL::squared_distance(origin_point, *intersected_point));
+                }
+            }
+        }
+    }
 
     return std::numeric_limits<double>::lowest();
 }
@@ -509,7 +508,7 @@ void TeethWrapper::CalculateTeethSlicer(SurfaceMesh sm)
 {
     Timer timer("CalculateTeethSlicer");
     m_teeth_sm = new SurfaceMesh(sm);
-	m_teeth_halfedge_tree_ptr = std::make_shared<HalfedgeTree>(edges(*m_teeth_sm).first, edges(*m_teeth_sm).second, *m_teeth_sm);
+    m_teeth_halfedge_tree_ptr = std::make_shared<HalfedgeTree>(edges(*m_teeth_sm).first, edges(*m_teeth_sm).second, *m_teeth_sm);
     m_teeth_slicer = std::make_shared<CGAL::Polygon_mesh_slicer<SurfaceMesh, Kernel>>(*m_teeth_sm, *m_teeth_halfedge_tree_ptr);
 }
 
@@ -599,10 +598,10 @@ void TeethWrapper::CalculateAllLayerPolylines()
 void TeethWrapper::CalculateCusp()
 {
     Timer timer("CalculateCusp");
-    m_cusp_vertices.clear(); 
-    
+    m_cusp_vertices.clear();
+
     for (size_t k = 1; k < m_all_layer_polylines.size(); ++k)
-    {  
+    {
         // If the enough quota of cusp points have been found, stop searching
         if (m_cusp_vertices.size() >= 5)
         {
@@ -699,12 +698,12 @@ void TeethWrapper::CalculateCusp()
                     for (auto prev_cusp_vertex : m_cusp_vertices)
                     {
                         Point_3 prev_cusp_point = m_teeth_sm->point(prev_cusp_vertex);
-						double distance = std::sqrt(CGAL::squared_distance(cusp_point, prev_cusp_point));
+                        double distance = std::sqrt(CGAL::squared_distance(cusp_point, prev_cusp_point));
                         if (distance < 1.5)
                         {
-							return;
-						}
-					}
+                            return;
+                        }
+                    }
                     // The new point is not too close to previous cusp points
                     // , continue to locate the nearest vertex on the m_teeth_sm
                     std::pair<Point_3, HalfedgeTree::Primitive_id> closest = m_teeth_halfedge_tree_ptr->closest_point_and_primitive(cusp_point);
@@ -714,7 +713,7 @@ void TeethWrapper::CalculateCusp()
                 }
             }
         }
-	}
+    }
 }
 
 /**
@@ -732,7 +731,7 @@ FaceTree& TeethWrapper::GetCutTree()
  * @brief Calculates the intersected vertices and their distances from the bite, and the maximum overlapping depth.
  *
  * Please perform this method each time after adjusting teeth wall thickness and occlusion and before rendering.
- * 
+ *
  * This method first clears the set of intersected vertices. Then for each vertex in the teeth's SurfaceMesh,
  * it constructs a ray from the vertex in the direction of projection and tests for intersection with the bite.
  * If the vertex is found to intersect with the bite, it is added to the set of intersected vertices.
@@ -751,7 +750,7 @@ void TeethWrapper::CalculateIntersectedVertexAndDistanceFromBite()
     if (!m_bite_tree_ptr)
     {
         std::cerr << "m_bite_tree_ptr is not set" << std::endl;
-        
+
         return;
     }
 
@@ -802,9 +801,9 @@ void TeethWrapper::ExtractAdjacentTeethWithoutAbutment()
     }
     else if (!m_arch_pd)
     {
-		std::cerr << "m_arch_pd is not set" << std::endl;
+        std::cerr << "m_arch_pd is not set" << std::endl;
         return;
-	}
+    }
     else if (!m_arch_sm)
     {
         std::cerr << "m_arch_sm is not set" << std::endl;
@@ -818,10 +817,10 @@ void TeethWrapper::ExtractAdjacentTeethWithoutAbutment()
 
     ofstream arch_without_abutment_file("arch_without_abutment.xyz");
     for (auto& vd : m_arch_without_abutment_set)
-	{
-		Point_3 point = (*m_arch_sm).point(vd);
-		arch_without_abutment_file << point.x() << " " << point.y() << " " << point.z() << std::endl;
-	}
+    {
+        Point_3 point = (*m_arch_sm).point(vd);
+        arch_without_abutment_file << point.x() << " " << point.y() << " " << point.z() << std::endl;
+    }
     arch_without_abutment_file.close();
     std::unordered_map<face_descriptor, face_descriptor> new_to_origin_face_map;
     unsigned expansion_level = 200;
@@ -829,24 +828,24 @@ void TeethWrapper::ExtractAdjacentTeethWithoutAbutment()
     CGAL::IO::write_PLY("expanded_abutment_" + std::to_string(expansion_level) + ".ply", *expanded_abutment_sm);
     std::set<face_descriptor> expanded_abutment_face_set;
     for (auto& pair : new_to_origin_face_map)
-	{
-		expanded_abutment_face_set.insert(pair.second);
-	}
+    {
+        expanded_abutment_face_set.insert(pair.second);
+    }
     //std::cout << "expanded_abutment_face_set" << std::endl;
     std::set<vertex_descriptor> expanded_abutment_vertex_set;
     for (auto& fd : expanded_abutment_face_set)
-	{
-		for (auto he : halfedges_around_face(halfedge(fd, *m_arch_sm), *m_arch_sm))
-		{
-			expanded_abutment_vertex_set.insert(target(he, *m_arch_sm));
-		}
-	}
+    {
+        for (auto he : halfedges_around_face(halfedge(fd, *m_arch_sm), *m_arch_sm))
+        {
+            expanded_abutment_vertex_set.insert(target(he, *m_arch_sm));
+        }
+    }
     std::ofstream expanded_abutment_file("expanded_abutment.xyz");
     std::ofstream expanded_abutment_vd_file("expanded_abutment_vd.txt");
     for (auto& vd : expanded_abutment_vertex_set)
     {
-		Point_3 point = (*m_arch_sm).point(vd);
-		expanded_abutment_file << point.x() << " " << point.y() << " " << point.z() << std::endl;
+        Point_3 point = (*m_arch_sm).point(vd);
+        expanded_abutment_file << point.x() << " " << point.y() << " " << point.z() << std::endl;
         expanded_abutment_vd_file << vd.idx() << std::endl;
     }
     expanded_abutment_file.close();
@@ -856,18 +855,18 @@ void TeethWrapper::ExtractAdjacentTeethWithoutAbutment()
     //std::cout << "The number of vertices of m_arch_without_abutment_set: " << m_arch_without_abutment_set.size() << std::endl;
     //std::cout << "The number of vertices of expanded abutment: " << expanded_abutment_vertex_set.size() << std::endl;
     std::set<vertex_descriptor> adjacent_teeth_without_abutment_set; // The set of vertices of adjacent teeth without abutment
-	std::set_intersection(m_arch_without_abutment_set.begin(), m_arch_without_abutment_set.end(), expanded_abutment_vertex_set.begin(), expanded_abutment_vertex_set.end(), std::inserter(adjacent_teeth_without_abutment_set, adjacent_teeth_without_abutment_set.begin()));
+    std::set_intersection(m_arch_without_abutment_set.begin(), m_arch_without_abutment_set.end(), expanded_abutment_vertex_set.begin(), expanded_abutment_vertex_set.end(), std::inserter(adjacent_teeth_without_abutment_set, adjacent_teeth_without_abutment_set.begin()));
     //std::cout << "The number of vertices of adjacent_teeth_without_abutment_set: " << adjacent_teeth_without_abutment_set.size() << std::endl;
     std::ofstream adjacent_teeth_without_abutment_file("adjacent_teeth_without_abutment.xyz");
     for (auto& vd : adjacent_teeth_without_abutment_set)
-	{
-		Point_3 point = (*m_arch_sm).point(vd);
-		adjacent_teeth_without_abutment_file << point.x() << " " << point.y() << " " << point.z() << std::endl;
-	}
-	adjacent_teeth_without_abutment_file.close();
+    {
+        Point_3 point = (*m_arch_sm).point(vd);
+        adjacent_teeth_without_abutment_file << point.x() << " " << point.y() << " " << point.z() << std::endl;
+    }
+    adjacent_teeth_without_abutment_file.close();
 
     std::vector<vertex_descriptor> adjacent_teeth_without_abutment_vector(adjacent_teeth_without_abutment_set.begin(), adjacent_teeth_without_abutment_set.end());
-    std::pair<SurfaceMesh, std::unordered_map<vertex_descriptor, vertex_descriptor>> 
+    std::pair<SurfaceMesh, std::unordered_map<vertex_descriptor, vertex_descriptor>>
         arch_without_abutment_pair = ExtractSubmeshAndVertexMapping(*m_arch_sm, adjacent_teeth_without_abutment_vector);
     //std::cout << arch_without_abutment_pair.first.number_of_vertices();
     m_adjacent_teeth_sm = std::make_shared<SurfaceMesh>(arch_without_abutment_pair.first);
@@ -915,12 +914,12 @@ void TeethWrapper::SetMaxCuspOffsetThreshold(double threshold)
 
 void TeethWrapper::SetArchSurfaceMesh(SurfaceMesh& sm)
 {
-	m_arch_sm = &sm;
+    m_arch_sm = &sm;
 }
 
 void TeethWrapper::SetArchPolyData(vtkSmartPointer<vtkPolyData> pd)
 {
-	m_arch_pd = pd;
+    m_arch_pd = pd;
 }
 
 void TeethWrapper::SetArchWithoutAbutmentSet(const std::set<vertex_descriptor>& arch_without_abutment_set)
@@ -1072,7 +1071,7 @@ void TeethWrapper::SmoothMesh()
  */
 template <typename VertexContainer>
 void TeethWrapper::SmoothMesh(
-    SurfaceMesh& sm, 
+    SurfaceMesh& sm,
     const VertexContainer& area_vertices,
     const double radius,
     const int iteration_times
@@ -1105,7 +1104,7 @@ void TeethWrapper::SmoothMesh(
             Point_3 p = sm.point(v);
             int num = CountAdjacentVertices(sm, v);
             auto circ = sm.halfedge(v);
-            if (!sm.is_valid(circ)) 
+            if (!sm.is_valid(circ))
             {
                 continue;
             }
@@ -1115,7 +1114,7 @@ void TeethWrapper::SmoothMesh(
                 circ = sm.prev(sm.opposite(circ));
             }
             auto done = circ;
-            do 
+            do
             {
                 delta = delta + ((sm.point(sm.source(circ)) - p) / num);
                 circ = sm.prev(sm.opposite(circ));
@@ -1306,7 +1305,7 @@ SurfaceMesh* TeethWrapper::AreaExpander(SurfaceMesh& mesh, const vtkSmartPointer
  * @param extracted_vertices A vector containing the descriptors of the vertices to include in the submesh.
  * @return A pair consisting of the new submesh and a map from the new mesh's vertex descriptors to the original mesh's vertex descriptors.
  */
-std::pair<SurfaceMesh, std::unordered_map<vertex_descriptor, vertex_descriptor>> 
+std::pair<SurfaceMesh, std::unordered_map<vertex_descriptor, vertex_descriptor>>
 TeethWrapper::ExtractSubmeshAndVertexMapping(
     const SurfaceMesh& original_mesh,
     const std::vector<vertex_descriptor>& extracted_vertices
@@ -1399,11 +1398,11 @@ face_descriptor TeethWrapper::FindAdjacentFace(const SurfaceMesh& mesh, const ve
 void TeethWrapper::AdjustCrownWallThickness(double thickness)
 {
     if (!m_cut_tree_ptr)
-	{
-		std::cerr << "m_cut_tree_ptr is not set" << std::endl;
+    {
+        std::cerr << "m_cut_tree_ptr is not set" << std::endl;
 
-		return;
-	}
+        return;
+    }
 
     // Check if m_teeth_border_points is initialized.
     if (m_teeth_border_points.size() == 0)
@@ -1422,7 +1421,7 @@ void TeethWrapper::AdjustCrownWallThickness(double thickness)
     PMP::compute_vertex_normals((*m_teeth_sm), vnormals_teeth);
 
     // Set to store the intersected face descriptors
-    // std::set<face_descriptor> intersected_faces;
+    // std::set<face_descriptor> modified_faces;
     std::map<vertex_descriptor, double> offset_map;
     std::vector<char> chosen_point((*m_teeth_sm).number_of_vertices(), 0);
     std::vector<vertex_descriptor> intersected_vertices;
@@ -1448,7 +1447,7 @@ void TeethWrapper::AdjustCrownWallThickness(double thickness)
 
                 //	if (f != boost::graph_traits<SurfaceMesh>::null_face() && !teeth.is_border(h))
                 //	{
-                //		intersected_faces.insert(f);
+                //		modified_faces.insert(f);
                 //	}
                 //}
                 intersected_vertices.push_back(v);
@@ -1470,16 +1469,16 @@ void TeethWrapper::AdjustCrownWallThickness(double thickness)
                         double min_distance = std::numeric_limits<double>::max();
                         for (auto border_point : m_teeth_border_points)
                         {
-							double distance = sqrt(CGAL::squared_distance(origin_point, border_point));
+                            double distance = sqrt(CGAL::squared_distance(origin_point, border_point));
                             if (distance < min_distance)
                             {
-								min_distance = distance;
-							}
-						}
+                                min_distance = distance;
+                            }
+                        }
                         if (min_distance < 1.0)
                         {
-							offset_map[v] = 0.0; // Do not offset
-						}
+                            offset_map[v] = 0.0; // Do not offset
+                        }
                         else if (min_distance < 2.0)
                         {
                             offset_map[v] *= (min_distance - 1.0) * 2; // Gradually offset
@@ -1518,14 +1517,14 @@ void TeethWrapper::AdjustCrownWallThickness(double thickness)
             if (i % smooth_interval == 0)
             {
                 SmoothMesh(*m_teeth_sm, intersected_vertices, 1.0, 15);
-                //PMP::smooth_shape(intersected_faces, teeth, 1e-2/*, CGAL::parameters::vertex_is_constrained_map(constraint_vertex_map)*/);
+                //PMP::smooth_shape(modified_faces, teeth, 1e-2/*, CGAL::parameters::vertex_is_constrained_map(constraint_vertex_map)*/);
             }
             //PMP::compute_vertex_normals(teeth, vnormals_teeth);
             SmoothAllNormal(vnormals_teeth);
         }
 
         SmoothMesh(*m_teeth_sm, intersected_vertices, 1.0, 15);
-        //PMP::smooth_shape(intersected_faces, teeth, 1e-2/*, CGAL::parameters::vertex_is_constrained_map(constraint_vertex_map)*/);
+        //PMP::smooth_shape(modified_faces, teeth, 1e-2/*, CGAL::parameters::vertex_is_constrained_map(constraint_vertex_map)*/);
     }
 
     CGAL::IO::write_polygon_mesh("teeth_after_thickness.ply", *m_teeth_sm);
@@ -1687,10 +1686,10 @@ void TeethWrapper::AdjustCuspHeight()
     }
 
     if (modifiable_cusp_vertices_offset.size() == 0)
-	{
-		std::cout << "No cusp vertex is modifiable." << std::endl;
-		return;
-	}
+    {
+        std::cout << "No cusp vertex is modifiable." << std::endl;
+        return;
+    }
 
     for (vertex_descriptor offset_v : m_teeth_sm->vertices())
     {
@@ -1831,11 +1830,11 @@ void TeethWrapper::OcclusionShaving(double offset)
         }
     }
 
-    for (auto f : m_teeth_sm->faces()) 
+    for (auto f : m_teeth_sm->faces())
     {
-        for (auto v : vertices_around_face(halfedge(f, *m_teeth_sm), *m_teeth_sm)) 
+        for (auto v : vertices_around_face(halfedge(f, *m_teeth_sm), *m_teeth_sm))
         {
-            if (m_changed_v_set.find(v) != m_changed_v_set.end()) 
+            if (m_changed_v_set.find(v) != m_changed_v_set.end())
             {
                 extracted_faces.insert(f);
                 break; // Once we find a matching vertex, no need to check the rest for this face
@@ -1901,18 +1900,17 @@ void TeethWrapper::ProximalShaving(double offset)
         }
     }
 
-
     int iteration_times = 10;
     int smooth_iteration = 10;
     int smooth_interval = 20;
-    double protected_threshold = 1.0;
-    double gradual_threshold = 2.0;
+    double protected_threshold = 0.3;
+    double gradual_threshold = 0.6;
     std::set<vertex_descriptor> modified_vertices;
 
 
     VNMap teeth_vertices_normal = AddVerticesNormalsPropertyMap();
     PMP::compute_vertex_normals(*m_teeth_sm, teeth_vertices_normal);
-        
+
     auto vertical_intersection_map = m_teeth_sm->add_property_map<vertex_descriptor, bool>("v:vertical_intersection", false).first;
     auto chosen_point_map = m_teeth_sm->add_property_map<vertex_descriptor, bool>("v:chosen_point", false).first;
     auto offset_map = m_teeth_sm->add_property_map<vertex_descriptor, double>("v:offset", 0.0).first;
@@ -1936,8 +1934,8 @@ void TeethWrapper::ProximalShaving(double offset)
 
     for (int i = 0; i < iteration_times; ++i)
     {
+        chosen_point_map = m_teeth_sm->add_property_map<vertex_descriptor, bool>("v:chosen_point", false).first;
         offset_map = m_teeth_sm->add_property_map<vertex_descriptor, double>("v:offset", 0.0).first;
-
         {
             for (auto v : m_teeth_sm->vertices())
             {
@@ -2001,9 +1999,9 @@ void TeethWrapper::ProximalShaving(double offset)
                             if (min_distance < protected_threshold)
                             {
                                 //offset_map[v] = 0.0; // Do not offset
-                                std::cout << min_distance << std::endl;
+                                //::cout << min_distance << std::endl;
                                 chosen_point_map[v] = false;
-                                std::cout << "Skipped vertex: " << v.idx() << "\n";
+                                //std::cout << "Skipped vertex: " << v.idx() << "\n";
                                 continue;
 
                             }
@@ -2023,8 +2021,11 @@ void TeethWrapper::ProximalShaving(double offset)
                 (*m_teeth_sm).point(v) += offset_vector;
             }
         }
+        m_teeth_sm->remove_property_map(offset_map);
+        m_teeth_sm->remove_property_map(chosen_point_map);
     }
     {
+        chosen_point_map = m_teeth_sm->add_property_map<vertex_descriptor, bool>("v:chosen_point", false).first;
         offset_map = m_teeth_sm->add_property_map<vertex_descriptor, double>("v:offset", 0.0).first;
         {
             for (auto v : m_teeth_sm->vertices())
@@ -2106,45 +2107,47 @@ void TeethWrapper::ProximalShaving(double offset)
                 (*m_teeth_sm).point(v) += offset_vector;
             }
         }
+        m_teeth_sm->remove_property_map(chosen_point_map);
+        m_teeth_sm->remove_property_map(offset_map);
     }
-    std::set<face_descriptor> intersected_faces;
-    for (auto& vd : modified_vertices) 
+    std::set<face_descriptor> modified_faces;
+    for (auto& vd : modified_vertices)
     {
         for (auto h : halfedges_around_target(vd, *m_teeth_sm))
         {
             face_descriptor fd = face(h, *m_teeth_sm);
-            intersected_faces.insert(fd);
+            modified_faces.insert(fd);
         }
     }
-    std::cout << "Intersected faces: " << intersected_faces.size() << std::endl;
+    std::cout << "Intersected faces: " << modified_faces.size() << std::endl;
     // Check if the face contains border edge
-    auto has_border_edge_or_not_valid = [](SurfaceMesh& sm, face_descriptor fd) -> bool 
-    {
-        if (!sm.is_valid(fd))
+    auto has_border_edge_or_not_valid = [](SurfaceMesh& sm, face_descriptor fd) -> bool
         {
-			return true;
-		}
-        halfedge_descriptor hd = sm.halfedge(fd);
-        for (int i = 0; i < 3; ++i, hd = sm.next(hd)) 
-        {
-            if (sm.is_border(sm.target(hd))) 
+            if (!sm.is_valid(fd))
             {
                 return true;
             }
-        }
-        return false;
-    };
+            halfedge_descriptor hd = sm.halfedge(fd);
+            for (int i = 0; i < 3; ++i, hd = sm.next(hd))
+            {
+                if (sm.is_border(sm.target(hd)))
+                {
+                    return true;
+                }
+            }
+            return false;
+        };
 
     // Find border faces around the modified faces.
     std::set<face_descriptor> modified_faces_border;
     std::set<vertex_descriptor> modified_vertices_border;
     {
-        for (auto& fd : intersected_faces)
+        for (auto& fd : modified_faces)
         {
             if (has_border_edge_or_not_valid(*m_teeth_sm, fd))
             {
                 continue;
-			}
+            }
             halfedge_descriptor hd = m_teeth_sm->halfedge(fd);
             for (int i = 0; i < 3; ++i, hd = m_teeth_sm->next(hd))
             {
@@ -2153,19 +2156,21 @@ void TeethWrapper::ProximalShaving(double offset)
 
                 if (
                     !has_border_edge_or_not_valid(*m_teeth_sm, fd_opposite)
-                    && intersected_faces.find(fd_opposite) == intersected_faces.end() 
-                )
+                    && modified_faces.find(fd_opposite) == modified_faces.end()
+                    )
                 {
-					modified_faces_border.insert(fd);
+                    modified_faces_border.insert(fd);
                     modified_faces_border.insert(fd_opposite);
-				}
+                }
             }
         }
     }
 
     SmoothMesh(*m_teeth_sm, modified_vertices_border, 1.5, 30);
-    PMP::isotropic_remeshing(intersected_faces, 0.1, *m_teeth_sm);
-
+    PMP::isotropic_remeshing(modified_faces, 0.25, *m_teeth_sm);
+    m_teeth_sm->remove_property_map(chosen_point_map);
+    m_teeth_sm->remove_property_map(offset_map);
+    m_teeth_sm->remove_property_map(vertical_intersection_map);
     m_teeth_sm->collect_garbage();
 
     CGAL::IO::write_polygon_mesh("teeth_after_proximal_shaving.ply", *m_teeth_sm);
@@ -2258,7 +2263,7 @@ void TeethWrapper::ScaleTeeth(double offset)
                 area.push_back(f);
             }
         }
-        PMP::isotropic_remeshing(area, 0.05, *m_teeth_sm);
+        PMP::isotropic_remeshing(area, 0.25, *m_teeth_sm);
         (*m_teeth_sm).collect_garbage();
     }
 }

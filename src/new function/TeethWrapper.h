@@ -1,8 +1,74 @@
 #pragma once
 #ifndef TEETH_WRAPPER_H
 #define TEETH_WRAPPER_H
-#include"stdafx.h"
 
+#include <CGAL/Simple_cartesian.h>
+#include <CGAL/Surface_mesh.h>
+#include <CGAL/Point_3.h>
+#include <CGAL/AABB_face_graph_triangle_primitive.h>
+#include <CGAL/AABB_halfedge_graph_segment_primitive.h>
+#include <CGAL/Polygon_mesh_slicer.h>
+#include <CGAL/AABB_traits.h>
+#include <CGAL/AABB_tree.h>
+#include <CGAL/Surface_mesh_deformation.h>
+#include <CGAL/Polygon_mesh_processing/compute_normal.h>
+#include <CGAL/Polygon_mesh_processing/self_intersections.h>
+#include <CGAL/Polygon_mesh_processing/remesh.h>
+
+#include <boost/optional.hpp>
+#include <vtkPolyData.h>
+#include <vtkSphereSource.h>
+#include <vtkSmartPointer.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkActor.h>
+#include <vtkProperty.h>
+#include <vtkFloatArray.h>
+#include <vtkPointData.h>
+#include <vtkRenderer.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkFloatArray.h>
+#include <vtkLookupTable.h>
+#include <vtkCellData.h>
+#include "vectorAlgorithm.h"
+#include "Timer.hpp"
+
+typedef CGAL::Simple_cartesian<double>												Kernel;
+typedef Kernel::Point_2																Point_2;
+typedef Kernel::Point_3																Point_3;
+typedef Kernel::Vector_3															Vector_3;
+typedef CGAL::Surface_mesh<Kernel::Point_3>											SurfaceMesh;
+typedef boost::graph_traits<SurfaceMesh>::vertex_descriptor							vertex_descriptor;
+typedef boost::graph_traits<SurfaceMesh>::halfedge_descriptor						halfedge_descriptor;
+typedef boost::graph_traits<SurfaceMesh>::vertex_iterator							vertex_iterator;
+typedef boost::graph_traits<SurfaceMesh>::face_descriptor							face_descriptor;
+typedef boost::graph_traits<SurfaceMesh>::edge_descriptor							edge_descriptor;
+
+typedef Kernel::Segment_2															Segment_2;
+typedef Kernel::Segment_3															Segment_3;
+typedef Kernel::Plane_3																Plane_3;
+typedef CGAL::AABB_face_graph_triangle_primitive<SurfaceMesh>						FacePrimitive;
+typedef CGAL::AABB_traits<Kernel, FacePrimitive>									FaceTraits;
+typedef CGAL::AABB_tree<FaceTraits>														FaceTree;
+typedef FaceTree::Primitive_id															Primitive_id;
+typedef boost::optional<FaceTree::Intersection_and_primitive_id<Kernel::Ray_3>::Type>	Ray_intersection;
+typedef Kernel::Ray_3																	Ray;
+typedef boost::optional<FaceTree::Intersection_and_primitive_id<Segment_3>::Type>		Segment_intersection;
+typedef std::vector<std::pair<SurfaceMesh::Face_index, SurfaceMesh::Face_index>>		Face_intersections;
+
+typedef std::vector<Kernel::Point_3>												Polyline_type;
+typedef std::vector<Polyline_type>													Polylines;
+
+typedef CGAL::AABB_halfedge_graph_segment_primitive<SurfaceMesh>					HalfedgePrimitive;
+typedef CGAL::AABB_traits<Kernel, HalfedgePrimitive>								HalfedgeTraits;
+typedef CGAL::AABB_tree<HalfedgeTraits>												HalfedgeTree;
+
+typedef boost::property_map<SurfaceMesh, CGAL::vertex_point_t>::type				VPMap;
+typedef SurfaceMesh::template Property_map<vertex_descriptor, Vector_3>				VNMap;
+typedef SurfaceMesh::template Property_map<vertex_descriptor, double>				VLMap;
+typedef CGAL::Surface_mesh_deformation<SurfaceMesh, CGAL::Default, CGAL::Default, CGAL::SRE_ARAP>	Surface_mesh_deformation;
+
+namespace PMP = CGAL::Polygon_mesh_processing;
 
 /**
  * @class TeethWrapper
@@ -23,11 +89,11 @@
 class TeethWrapper
 {
 private:
-	SurfaceMesh*                     m_teeth_sm;
-	SurfaceMesh*					 m_bite_sm;
-	SurfaceMesh*					 m_cut_sm;
+	SurfaceMesh* m_teeth_sm;
+	SurfaceMesh* m_bite_sm;
+	SurfaceMesh* m_cut_sm;
 	std::shared_ptr<SurfaceMesh>	 m_adjacent_teeth_sm; ///< The adjacent teeth in arch without abutment.
-	SurfaceMesh*					 m_arch_sm; ///< The dental arch.
+	SurfaceMesh* m_arch_sm; ///< The dental arch.
 	vtkSmartPointer<vtkPolyData>     m_teeth_pd;
 	vtkSmartPointer<vtkPolyData>     m_arch_pd; ///< PolyData of the dental arch.
 	vtkSmartPointer<vtkActor>        m_teeth_actor;
