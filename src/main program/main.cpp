@@ -2,13 +2,38 @@
 #include"vtkRenderPipeline.h"
 #include"meshTransform.h"
 #include"simpleRender.h"
+#include "TeethWrapper.h"
 
 vtkRenderPipeline* pipeline;
 SurfaceMesh mesh;
 
+TeethWrapper teeth_wrapper;
+
+vtkSmartPointer<vtkPolyData> PolyData;
+vtkSmartPointer<vtkActor> PolyDataActor;
+vtkSmartPointer<vtkActor> TeethPolyDataActor;
+vtkSmartPointer<vtkActor> RemeshedTeethPolyDataActor;
+vtkSmartPointer<vtkPolyData> TeethPolydata;
+
+Vector_3 projection_direction(-0.037686, 0.379984, -0.203274);
+
+bool rotate_flag = true;
 void LeftPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
-	//cout<<"Left Press" << endl;
+    if (rotate_flag)
+    {
+        pipeline->Renderer->RemoveActor(TeethPolyDataActor);
+        pipeline->Renderer->AddActor(RemeshedTeethPolyDataActor);
+        pipeline->RenderWindow->Render();
+        rotate_flag = false;
+    }
+    else
+    {
+        pipeline->Renderer->RemoveActor(RemeshedTeethPolyDataActor);
+        pipeline->Renderer->AddActor(TeethPolyDataActor);
+        pipeline->RenderWindow->Render();
+        rotate_flag = true;
+    }
 }
 
 void MouseMove(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
@@ -16,168 +41,122 @@ void MouseMove(vtkObject* caller, long unsigned int eventId, void* clientData, v
 	
 }
 
-std::string select_folder()
-{
-	BROWSEINFO  bi;
-	bi.hwndOwner = NULL;
-	bi.pidlRoot = CSIDL_DESKTOP; //�ļ��еĸ�Ŀ¼���˴�Ϊ����
-	bi.pszDisplayName = NULL;
-	bi.lpszTitle = NULL; //��ʾλ�ڶԻ������ϲ�����ʾ��Ϣ
-	bi.ulFlags = BIF_DONTGOBELOWDOMAIN | BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE; //���½��ļ��а�ť
-	bi.lpfn = NULL;
-	bi.iImage = 0;
-	LPITEMIDLIST pidl = SHBrowseForFolder(&bi); //����ѡ��Ի���
-	if (pidl == NULL)
-	{
-		std::cout << "û��ѡ��Ŀ¼" << std::endl;
-		return std::string();
-	}
-	TCHAR folder_tchar[MAX_PATH];
-	SHGetPathFromIDList(pidl, folder_tchar);
-	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-	std::string selected_folder = converter.to_bytes(folder_tchar);
-
-	return selected_folder;
-}
-
-void writePNG(SurfaceMesh sm,double3 dir)
-{
-	dir = -dir;
-	dir.normalize();
-	double3 y(0, 1, 0);
-	double3 axis = double3::crossProduct(dir,y);
-	axis.normalize();
-	axis = axis * acos(double3::dotProduct(dir, y));
-	double3 center(0, 0, 0);
-	for (auto v : sm.vertices())
-		center = center + double3(sm.point(v).x(), sm.point(v).y(), sm.point(v).z());
-	center = center / sm.number_of_vertices();
-	for (auto v : sm.vertices())
-	{
-		double3 pt(sm.point(v).x(), sm.point(v).y(), sm.point(v).z());
-		pt = pt - center;
-		AngleAxisRotatePoint(axis.data, pt.data, pt.data);
-		sm.point(v) = Point_3(pt[0] , pt[1] , pt[2] );
-	}
-	
-	Tree tree(faces(sm).first, faces(sm).second, sm);
-	double x_min = std::numeric_limits<double>::max();
-	double x_max = std::numeric_limits<double>::min();
-	double z_min = std::numeric_limits<double>::max();
-	double z_max = std::numeric_limits<double>::min();
-	double y_max = std::numeric_limits<double>::min();
-	for (auto v : sm.vertices())
-	{
-		Point_3 p = sm.point(v);
-		x_min = std::min(x_min, p.x());
-		x_max = std::max(x_max, p.x());
-		z_min = std::min(z_min, p.z());
-		z_max = std::max(z_max, p.z());
-		y_max = std::max(y_max, p.y());
-	}
-	double max;
-	if ((x_max - x_min) > (z_max - z_min))
-		max = x_max - x_min;
-	else
-		max = z_max - z_min;
-
-	vtkSmartPointer< vtkImageData> image = vtkSmartPointer< vtkImageData>::New();
-	image->SetDimensions(1000, 1000, 1);
-	image->AllocateScalars(VTK_UNSIGNED_CHAR, 3);
-	int dim[3];
-	image->GetDimensions(dim);
-	cout << dim[0] << " " << dim[1] << " " << dim[2] << endl;
-	std::vector<std::vector<double>> depth(dim[0], std::vector<double>(dim[1], 0));
-	for (int x = 0; x < dim[0]; x++)
-	{
-		for (int z = 0; z < dim[1]; z++)
-		{
-			double x_ = x_min + (x_max - x_min) * x / dim[0];
-			double z_ = z_min + (z_max - z_min) * z / dim[1];
-			Ray_3 ray_query(Point_3(x_, y_max, z_), Vector_3(0, -1, 0));
-			auto intersection = tree.first_intersection(ray_query);
-			const Point_3* p;
-			if (intersection && boost::get<Point_3>(&(intersection->first)))
-			{
-				p = boost::get<Point_3>(&(intersection->first));
-				depth[x][z] = y_max - p->y();
-			}
-			else
-			{
-				depth[x][z] = 0;
-			}
-		}
-	}
-	double depth_max = 0;
-	for (int x = 0; x < 1000; x++)
-	{
-		for (int z = 0; z < 1000; z++)
-		{
-			depth_max = std::max(depth_max, depth[x][z]);
-		}
-	}
-	for (int x = 0; x < 1000; x++)
-	{
-		for (int z = 0; z < 1000; z++)
-		{
-			if (depth[x][z] == 0)
-			{
-				unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x, z, 0));
-				pixel[0] = static_cast<int>(depth[x][z] / depth_max * 255); 
-				pixel[1] = static_cast<int>(depth[x][z] / depth_max * 255);  
-				pixel[2] = static_cast<int>(depth[x][z] / depth_max * 255); 
-			}
-			else
-			{
-				if (255 - static_cast<int>(depth[x][z] / depth_max * 255) > 100) 
-				{
-					unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x, z, 0));
-					pixel[0] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);
-					pixel[1] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);
-					pixel[2] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);
-				}
-				else
-				{
-					unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x, z, 0));
-					pixel[0] = 0;
-					pixel[1] = 0;
-					pixel[2] = 0;
-				}
-			}
-		}
-	}
-	vtkSmartPointer<vtkPNGWriter> writer = vtkSmartPointer<vtkPNGWriter>::New();
-	writer->SetFileName("output.png");
-	writer->SetInputData(image);
-	writer->Write();
-}
-
 
 void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
-	vtkSmartPointer<vtkCoordinate> coordinate = vtkSmartPointer<vtkCoordinate>::New();
-	coordinate->SetCoordinateSystemToDisplay();
-	coordinate->SetValue(pipeline->RenderWindow->GetSize()[0] / 2, pipeline->RenderWindow->GetSize()[1] / 2, 0);
-	double3 dir(coordinate->GetComputedWorldValue(pipeline->Renderer));
-	dir = dir - double3(pipeline->Renderer->GetActiveCamera()->GetPosition());
-	writePNG(mesh,dir);
 }
-
-
-
 
 
 int main()
 {
 	pipeline = new vtkRenderPipeline();
 
-	std::string selected_folder_path = select_folder();
+    vtkNew<vtkXMLPolyDataReader> vtp_reader;
+    vtp_reader->SetFileName("data/arch_38057.vtp");
+    vtp_reader->Update();
+    PolyData = vtp_reader->GetOutput();
+    std::cout << "arch.vtp" << std::endl;
+    vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    mapper->SetInputData(PolyData);
+    mapper->Update();
+    PolyDataActor = vtkSmartPointer<vtkActor>::New();
+    PolyDataActor->SetMapper(mapper);
+    PolyDataActor->GetProperty()->SetColor(1, 1, 1);
+    PolyDataActor->GetProperty()->SetAmbient(0.5);
+    PolyDataActor->GetProperty()->SetSpecularPower(100);
+    PolyDataActor->GetProperty()->SetSpecular(0.5);
+    PolyDataActor->GetProperty()->SetDiffuse(0.5);
+    PolyDataActor->GetProperty()->EdgeVisibilityOff();
+    PolyDataActor->PickableOn();
 
-	std::cout << "selected_folder_path: " << selected_folder_path << std::endl;
+    SurfaceMesh arch_sm;
+    //PolyDataToSurfaceMesh(PolyData, arch_sm);
+    arch_sm = VTK_PolyData2CGAL_Surface_Mesh(PolyData);
 
-	CGAL::IO::read_polygon_mesh("data/test.stl",mesh);
-	RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(mesh), pipeline->Renderer,1,1,1,1);
-	
+    std::ifstream visited_vd_reader("data/visited_vd_38057.txt");
+    std::set<vertex_descriptor> arch_without_abutment_set;
+    {
+        std::string line;
+        while (std::getline(visited_vd_reader, line))
+        {
+            std::istringstream iss(line);
+            int x;
+            if (!(iss >> x)) { break; } // error
+            arch_without_abutment_set.insert(vertex_descriptor(x));
+        }
+    }
+
+    vtkSmartPointer<vtkPLYReader> teeth_reader = vtkSmartPointer<vtkPLYReader>::New();
+    teeth_reader->SetFileName("data/teeth_38057.ply");
+    teeth_reader->Update();
+    TeethPolydata = teeth_reader->GetOutput();
+
+    SurfaceMesh teeth_sm;
+    teeth_sm = VTK_PolyData2CGAL_Surface_Mesh(TeethPolydata);
+
+    teeth_wrapper.SetTeethSurfaceMesh(teeth_sm);
+    teeth_wrapper.SetTeethActor(TeethPolyDataActor);
+    teeth_wrapper.SetRenderer(pipeline->Renderer);
+    teeth_wrapper.SetRenderWindow(pipeline->RenderWindow);
+    teeth_wrapper.SetProjectionDirection(projection_direction);
+    //teeth_wrapper.SetMaxDistance(max_distance);
+    teeth_wrapper.SetOpacity(1);
+
+    teeth_wrapper.SetSelectedId(6);
+    teeth_wrapper.SetArchPolyData(PolyData);
+    teeth_wrapper.SetArchSurfaceMesh(arch_sm);
+    teeth_wrapper.SetArchWithoutAbutmentSet(arch_without_abutment_set);
+    teeth_wrapper.ExtractAdjacentTeethWithoutAbutment();
+    teeth_wrapper.ProximalShaving(0.08);
+    SurfaceMesh remeshed_sm = teeth_wrapper.GetTeethSurfaceMesh();
+    vtkSmartPointer<vtkPolyData> remeshed_polydata = CGAL_Surface_Mesh2VTK_PolyData(remeshed_sm);
+    vtkSmartPointer<vtkPolyDataMapper> remeshed_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    remeshed_mapper->SetInputData(remeshed_polydata);
+    remeshed_mapper->Update();
+    RemeshedTeethPolyDataActor = vtkSmartPointer<vtkActor>::New();
+    RemeshedTeethPolyDataActor->SetMapper(remeshed_mapper);
+    RemeshedTeethPolyDataActor->GetProperty()->SetColor(0, 1, 1);
+    RemeshedTeethPolyDataActor->GetProperty()->SetAmbient(0.5);
+    RemeshedTeethPolyDataActor->GetProperty()->SetSpecularPower(100);
+    RemeshedTeethPolyDataActor->GetProperty()->SetSpecular(0.5);
+    RemeshedTeethPolyDataActor->GetProperty()->SetDiffuse(0.5);
+    RemeshedTeethPolyDataActor->GetProperty()->SetOpacity(0.8);
+    RemeshedTeethPolyDataActor->GetProperty()->EdgeVisibilityOff();
+    //RemeshedTeethPolyDataActor->PickableOn();
+
+    std::shared_ptr<SurfaceMesh> adjacent_teeth_sm = teeth_wrapper.GetAdjacentTeethSurfaceMesh();
+    vtkSmartPointer<vtkPolyData> adjacent_teeth_polydata = CGAL_Surface_Mesh2VTK_PolyData(*adjacent_teeth_sm);
+
+    vtkSmartPointer<vtkPolyDataMapper> adjacent_teeth_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    adjacent_teeth_mapper->SetInputData(adjacent_teeth_polydata);
+    adjacent_teeth_mapper->Update();
+
+    vtkSmartPointer<vtkActor> adjacent_teeth_actor = vtkSmartPointer<vtkActor>::New();
+    adjacent_teeth_actor->SetMapper(adjacent_teeth_mapper);
+    adjacent_teeth_actor->GetProperty()->SetColor(1, 1, 1);
+    adjacent_teeth_actor->GetProperty()->SetAmbient(0.5);
+    adjacent_teeth_actor->GetProperty()->SetSpecularPower(100);
+    adjacent_teeth_actor->GetProperty()->SetSpecular(0.5);
+    adjacent_teeth_actor->GetProperty()->SetDiffuse(0.5);
+    adjacent_teeth_actor->GetProperty()->SetOpacity(0.5);
+    adjacent_teeth_actor->GetProperty()->EdgeVisibilityOff();
+    pipeline->Renderer->AddActor(adjacent_teeth_actor);
+
+    vtkSmartPointer<vtkPolyDataMapper> teeth_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    teeth_mapper->SetInputData(TeethPolydata);
+    teeth_mapper->Update();
+    TeethPolyDataActor = vtkSmartPointer<vtkActor>::New();
+    TeethPolyDataActor->SetMapper(teeth_mapper);
+    TeethPolyDataActor->GetProperty()->SetColor(0, 1, 1);
+    TeethPolyDataActor->GetProperty()->SetAmbient(0.5);
+    TeethPolyDataActor->GetProperty()->SetSpecularPower(100);
+    TeethPolyDataActor->GetProperty()->SetSpecular(0.5);
+    TeethPolyDataActor->GetProperty()->SetDiffuse(0.5);
+    TeethPolyDataActor->GetProperty()->SetOpacity(0.8);
+    //TeethPolyDataActor->GetProperty()->EdgeVisibilityOn();
+    //TeethPolyDataActor->PickableOn();
+    pipeline->Renderer->AddActor(TeethPolyDataActor);
+
 	pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
 	pipeline->Renderer->ResetCamera();
 	pipeline->addObserver(vtkCommand::LeftButtonPressEvent, LeftPress);

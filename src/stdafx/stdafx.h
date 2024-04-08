@@ -162,6 +162,6 @@ typedef boost::property_map<SurfaceMesh, CGAL::vertex_point_t>::type				VPMap;
 typedef SurfaceMesh::template Property_map<vertex_descriptor, Vector_3>				VNMap;
 typedef SurfaceMesh::template Property_map<face_descriptor, Vector_3>				FNMap;
 typedef SurfaceMesh::template Property_map<vertex_descriptor, double>				VLMap;
-//typedef CGAL::Surface_mesh_deformation<SurfaceMesh, CGAL::Default, CGAL::Default, CGAL::SRE_ARAP>	Surface_mesh_deformation;
+typedef CGAL::Surface_mesh_deformation<SurfaceMesh, CGAL::Default, CGAL::Default, CGAL::SRE_ARAP>	Surface_mesh_deformation;
 
 namespace PMP = CGAL::Polygon_mesh_processing;
