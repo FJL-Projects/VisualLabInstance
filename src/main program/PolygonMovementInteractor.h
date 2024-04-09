@@ -60,18 +60,50 @@ enum class MoveState
 
 class PolygonMovementInteractorStyle : public vtkInteractorStyleTrackballCamera
 {
+private:
+	vtkSmartPointer<vtkCellPicker> m_cell_picker = vtkSmartPointer<vtkCellPicker>::New();
+	//vtkSmartPointer<vtkPolyData> m_polydata = vtkSmartPointer<vtkPolyData>::New();
+	vtkSmartPointer<vtkActor> m_polydata_actor = vtkSmartPointer<vtkActor>::New();
+	vtkSmartPointer<vtkRenderer> m_renderer = vtkSmartPointer<vtkRenderer>::New();
+	vtkSmartPointer<vtkRenderWindow> m_render_window = vtkSmartPointer<vtkRenderWindow>::New();
+	SurfaceMesh m_mesh;
+
+	MoveState m_state;
+	int m_last_x = -1000;
+	int m_last_y = -1000;
+	std::array<double, 3> m_center_position;
+	std::array<double, 3> m_last_pick_position;
+	const std::array<double, 3> m_axis_x = { 1, 0, 0 };
+	const std::array<double, 3> m_axis_y = { 0, 1, 0 };
+	const std::array<double, 3> m_axis_z = { 0, 0, 1 };
+	vtkSmartPointer<vtkTransform> m_transform_x;
+	vtkSmartPointer<vtkTransform> m_transform_y;
+	vtkSmartPointer<vtkTransform> m_transform_z;
+
+	vtkSmartPointer<vtkActor> m_arrow_actor_x = vtkSmartPointer<vtkActor>::New();
+	vtkSmartPointer<vtkActor> m_arrow_actor_y = vtkSmartPointer<vtkActor>::New();
+	vtkSmartPointer<vtkActor> m_arrow_actor_z = vtkSmartPointer<vtkActor>::New();
+
+	std::array<double, 3> m_corrected_occlusal_direction = { 0, 0, 0 };
+
+	bool m_constrain_border = false;
+
 public:
+	vtkObject* caller;
 	static PolygonMovementInteractorStyle* New()
 	{
 		return new PolygonMovementInteractorStyle;
 	}
 	vtkTypeMacro(PolygonMovementInteractorStyle, vtkInteractorStyleTrackballCamera);
 
-	PolygonMovementInteractorStyle(){}
+	PolygonMovementInteractorStyle()
+	{
+	}
 
 	void SetPolyData(vtkSmartPointer<vtkPolyData>);
 	void SetRenderer(vtkSmartPointer<vtkRenderer>);
 	void SetRenderWindow(vtkSmartPointer<vtkRenderWindow>);
+	void SetSurfaceMesh(SurfaceMesh&);
 
 	virtual void OnLeftButtonDown()  override;
 	virtual void OnLeftButtonUp() override;
@@ -121,31 +153,7 @@ public:
 		Polydata->SetPolys(TrianglePolys);
 		return Polydata;
 	}
-	vtkObject* caller;
-
-public:
-	vtkSmartPointer<vtkCellPicker> m_cell_picker = vtkSmartPointer<vtkCellPicker>::New();
-	vtkSmartPointer<vtkPolyData> m_polydata = vtkSmartPointer<vtkPolyData>::New();
-	vtkSmartPointer<vtkRenderer> m_renderer = vtkSmartPointer<vtkRenderer>::New();
-	vtkSmartPointer<vtkActor> m_polydata_actor = vtkSmartPointer<vtkActor>::New();
-	vtkSmartPointer<vtkRenderWindow> m_render_window = vtkSmartPointer<vtkRenderWindow>::New();
-	MoveState m_state;
-	int m_last_x = -1000;
-	int m_last_y = -1000;
-	std::array<double, 3> m_center_position;
-	std::array<double, 3> m_last_pick_position;
-	const std::array<double, 3> m_axis_x = { 1, 0, 0 };
-	const std::array<double, 3> m_axis_y = { 0, 1, 0 };
-	const std::array<double, 3> m_axis_z = { 0, 0, 1 };
-	vtkSmartPointer<vtkTransform> m_transform_x;
-	vtkSmartPointer<vtkTransform> m_transform_y;
-	vtkSmartPointer<vtkTransform> m_transform_z;
-
-	vtkSmartPointer<vtkActor> m_arrow_actor_x = vtkSmartPointer<vtkActor>::New();
-	vtkSmartPointer<vtkActor> m_arrow_actor_y = vtkSmartPointer<vtkActor>::New();
-	vtkSmartPointer<vtkActor> m_arrow_actor_z = vtkSmartPointer<vtkActor>::New();
-
-	std::array<double, 3> m_corrected_occlusal_direction = { 0, 0, 0 };
+	void SetConstrainBorder(bool b) { m_constrain_border = b; }
 };
 
 #endif // POLYGONMOVEMENTINTERACTOR_H

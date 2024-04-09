@@ -7,6 +7,7 @@
 
 vtkRenderPipeline* pipeline;
 PolygonMovementInteractorStyle generated_crown_scale_interactor;
+Vector_3 projection_direction(0.194717, 0.911011, -0.363515);
 /**
  * @brief Generate a 4-digit number string with leading zeros.
  *
@@ -41,21 +42,23 @@ void RightRelease(vtkObject* caller, long unsigned int eventId, void* clientData
 	//std::cout<<"Right Released" << endl;
 }
 
-void LeftPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
-{
-	//std::cout<<"Left Press" << endl;
-}
-
 void MouseMove(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
-	
+	generated_crown_scale_interactor.caller = caller;
+	generated_crown_scale_interactor.OnMouseMove();
 }
 
+void LeftPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
+{
+	generated_crown_scale_interactor.caller = caller;
+	generated_crown_scale_interactor.OnLeftButtonDown();
+}
+	
 void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
+	generated_crown_scale_interactor.caller = caller;
+	generated_crown_scale_interactor.OnLeftButtonUp();
 }
-	
-
 int main()
 {
 	pipeline = new vtkRenderPipeline();
@@ -65,8 +68,58 @@ int main()
 
 	vtkSmartPointer<vtkPolyData> teeth_pd = CGAL_Surface_Mesh2VTK_PolyData(teeth_sm);
 
-	RenderPolydata(teeth_pd, pipeline->m_renderer);
+	double3 direction = { projection_direction.x(), projection_direction.y(), projection_direction.z() };
+	
+	double3 center(teeth_pd->GetCenter());
+	Point_3 source(center[0], center[1], center[2]);
+	Vector_3 direction_vector(direction[0], direction[1], direction[2]);
+	direction_vector *= 10;
+	Point_3 destination = source + direction_vector;
 
+	// Create a line
+	vtkSmartPointer<vtkLineSource> lineSource = vtkSmartPointer<vtkLineSource>::New();
+	lineSource->SetPoint1(source[0], source[1], source[2]);
+	lineSource->SetPoint2(destination[0], destination[1], destination[2]);
+	lineSource->Update();
+
+	RenderPolydata(lineSource->GetOutput(), pipeline->m_renderer);
+
+	//// Create an arrow
+	//vtkSmartPointer<vtkArrowSource> arrowSource = vtkSmartPointer<vtkArrowSource>::New();
+
+	//// Create a transform that aligns the Z-axis with the desired direction
+	//vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
+	//transform->Translate(teeth_pd->GetCenter());
+	//transform->Scale(20, 20, 20);
+	//double zAxis[3] = { 0.0, 0.0, 1.0 };
+	//// Compute the angle and axis for the rotation
+	//double angle = vtkMath::AngleBetweenVectors(zAxis, direction.data);
+	//double axis[3];
+	//vtkMath::Cross(zAxis, direction.data, axis);
+
+	//// Apply the rotation if the angle is not 0
+	//if (angle >= 1e-6)
+	//{
+	//	transform->RotateWXYZ(vtkMath::DegreesFromRadians(angle), axis);
+	//}
+	//transform->Update();
+	//// Mapper
+	//vtkSmartPointer<vtkPolyDataMapper> mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	//mapper->SetInputConnection(arrowSource->GetOutputPort());
+	//mapper->Update();
+
+	//// Actor
+	//vtkSmartPointer<vtkActor> actor = vtkSmartPointer<vtkActor>::New();
+	//actor->SetMapper(mapper);
+	//actor->SetUserTransform(transform);
+
+	//pipeline->m_renderer->AddActor(actor);
+
+	//RenderPolydata(teeth_pd, pipeline->m_renderer);
+	generated_crown_scale_interactor.SetRenderer(pipeline->m_renderer);
+	generated_crown_scale_interactor.SetRenderWindow(pipeline->m_render_window);
+	generated_crown_scale_interactor.SetPolyData(teeth_pd);
+	generated_crown_scale_interactor.SetCorrectedOcclusalDirection(direction);
 	// Set up the camera and interactor.
 	pipeline->m_renderer->GetActiveCamera()->SetParallelProjection(1);
 	pipeline->m_renderer->ResetCamera();
