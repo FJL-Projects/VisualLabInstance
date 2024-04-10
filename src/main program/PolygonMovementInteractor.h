@@ -6,6 +6,8 @@
 #include <cmath>
 #include <vector>
 #include <array>
+#include <memory>
+
 #include <vtkTubeFilter.h>
 #include <vtkNamedColors.h>
 #include <vtkSmartPointer.h>
@@ -62,11 +64,12 @@ class PolygonMovementInteractorStyle : public vtkInteractorStyleTrackballCamera
 {
 private:
 	vtkSmartPointer<vtkCellPicker> m_cell_picker = vtkSmartPointer<vtkCellPicker>::New();
-	//vtkSmartPointer<vtkPolyData> m_polydata = vtkSmartPointer<vtkPolyData>::New();
+	vtkSmartPointer<vtkPolyData> m_polydata = vtkSmartPointer<vtkPolyData>::New();
 	vtkSmartPointer<vtkActor> m_polydata_actor = vtkSmartPointer<vtkActor>::New();
 	vtkSmartPointer<vtkRenderer> m_renderer = vtkSmartPointer<vtkRenderer>::New();
 	vtkSmartPointer<vtkRenderWindow> m_render_window = vtkSmartPointer<vtkRenderWindow>::New();
-	SurfaceMesh m_mesh;
+	
+	std::shared_ptr<SurfaceMesh> m_mesh;
 
 	MoveState m_state;
 	int m_last_x = -1000;
@@ -85,8 +88,11 @@ private:
 	vtkSmartPointer<vtkActor> m_arrow_actor_z = vtkSmartPointer<vtkActor>::New();
 
 	std::array<double, 3> m_corrected_occlusal_direction = { 0, 0, 0 };
+	std::set<vtkIdType> m_border_points;
 
 	bool m_constrain_border = false;
+	bool m_block_move = false;
+	bool m_block_rotate = false;
 
 public:
 	vtkObject* caller;
@@ -104,6 +110,10 @@ public:
 	void SetRenderer(vtkSmartPointer<vtkRenderer>);
 	void SetRenderWindow(vtkSmartPointer<vtkRenderWindow>);
 	void SetSurfaceMesh(SurfaceMesh&);
+	void SetBlockMove(bool);
+	void SetBlockRotate(bool);
+	
+	SurfaceMesh GetSurfaceMesh();
 
 	virtual void OnLeftButtonDown()  override;
 	virtual void OnLeftButtonUp() override;
@@ -153,7 +163,7 @@ public:
 		Polydata->SetPolys(TrianglePolys);
 		return Polydata;
 	}
-	void SetConstrainBorder(bool b) { m_constrain_border = b; }
+	void SetConstrainBorder(bool b);
 };
 
 #endif // POLYGONMOVEMENTINTERACTOR_H
