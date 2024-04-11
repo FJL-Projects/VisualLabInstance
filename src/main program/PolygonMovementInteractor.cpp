@@ -2,104 +2,105 @@
 
 void PolygonMovementInteractorStyle::SetPolyDataAndRender(vtkSmartPointer<vtkPolyData> pd)
 {
-	m_polydata = pd;
+    m_polydata = pd;
     vtkSmartPointer<vtkPolyDataMapper> mesh_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
     mesh_mapper->SetInputData(m_polydata);
     mesh_mapper->Update();
 
-    std::cout << m_color.g() << std::endl;
-
     m_polydata_actor = vtkSmartPointer<vtkActor>::New();
     m_polydata_actor->SetMapper(mesh_mapper);
     m_polydata_actor->GetProperty()->SetColor(m_color.r() / 255.0, m_color.g() / 255.0, m_color.b() / 255.0);
-    m_polydata_actor->GetProperty()->SetAmbient(0.5);
-    m_polydata_actor->GetProperty()->SetSpecularPower(100);
-    m_polydata_actor->GetProperty()->SetSpecular(0.5);
-    m_polydata_actor->GetProperty()->SetDiffuse(0.5);
     m_polydata_actor->GetProperty()->SetOpacity(m_opacity);
     m_renderer->AddActor(m_polydata_actor);
     m_renderer->GetActiveCamera()->SetFocalPoint(m_polydata->GetCenter());
 
-    //m_transform_x = vtkSmartPointer<vtkTransform>::New();
-    //m_transform_x->Translate(m_polydata->GetCenter());
-    //m_transform_x->Scale(15.0, 15.0, 15.0);
-    //m_transform_x->Update();
+    if (!m_block_arrow_actor)
+    {
+        m_transform_x = vtkSmartPointer<vtkTransform>::New();
+        m_transform_x->Translate(m_polydata->GetCenter());
+        m_transform_x->Scale(15.0, 15.0, 15.0);
+        m_transform_x->Update();
 
-    //vtkSmartPointer<vtkArrowSource> arrow_source_x = vtkSmartPointer<vtkArrowSource>::New();
-    //arrow_source_x->Update();
+        vtkSmartPointer<vtkArrowSource> arrow_source_x = vtkSmartPointer<vtkArrowSource>::New();
+        arrow_source_x->Update();
 
-    //vtkSmartPointer<vtkTransformPolyDataFilter> transform_filter_x = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    //transform_filter_x->SetInputConnection(arrow_source_x->GetOutputPort());
-    //transform_filter_x->SetTransform(m_transform_x);
-    //transform_filter_x->Update();
+        vtkSmartPointer<vtkTransformPolyDataFilter> transform_filter_x = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+        transform_filter_x->SetInputConnection(arrow_source_x->GetOutputPort());
+        transform_filter_x->SetTransform(m_transform_x);
+        transform_filter_x->Update();
 
-    //vtkSmartPointer<vtkPolyDataMapper> arrow_mapper_x = vtkSmartPointer<vtkPolyDataMapper>::New();
-    //arrow_mapper_x->SetInputConnection(transform_filter_x->GetOutputPort());
-    //arrow_mapper_x->Update();
+        vtkSmartPointer<vtkPolyDataMapper> arrow_mapper_x = vtkSmartPointer<vtkPolyDataMapper>::New();
+        arrow_mapper_x->SetInputConnection(transform_filter_x->GetOutputPort());
+        arrow_mapper_x->Update();
 
-    //m_arrow_actor_x = vtkSmartPointer<vtkActor>::New();
-    //m_arrow_actor_x->SetMapper(arrow_mapper_x);
-    //m_arrow_actor_x->GetProperty()->SetColor(1, 0, 0);
-    //m_arrow_actor_x->GetProperty()->SetAmbient(1.0);
-    //m_arrow_actor_x->GetProperty()->SetSpecularPower(0);
-    //m_arrow_actor_x->GetProperty()->SetSpecular(0);
-    //m_arrow_actor_x->GetProperty()->SetDiffuse(0.5);
-    //m_renderer->AddActor(m_arrow_actor_x);
+        m_arrow_actor_x = vtkSmartPointer<vtkActor>::New();
+        m_arrow_actor_x->SetMapper(arrow_mapper_x);
+        m_arrow_actor_x->GetProperty()->SetColor(1, 0, 0);
+        m_arrow_actor_x->GetProperty()->SetAmbient(1.0);
+        m_arrow_actor_x->GetProperty()->SetSpecularPower(0);
+        m_arrow_actor_x->GetProperty()->SetSpecular(0);
+        m_arrow_actor_x->GetProperty()->SetDiffuse(0.5);
+        m_renderer->AddActor(m_arrow_actor_x);
 
-    //m_transform_y = vtkSmartPointer<vtkTransform>::New();
-    //m_transform_y->Translate(m_polydata->GetCenter());
-    //m_transform_y->Scale(15.0, 15.0, 15.0);
-    //m_transform_y->RotateZ(90.0);
-    //m_transform_y->Update();
+        m_transform_y = vtkSmartPointer<vtkTransform>::New();
+        m_transform_y->Translate(m_polydata->GetCenter());
+        m_transform_y->Scale(15.0, 15.0, 15.0);
+        m_transform_y->RotateZ(90.0);
+        m_transform_y->Update();
 
-    //vtkSmartPointer<vtkArrowSource> arrow_source_y = vtkSmartPointer<vtkArrowSource>::New();
-    //arrow_source_y->Update();
+        vtkSmartPointer<vtkArrowSource> arrow_source_y = vtkSmartPointer<vtkArrowSource>::New();
+        arrow_source_y->Update();
 
-    //vtkSmartPointer<vtkTransformPolyDataFilter> transform_filter_y = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    //transform_filter_y->SetInputConnection(arrow_source_y->GetOutputPort());
-    //transform_filter_y->SetTransform(m_transform_y);
-    //transform_filter_y->Update();
+        vtkSmartPointer<vtkTransformPolyDataFilter> transform_filter_y = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+        transform_filter_y->SetInputConnection(arrow_source_y->GetOutputPort());
+        transform_filter_y->SetTransform(m_transform_y);
+        transform_filter_y->Update();
 
-    //vtkSmartPointer<vtkPolyDataMapper> arrow_mapper_y = vtkSmartPointer<vtkPolyDataMapper>::New();
-    //arrow_mapper_y->SetInputConnection(transform_filter_y->GetOutputPort());
-    //arrow_mapper_y->Update();
+        vtkSmartPointer<vtkPolyDataMapper> arrow_mapper_y = vtkSmartPointer<vtkPolyDataMapper>::New();
+        arrow_mapper_y->SetInputConnection(transform_filter_y->GetOutputPort());
+        arrow_mapper_y->Update();
 
-    //m_arrow_actor_y = vtkSmartPointer<vtkActor>::New();
-    //m_arrow_actor_y->SetMapper(arrow_mapper_y);
-    //m_arrow_actor_y->GetProperty()->SetColor(0, 1, 0);
-    //m_arrow_actor_y->GetProperty()->SetAmbient(1.0);
-    //m_arrow_actor_y->GetProperty()->SetSpecularPower(0);
-    //m_arrow_actor_y->GetProperty()->SetSpecular(0);
-    //m_arrow_actor_y->GetProperty()->SetDiffuse(0.5);
-    //m_renderer->AddActor(m_arrow_actor_y);
+        m_arrow_actor_y = vtkSmartPointer<vtkActor>::New();
+        m_arrow_actor_y->SetMapper(arrow_mapper_y);
+        m_arrow_actor_y->GetProperty()->SetColor(0, 1, 0);
+        m_arrow_actor_y->GetProperty()->SetAmbient(1.0);
+        m_arrow_actor_y->GetProperty()->SetSpecularPower(0);
+        m_arrow_actor_y->GetProperty()->SetSpecular(0);
+        m_arrow_actor_y->GetProperty()->SetDiffuse(0.5);
+        m_renderer->AddActor(m_arrow_actor_y);
 
-    //m_transform_z = vtkSmartPointer<vtkTransform>::New();
-    //m_transform_z->Translate(m_polydata->GetCenter());
-    //m_transform_z->Scale(15.0, 15.0, 15.0);
-    //m_transform_z->RotateY(90.0);
-    //m_transform_z->Update();
+        m_transform_z = vtkSmartPointer<vtkTransform>::New();
+        m_transform_z->Translate(m_polydata->GetCenter());
+        m_transform_z->Scale(15.0, 15.0, 15.0);
+        m_transform_z->RotateY(90.0);
+        m_transform_z->Update();
 
-    //vtkSmartPointer<vtkArrowSource> arrow_source_z = vtkSmartPointer<vtkArrowSource>::New();
-    //arrow_source_z->Update();
+        vtkSmartPointer<vtkArrowSource> arrow_source_z = vtkSmartPointer<vtkArrowSource>::New();
+        arrow_source_z->Update();
 
-    //vtkSmartPointer<vtkTransformPolyDataFilter> transform_filter_z = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-    //transform_filter_z->SetInputConnection(arrow_source_z->GetOutputPort());
-    //transform_filter_z->SetTransform(m_transform_z);
-    //transform_filter_z->Update();
+        vtkSmartPointer<vtkTransformPolyDataFilter> transform_filter_z = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+        transform_filter_z->SetInputConnection(arrow_source_z->GetOutputPort());
+        transform_filter_z->SetTransform(m_transform_z);
+        transform_filter_z->Update();
 
-    //vtkSmartPointer<vtkPolyDataMapper> arrow_mapper_z = vtkSmartPointer<vtkPolyDataMapper>::New();
-    //arrow_mapper_z->SetInputConnection(transform_filter_z->GetOutputPort());
-    //arrow_mapper_z->Update();
+        vtkSmartPointer<vtkPolyDataMapper> arrow_mapper_z = vtkSmartPointer<vtkPolyDataMapper>::New();
+        arrow_mapper_z->SetInputConnection(transform_filter_z->GetOutputPort());
+        arrow_mapper_z->Update();
 
-    //m_arrow_actor_z = vtkSmartPointer<vtkActor>::New();
-    //m_arrow_actor_z->SetMapper(arrow_mapper_z);
-    //m_arrow_actor_z->GetProperty()->SetColor(0, 0, 1);
-    //m_arrow_actor_z->GetProperty()->SetAmbient(1.0);
-    //m_arrow_actor_z->GetProperty()->SetSpecularPower(0);
-    //m_arrow_actor_z->GetProperty()->SetSpecular(0);
-    //m_arrow_actor_z->GetProperty()->SetDiffuse(0.5);
-    //m_renderer->AddActor(m_arrow_actor_z);
+        m_arrow_actor_z = vtkSmartPointer<vtkActor>::New();
+        m_arrow_actor_z->SetMapper(arrow_mapper_z);
+        m_arrow_actor_z->GetProperty()->SetColor(0, 0, 1);
+        m_arrow_actor_z->GetProperty()->SetAmbient(1.0);
+        m_arrow_actor_z->GetProperty()->SetSpecularPower(0);
+        m_arrow_actor_z->GetProperty()->SetSpecular(0);
+        m_arrow_actor_z->GetProperty()->SetDiffuse(0.5);
+        m_renderer->AddActor(m_arrow_actor_z);
+    }
+}
 
+void PolygonMovementInteractorStyle::SetTeethActor(vtkSmartPointer<vtkActor> actor)
+{
+	m_polydata_actor = actor;
 }
 
 void PolygonMovementInteractorStyle::SetRenderer(vtkSmartPointer<vtkRenderer> r)
@@ -169,6 +170,11 @@ void PolygonMovementInteractorStyle::SetBlockRotate(bool block)
     m_block_rotate = block;
 }
 
+void PolygonMovementInteractorStyle::SetBlockArrowActor(bool block)
+{
+    m_block_arrow_actor = block;
+}
+
 void PolygonMovementInteractorStyle::SetColor(CGAL::Color color)
 {
     m_color = color;
@@ -190,35 +196,23 @@ SurfaceMesh PolygonMovementInteractorStyle::GetSurfaceMesh()
     return *m_mesh;
 }
 
+void PolygonMovementInteractorStyle::RemoveArrowActors()
+{
+    if (!m_block_arrow_actor)
+    {
+        m_renderer->RemoveActor(m_arrow_actor_x);
+		m_renderer->RemoveActor(m_arrow_actor_y);
+		m_renderer->RemoveActor(m_arrow_actor_z);
+    }
+}
+
 void PolygonMovementInteractorStyle::OnLeftButtonDown()
 {
     int tri_id = -1;
     double pick_position[3];
     vtkSmartPointer<vtkActor> pick_actor;
     auto vtk_inter = GetRayIntersection(caller, tri_id, pick_position, pick_actor);
-    if (!vtk_inter->GetControlKey() && !vtk_inter->GetShiftKey() && pick_actor == m_arrow_actor_x)
-    {
-        m_state = MoveState::move_x;
-    }
-    else if (!vtk_inter->GetControlKey() && !vtk_inter->GetShiftKey() && pick_actor == m_arrow_actor_y)
-    {
-        m_state = MoveState::move_y;
-    }
-    else  if (!vtk_inter->GetControlKey() && !vtk_inter->GetShiftKey() && pick_actor == m_arrow_actor_z)
-    {
-        m_state = MoveState::move_z;
-    }
-    else
-    {
-        m_renderer->RemoveActor(m_arrow_actor_x);
-        m_renderer->RemoveActor(m_arrow_actor_y);
-        m_renderer->RemoveActor(m_arrow_actor_z);
-    }
-    if (vtk_inter->GetControlKey() && !vtk_inter->GetShiftKey())
-    {
-        m_state = MoveState::rotate;
-    }
-    if (!vtk_inter->GetControlKey() && vtk_inter->GetShiftKey())
+    if (m_block_move && m_block_rotate) // In this case, zooming doesn't require ctrl and shift key pressed.
     {
         int event_pos[2];
         vtk_inter->GetEventPosition(event_pos);
@@ -243,21 +237,82 @@ void PolygonMovementInteractorStyle::OnLeftButtonDown()
             {
                 m_state = MoveState::zoom_right;
             }
+
             else
             {
                 m_state = MoveState::zoom_left;
             }
         }
+    }
+    else
+    {
+        if (!vtk_inter->GetControlKey() && !vtk_inter->GetShiftKey() && pick_actor == m_arrow_actor_x)
+        {
+            m_state = MoveState::move_x;
+        }
+        else if (!vtk_inter->GetControlKey() && !vtk_inter->GetShiftKey() && pick_actor == m_arrow_actor_y)
+        {
+            m_state = MoveState::move_y;
+        }
+        else if (!vtk_inter->GetControlKey() && !vtk_inter->GetShiftKey() && pick_actor == m_arrow_actor_z)
+        {
+            m_state = MoveState::move_z;
+        }
+        else
+        {
+            if (!m_block_arrow_actor)
+            {
+				m_renderer->RemoveActor(m_arrow_actor_x);
+				m_renderer->RemoveActor(m_arrow_actor_y);
+				m_renderer->RemoveActor(m_arrow_actor_z);
+			}
+        }
+        if (vtk_inter->GetControlKey() && !vtk_inter->GetShiftKey())
+        {
+            m_state = MoveState::rotate;
+        }
+        if (!vtk_inter->GetControlKey() && vtk_inter->GetShiftKey())
+        {
+            int event_pos[2];
+            vtk_inter->GetEventPosition(event_pos);
+            int size[2];
+            vtk_inter->GetSize(size);
+            event_pos[0] -= size[0] / 2;
+            event_pos[1] -= size[1] / 2;
+            if (abs(event_pos[1]) > abs(event_pos[0]))
+            {
+                if (event_pos[1] > 0)
+                {
+                    m_state = MoveState::zoom_up;
+                }
+                else
+                {
+                    m_state = MoveState::zoom_down;
+                }
+            }
+            else
+            {
+                if (event_pos[0] > 0)
+                {
+                    m_state = MoveState::zoom_right;
+                }
 
+                else
+                {
+                    m_state = MoveState::zoom_left;
+                }
+            }
+        }
+        if (vtk_inter->GetControlKey() && vtk_inter->GetShiftKey())
+        {
+            m_state = MoveState::all_zoom;
+        }
+        if (!vtk_inter->GetControlKey() && !vtk_inter->GetShiftKey() && pick_actor == m_polydata_actor)
+        {
+            m_state = MoveState::move;
+        }
     }
-    if (vtk_inter->GetControlKey() && vtk_inter->GetShiftKey())
-    {
-        m_state = MoveState::all_zoom;
-    }
-    if (!vtk_inter->GetControlKey() && !vtk_inter->GetShiftKey() && pick_actor == m_polydata)
-    {
-        m_state = MoveState::move;
-    }
+   
 
     m_polydata->GetCenter(m_center_position.data());
 }
@@ -267,7 +322,7 @@ void PolygonMovementInteractorStyle::OnLeftButtonUp()
     /*if (state > MoveState::all_zoom)
     {
         m_renderer->RemoveActor(m_polydata);
-        auto sm = VTK_PolyData2CGAL_Surface_Mesh(m_polydata);
+        auto sm = VTKPolyData2CGALSurfaceMesh(m_polydata);
         CGAL::Polygon_mesh_processing::isotropic_remeshing(sm.faces(), 0.2, sm);
         m_polydata = Mesh2PolyData(sm);
         vtkSmartPointer<vtkPolyDataMapper> mesh_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
@@ -290,9 +345,12 @@ void PolygonMovementInteractorStyle::OnLeftButtonUp()
     m_last_pick_position[0] = 0;
     m_last_pick_position[1] = 0;
     m_last_pick_position[2] = 0;
-    m_renderer->AddActor(m_arrow_actor_x);
-    m_renderer->AddActor(m_arrow_actor_y);
-    m_renderer->AddActor(m_arrow_actor_z);
+    if (!m_block_arrow_actor)
+	{
+		m_renderer->AddActor(m_arrow_actor_x);
+		m_renderer->AddActor(m_arrow_actor_y);
+		m_renderer->AddActor(m_arrow_actor_z);
+	}
     //m_renderer->GetActiveCamera()->SetFocalPoint(m_polydata->GetCenter());
    
 }
@@ -774,9 +832,14 @@ double3 PolygonMovementInteractorStyle::GetCorrectedOcclusalDirection()
     return direction;
 }
 
-vtkSmartPointer<vtkActor> PolygonMovementInteractorStyle::GetPolydataActor()
+vtkSmartPointer<vtkActor> PolygonMovementInteractorStyle::GetActor()
 {
     return m_polydata_actor;
+}
+
+vtkSmartPointer<vtkPolyData> PolygonMovementInteractorStyle::GetPolyData()
+{
+    return m_polydata;
 }
 
 void PolygonMovementInteractorStyle::SetConstrainBorder(bool b)

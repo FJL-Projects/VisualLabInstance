@@ -98,6 +98,7 @@ private:
 	bool m_constrain_border = false;
 	bool m_block_move = false;
 	bool m_block_rotate = false;
+	bool m_block_arrow_actor = false;
 
 public:
 	vtkObject* caller;
@@ -112,22 +113,25 @@ public:
 	}
 
 	void SetPolyDataAndRender(vtkSmartPointer<vtkPolyData>);
+	void SetTeethActor(vtkSmartPointer<vtkActor> actor);
 	void SetRenderer(vtkSmartPointer<vtkRenderer>);
 	void SetRenderWindow(vtkSmartPointer<vtkRenderWindow>);
 	void SetSurfaceMeshAndRender(SurfaceMesh&);
 	void SetBlockMove(bool);
 	void SetBlockRotate(bool);
+	void SetBlockArrowActor(bool);
 	void SetColor(CGAL::Color color);
 	void SetOpacity(double opacity);
 
 	SurfaceMesh GetSurfaceMesh();
-
+	void RemoveArrowActors();
 	virtual void OnLeftButtonDown()  override;
 	virtual void OnLeftButtonUp() override;
 	virtual void OnMouseMove() override;
 	void SetCorrectedOcclusalDirection(double3);
 	double3 GetCorrectedOcclusalDirection();
-	vtkSmartPointer<vtkActor> GetPolydataActor();
+	vtkSmartPointer<vtkActor> GetActor();
+	vtkSmartPointer<vtkPolyData> GetPolyData();
 
 	vtkSmartPointer<vtkRenderWindowInteractor> GetRayIntersection(vtkObject* caller, int& nTriId, double* pWorld, vtkSmartPointer<vtkActor>& actor)
 	{
