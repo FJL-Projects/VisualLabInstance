@@ -118,11 +118,14 @@ int main()
 	//RenderPolydata(teeth_pd, pipeline->m_renderer);
 	generated_crown_scale_interactor.SetRenderer(pipeline->m_renderer);
 	generated_crown_scale_interactor.SetRenderWindow(pipeline->m_render_window);
-	generated_crown_scale_interactor.SetSurfaceMesh(teeth_sm);
 	generated_crown_scale_interactor.SetBlockMove(true);
 	generated_crown_scale_interactor.SetBlockRotate(true);
 	generated_crown_scale_interactor.SetConstrainBorder(true);
 	generated_crown_scale_interactor.SetCorrectedOcclusalDirection(direction);
+	generated_crown_scale_interactor.SetColor(CGAL::Color(255, 255, 255));
+	generated_crown_scale_interactor.SetOpacity(1.0);
+	generated_crown_scale_interactor.SetSurfaceMeshAndRender(teeth_sm);
+
 	// Set up the camera and interactor.
 	pipeline->m_renderer->GetActiveCamera()->SetParallelProjection(1);
 	pipeline->m_renderer->ResetCamera();

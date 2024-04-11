@@ -1,21 +1,22 @@
 #include "PolygonMovementInteractor.h"
 
-void PolygonMovementInteractorStyle::SetPolyData(vtkSmartPointer<vtkPolyData> pd)
+void PolygonMovementInteractorStyle::SetPolyDataAndRender(vtkSmartPointer<vtkPolyData> pd)
 {
 	m_polydata = pd;
-    std::cout << m_polydata->GetNumberOfPoints() << std::endl;
     vtkSmartPointer<vtkPolyDataMapper> mesh_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
     mesh_mapper->SetInputData(m_polydata);
     mesh_mapper->Update();
-    
+
+    std::cout << m_color.g() << std::endl;
+
     m_polydata_actor = vtkSmartPointer<vtkActor>::New();
     m_polydata_actor->SetMapper(mesh_mapper);
-    m_polydata_actor->GetProperty()->SetColor(1, 0, 1);
+    m_polydata_actor->GetProperty()->SetColor(m_color.r() / 255.0, m_color.g() / 255.0, m_color.b() / 255.0);
     m_polydata_actor->GetProperty()->SetAmbient(0.5);
     m_polydata_actor->GetProperty()->SetSpecularPower(100);
     m_polydata_actor->GetProperty()->SetSpecular(0.5);
     m_polydata_actor->GetProperty()->SetDiffuse(0.5);
-    m_polydata_actor->GetProperty()->SetOpacity(0.8);
+    m_polydata_actor->GetProperty()->SetOpacity(m_opacity);
     m_renderer->AddActor(m_polydata_actor);
     m_renderer->GetActiveCamera()->SetFocalPoint(m_polydata->GetCenter());
 
@@ -111,19 +112,51 @@ void PolygonMovementInteractorStyle::SetRenderWindow(vtkSmartPointer<vtkRenderWi
 	m_render_window = rw;
 }
 
-void PolygonMovementInteractorStyle::SetSurfaceMesh(SurfaceMesh& mesh)
+void PolygonMovementInteractorStyle::SetSurfaceMeshAndRender(SurfaceMesh& mesh)
 {
     m_mesh = std::make_shared<SurfaceMesh>(mesh);
-    SetPolyData(Mesh2PolyData(*m_mesh));
+    SetPolyDataAndRender(Mesh2PolyData(*m_mesh));
     m_border_points.clear();
+    std::vector<Point_3> border_points;
 
     for (auto& v : m_mesh->vertices())
 	{
 		if (m_mesh->is_border(v))
 		{
 			m_border_points.insert(static_cast<vtkIdType>(v.idx()));
+            border_points.push_back(m_mesh->point(v));
 		}
 	}
+
+    auto zoom_ratio = m_mesh->add_property_map<vertex_descriptor, double>("v:zoom_ratio", 0.0).first;
+    for (auto& v : m_mesh->vertices())
+    {
+		double min_distance = std::numeric_limits<double>::max();
+        for (auto& p : border_points)
+        {
+			double distance = CGAL::squared_distance(m_mesh->point(v), p);
+            if (distance < min_distance)
+            {
+				min_distance = distance;
+			}
+		}
+
+        double min_threshold = 0.3;
+        double max_threshold = 0.6;
+
+        if (min_distance < min_threshold)
+        {
+            zoom_ratio[v] = 0.0;
+        }
+        else if (min_distance < max_threshold)
+        {
+            zoom_ratio[v] = (min_distance - min_threshold) / (max_threshold - min_threshold);
+        }
+        else
+        {
+            zoom_ratio[v] = 1.0;
+        }
+    }
 }
 
 void PolygonMovementInteractorStyle::SetBlockMove(bool block)
@@ -134,6 +167,16 @@ void PolygonMovementInteractorStyle::SetBlockMove(bool block)
 void PolygonMovementInteractorStyle::SetBlockRotate(bool block)
 {
     m_block_rotate = block;
+}
+
+void PolygonMovementInteractorStyle::SetColor(CGAL::Color color)
+{
+    m_color = color;
+}
+
+void PolygonMovementInteractorStyle::SetOpacity(double opacity)
+{
+    m_opacity = opacity;
 }
 
 SurfaceMesh PolygonMovementInteractorStyle::GetSurfaceMesh()
@@ -339,6 +382,8 @@ void PolygonMovementInteractorStyle::OnMouseMove()
 
             for (int i = 0; i < m_polydata->GetNumberOfPoints(); i++)
             {
+                vertex_descriptor v = static_cast<vertex_descriptor>(i);
+                double ratio = m_mesh->property_map<vertex_descriptor, double>("v:zoom_ratio").first[v];
                 m_polydata->GetPoint(i, p);
                 p[0] -= m_center_position[0];
                 p[1] -= m_center_position[1];
@@ -353,15 +398,15 @@ void PolygonMovementInteractorStyle::OnMouseMove()
                 }
                 if (last_pick2pick * up > 0)
                 {
-                    p[0] += up[0] * sqrt(last_pick2pick.squared_length()) * dis / 10;
-                    p[1] += up[1] * sqrt(last_pick2pick.squared_length()) * dis / 10;
-                    p[2] += up[2] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[0] += ratio * up[0] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[1] += ratio * up[1] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[2] += ratio * up[2] * sqrt(last_pick2pick.squared_length()) * dis / 10;
                 }
                 else
                 {
-                    p[0] -= up[0] * sqrt(last_pick2pick.squared_length()) * dis / 10;
-                    p[1] -= up[1] * sqrt(last_pick2pick.squared_length()) * dis / 10;
-                    p[2] -= up[2] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[0] -= ratio * up[0] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[1] -= ratio * up[1] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[2] -= ratio * up[2] * sqrt(last_pick2pick.squared_length()) * dis / 10;
                 }
                 p[0] += m_center_position[0];
                 p[1] += m_center_position[1];
@@ -394,6 +439,8 @@ void PolygonMovementInteractorStyle::OnMouseMove()
             }
             for (int i = 0; i < m_polydata->GetNumberOfPoints(); i++)
             {
+                vertex_descriptor v = static_cast<vertex_descriptor>(i);
+                double ratio = m_mesh->property_map<vertex_descriptor, double>("v:zoom_ratio").first[v];
                 m_polydata->GetPoint(i, p.data());
                 p[0] -= m_center_position[0];
                 p[1] -= m_center_position[1];
@@ -407,15 +454,15 @@ void PolygonMovementInteractorStyle::OnMouseMove()
                 }
                 if (last_pick2pick * up < 0)
                 {
-                    p[0] += up[0] * sqrt(last_pick2pick.squared_length()) * dis / 10;
-                    p[1] += up[1] * sqrt(last_pick2pick.squared_length()) * dis / 10;
-                    p[2] += up[2] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[0] += ratio * up[0] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[1] += ratio * up[1] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[2] += ratio * up[2] * sqrt(last_pick2pick.squared_length()) * dis / 10;
                 }
                 else
                 {
-                    p[0] -= up[0] * sqrt(last_pick2pick.squared_length()) * dis/ 10;
-                    p[1] -= up[1] * sqrt(last_pick2pick.squared_length()) * dis/ 10;
-                    p[2] -= up[2] * sqrt(last_pick2pick.squared_length()) * dis/ 10;
+                    p[0] -= ratio * up[0] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[1] -= ratio * up[1] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[2] -= ratio * up[2] * sqrt(last_pick2pick.squared_length()) * dis / 10;
                 }
                 p[0] += m_center_position[0];
                 p[1] += m_center_position[1];
@@ -452,6 +499,8 @@ void PolygonMovementInteractorStyle::OnMouseMove()
             }
             for (int i = 0; i < m_polydata->GetNumberOfPoints(); i++)
             {
+                vertex_descriptor v = static_cast<vertex_descriptor>(i);
+                double ratio = m_mesh->property_map<vertex_descriptor, double>("v:zoom_ratio").first[v];
                 m_polydata->GetPoint(i, p);
                 p[0] -= m_center_position[0];
                 p[1] -= m_center_position[1];
@@ -465,15 +514,15 @@ void PolygonMovementInteractorStyle::OnMouseMove()
                 }
                 if (last_pick2pick * left < 0)
                 {
-                    p[0] += left[0] * sqrt(last_pick2pick.squared_length()) * dis/ 10;
-                    p[1] += left[1] * sqrt(last_pick2pick.squared_length()) * dis/ 10;
-                    p[2] += left[2] * sqrt(last_pick2pick.squared_length()) * dis/ 10;
+                    p[0] += ratio * left[0] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[1] += ratio * left[1] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[2] += ratio * left[2] * sqrt(last_pick2pick.squared_length()) * dis / 10;
                 }
                 else
                 {
-                    p[0] -= left[0] * sqrt(last_pick2pick.squared_length()) * dis / 10;
-                    p[1] -= left[1] * sqrt(last_pick2pick.squared_length()) * dis / 10;
-                    p[2] -= left[2] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[0] -= ratio * left[0] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[1] -= ratio * left[1] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[2] -= ratio * left[2] * sqrt(last_pick2pick.squared_length()) * dis / 10;
                 }        
                 p[0] += m_center_position[0];
                 p[1] += m_center_position[1];
@@ -509,6 +558,8 @@ void PolygonMovementInteractorStyle::OnMouseMove()
             }
             for (int i = 0; i < m_polydata->GetNumberOfPoints(); i++)
             {
+                vertex_descriptor v = static_cast<vertex_descriptor>(i);
+                double ratio = m_mesh->property_map<vertex_descriptor, double>("v:zoom_ratio").first[v];
                 m_polydata->GetPoint(i, p.data());
                 p[0] -= m_center_position[0];
                 p[1] -= m_center_position[1];
@@ -522,15 +573,15 @@ void PolygonMovementInteractorStyle::OnMouseMove()
                 }
                 if (last_pick2pick * left > 0)
                 {
-                    p[0] += left[0] * sqrt(last_pick2pick.squared_length()) * dis/ 10;
-                    p[1] += left[1] * sqrt(last_pick2pick.squared_length()) * dis/ 10;
-                    p[2] += left[2] * sqrt(last_pick2pick.squared_length()) * dis/ 10;
+                    p[0] += ratio * left[0] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[1] += ratio * left[1] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[2] += ratio * left[2] * sqrt(last_pick2pick.squared_length()) * dis / 10;
                 }
                 else
                 {
-                    p[0] -= left[0] * sqrt(last_pick2pick.squared_length()) * dis / 10;
-                    p[1] -= left[1] * sqrt(last_pick2pick.squared_length()) * dis / 10;
-                    p[2] -= left[2] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[0] -= ratio * left[0] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[1] -= ratio * left[1] * sqrt(last_pick2pick.squared_length()) * dis / 10;
+                    p[2] -= ratio * left[2] * sqrt(last_pick2pick.squared_length()) * dis / 10;
                 }
                 p[0] += m_center_position[0];
                 p[1] += m_center_position[1];
@@ -721,6 +772,11 @@ double3 PolygonMovementInteractorStyle::GetCorrectedOcclusalDirection()
 {
     double3 direction(m_corrected_occlusal_direction.data());
     return direction;
+}
+
+vtkSmartPointer<vtkActor> PolygonMovementInteractorStyle::GetPolydataActor()
+{
+    return m_polydata_actor;
 }
 
 void PolygonMovementInteractorStyle::SetConstrainBorder(bool b)

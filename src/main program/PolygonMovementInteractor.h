@@ -34,17 +34,20 @@
 #include <vtkCellData.h>
 #include <vtkAutoInit.h>
 #include <vtkSTLWriter.h>
+#include <vtkArrowSource.h>
+#include <vtkTransform.h>
+#include <vtkTransformPolyDataFilter.h>
+
 #include <CGAL/Simple_cartesian.h>
 #include <CGAL/basic.h>
 #include <CGAL/squared_distance_2.h>
 #include <CGAL/intersections.h>
-#include "Rotation.h"
 #include <CGAL/Surface_mesh.h>
 #include <CGAL/Polygon_mesh_processing/remesh.h>
-#include <vtkArrowSource.h>
-#include <vtkTransform.h>
-#include <vtkTransformPolyDataFilter.h>
+#include <CGAL/IO/Color.h>
+
 #include "vectorAlgorithm.h"
+#include "Rotation.h"
 
 using Kernel = CGAL::Simple_cartesian<double>;
 using Point_3 = Kernel::Point_3;
@@ -70,6 +73,8 @@ private:
 	vtkSmartPointer<vtkRenderWindow> m_render_window = vtkSmartPointer<vtkRenderWindow>::New();
 	
 	std::shared_ptr<SurfaceMesh> m_mesh;
+	CGAL::Color m_color = CGAL::Color(255, 0, 255);
+	double m_opacity = 0.8;
 
 	MoveState m_state;
 	int m_last_x = -1000;
@@ -106,13 +111,15 @@ public:
 	{
 	}
 
-	void SetPolyData(vtkSmartPointer<vtkPolyData>);
+	void SetPolyDataAndRender(vtkSmartPointer<vtkPolyData>);
 	void SetRenderer(vtkSmartPointer<vtkRenderer>);
 	void SetRenderWindow(vtkSmartPointer<vtkRenderWindow>);
-	void SetSurfaceMesh(SurfaceMesh&);
+	void SetSurfaceMeshAndRender(SurfaceMesh&);
 	void SetBlockMove(bool);
 	void SetBlockRotate(bool);
-	
+	void SetColor(CGAL::Color color);
+	void SetOpacity(double opacity);
+
 	SurfaceMesh GetSurfaceMesh();
 
 	virtual void OnLeftButtonDown()  override;
@@ -120,6 +127,7 @@ public:
 	virtual void OnMouseMove() override;
 	void SetCorrectedOcclusalDirection(double3);
 	double3 GetCorrectedOcclusalDirection();
+	vtkSmartPointer<vtkActor> GetPolydataActor();
 
 	vtkSmartPointer<vtkRenderWindowInteractor> GetRayIntersection(vtkObject* caller, int& nTriId, double* pWorld, vtkSmartPointer<vtkActor>& actor)
 	{
