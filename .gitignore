@@ -63,3 +63,7 @@ _NCrunch_*
 
 # Ignore Temp files
 *.ini
+
+# Ignore Temp folders of Qt
+Debug/qmake/temp/*
+Release/qmake/temp/*
