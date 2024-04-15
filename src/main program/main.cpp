@@ -6,31 +6,25 @@
 #include <sstream>
 #include <vtkKochanekSpline.h>
 #include <vtkGlyph3DMapper.h>
+#include <vtkRenderWindowInteractor.h>
 vtkRenderPipeline* pipeline;
 
-/**
- * @brief Generate a 4-digit number string with leading zeros.
- *
- * This function takes an integer and converts it into a string representation
- * with a fixed width of 4 characters. If the number has less than 4 digits,
- * leading zeros are added to pad the string to the desired width.
- *
- * @param number The input integer to be converted.
- * @return A string representation of the input number with leading zeros.
- *
- * @note The function uses std::ostringstream, std::setw(), and std::setfill()
- *       to format the output string.
- *
- * @example
- *   int num = 42;
- *   std::string num_str = generate_leading_zero_number_str(num);
- *   // num_str will be "0042"
- */
-std::string generate_leading_zero_number_str(int number)
+#include <vtkTransform.h>
+
+int start_position[3] = { 0, 0, 0 };
+double start_world_position[3];
+vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
+vtkSmartPointer<vtkPolyData> plane_pd;
+vtkSmartPointer<vtkActor> plane_actor;
+void compute_rotation_axis(int start[3], int end[3], double axis[3])
 {
-	std::ostringstream stream;
-	stream << std::setw(4) << std::setfill('0') << number;
-	return stream.str();
+	double p1[3] = { double(start[0]), double(start[1]), 0.0 };
+	double p2[3] = { double(end[0]), double(end[1]), 0.0 };
+
+	// 这里假设Z坐标为0，因为通常在2D平面内操作
+	vtkMath::Subtract(p2, p1, axis);
+	vtkMath::Normalize(axis);
+	axis[2] = 0.0;  // 因为是在2D平面内，所以Z分量为0
 }
 
 void RightPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
@@ -44,14 +38,50 @@ void RightRelease(vtkObject* caller, long unsigned int eventId, void* clientData
 
 void LeftPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
-	//std::cout<<"Left Press" << endl;
+	vtkSmartPointer<vtkRenderWindowInteractor> interactor =
+		vtkRenderWindowInteractor::SafeDownCast(caller);
+	int x, y;
+	interactor->GetEventPosition(x, y);
+	vtkSmartPointer<vtkCoordinate> coordinate = vtkSmartPointer<vtkCoordinate>::New();
+	coordinate->SetCoordinateSystemToDisplay();
+	coordinate->SetValue(x, y, 0);
+	double* world = coordinate->GetComputedWorldValue(pipeline->Renderer);
+	memcpy(start_world_position, world, sizeof(double) * 3);
+	start_world_position[2] = 0;  // 确保在平面上
 }
 
 void MouseMove(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
-	
-}
+	vtkSmartPointer<vtkRenderWindowInteractor> interactor = vtkRenderWindowInteractor::SafeDownCast(caller);
+	if (interactor->GetShiftKey())
+	{
+		int x, y;
+		interactor->GetEventPosition(x, y);
+		vtkSmartPointer<vtkCoordinate> coordinate = vtkSmartPointer<vtkCoordinate>::New();
+		coordinate->SetCoordinateSystemToDisplay();
+		coordinate->SetValue(x, y, 0);
+		double* current_world_position = coordinate->GetComputedWorldValue(pipeline->Renderer);
 
+		double dx = current_world_position[0] - start_world_position[0];
+		double dy = current_world_position[1] - start_world_position[1];
+		double dz = current_world_position[2] - start_world_position[2];
+
+		double angle = std::sqrt(dx * dx + dy * dy + dz * dz) * 0.05;  // 角度计算，可能需要调整系数
+
+		if (angle > 0.0)
+		{
+			double axis[3] = { dy, -dx, 0 };  // 计算旋转轴，这里假设围绕Z轴旋转
+			transform->Identity();
+			//transform->Translate(-start_world_position[0], -start_world_position[1], -start_world_position[2]);
+			transform->RotateWXYZ(angle, axis);
+			//transform->Translate(start_world_position[0], start_world_position[1], start_world_position[2]);
+
+			plane_actor->SetUserTransform(transform);
+
+			pipeline->Renderer->GetRenderWindow()->Render();
+		}
+	}
+}
 void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
 }
@@ -60,6 +90,31 @@ void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData,
 int main()
 {
 	pipeline = new vtkRenderPipeline();
+
+	vtkNew<vtkPlaneSource> plane;
+	plane->SetNormal(0.0, 1.0, 0.0);
+	plane->Update();
+
+	double width = 100.0; // 宽度
+	double height = 100.0; // 高度
+
+	// 设置平面的角点
+	plane->SetOrigin(-width / 2, -height / 2, 0); // 原点在中心下方和左边
+	plane->SetPoint1(width / 2, -height / 2, 0);  // X方向的终点
+	plane->SetPoint2(-width / 2, height / 2, 0);  // Y方向的终点
+	plane->Update();
+
+	plane_pd = plane->GetOutput();
+	
+	vtkNew<vtkPolyDataMapper> mapper;
+	mapper->SetInputData(plane_pd);
+
+	plane_actor = vtkSmartPointer<vtkActor>::New();
+	plane_actor->SetMapper(mapper);
+	plane_actor->GetProperty()->SetColor(0.5, 0.5, 0.5);
+	plane_actor->GetProperty()->SetOpacity(0.8);
+
+	pipeline->Renderer->AddActor(plane_actor);
 	
 	std::vector<std::vector<SurfaceMesh> > meshes_vec;
 	std::vector<vtkSmartPointer<vtkPoints> > teeth_center_vec;
@@ -93,7 +148,7 @@ int main()
 		vtkIdType id = 0;
 		for (auto& mesh_pd : meshes_pd)
 		{
-			//RenderPolydata(mesh_pd, pipeline->Renderer, r, g, b, opacity);
+			RenderPolydata(mesh_pd, pipeline->Renderer, r, g, b, opacity);
 			double* bound = mesh_pd->GetBounds();
 			double center[3] = {
 				(bound[0] + bound[1]) / 2,
@@ -238,7 +293,7 @@ int main()
 		point_mapper->SetInputData(point_polydata);
 		point_mapper->SetSourceConnection(points_actor->GetOutputPort());
 
-		 //Create an actor for the points
+		 //Create an plane_actor for the points
 		vtkNew<vtkActor> point_actor;
 		point_actor->SetMapper(point_mapper);
 		point_actor->GetProperty()->SetColor(color->GetColor3d("Peacock").GetData());
@@ -263,7 +318,7 @@ int main()
 			//m_spline_actor_vec.push_back(dot_actor);
 		}
 
-		// Create an actor for the spline line
+		// Create an plane_actor for the spline line
 		vtkNew<vtkPolyDataMapper> line_mapper;
 		line_mapper->SetInputConnection(function_source->GetOutputPort());
 
@@ -286,7 +341,7 @@ int main()
 		//point_mapper->SetInputData(point_polydata);
 		//point_mapper->SetSourceConnection(points_actor->GetOutputPort());
 
-		// //Create an actor for the points
+		// //Create an plane_actor for the points
 		//vtkNew<vtkActor> point_actor;
 		//point_actor->SetMapper(point_mapper);
 		//point_actor->GetProperty()->SetColor(color->GetColor3d("Peacock").GetData());
