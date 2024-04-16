@@ -7,15 +7,17 @@
 #include <vtkKochanekSpline.h>
 #include <vtkGlyph3DMapper.h>
 #include <vtkRenderWindowInteractor.h>
+#include "PolygonMovementInteractor.h"
+
 vtkRenderPipeline* pipeline;
 
-#include <vtkTransform.h>
+PolygonMovementInteractorStyle plane_movement_interactor;
 
-int start_position[3] = { 0, 0, 0 };
-double start_world_position[3];
-vtkSmartPointer<vtkTransform> transform = vtkSmartPointer<vtkTransform>::New();
 vtkSmartPointer<vtkPolyData> plane_pd;
 vtkSmartPointer<vtkActor> plane_actor;
+vtkSmartPointer<vtkActor> line_actor;
+Vector_3 normal(0, 1, 0);
+
 void compute_rotation_axis(int start[3], int end[3], double axis[3])
 {
 	double p1[3] = { double(start[0]), double(start[1]), 0.0 };
@@ -34,56 +36,40 @@ void RightPress(vtkObject* caller, long unsigned int eventId, void* clientData, 
 void RightRelease(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
 	//std::cout<<"Right Released" << endl;
+	std::cout << "Normal: " << normal << std::endl;
 }
 
 void LeftPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
-	vtkSmartPointer<vtkRenderWindowInteractor> interactor =
-		vtkRenderWindowInteractor::SafeDownCast(caller);
-	int x, y;
-	interactor->GetEventPosition(x, y);
-	vtkSmartPointer<vtkCoordinate> coordinate = vtkSmartPointer<vtkCoordinate>::New();
-	coordinate->SetCoordinateSystemToDisplay();
-	coordinate->SetValue(x, y, 0);
-	double* world = coordinate->GetComputedWorldValue(pipeline->Renderer);
-	memcpy(start_world_position, world, sizeof(double) * 3);
-	start_world_position[2] = 0;  // 确保在平面上
+	plane_movement_interactor.caller = caller;
+	plane_movement_interactor.OnLeftButtonDown();
+	pipeline->Renderer->RemoveActor(line_actor);
+	pipeline->RenderWindow->Render();
 }
 
 void MouseMove(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
-	vtkSmartPointer<vtkRenderWindowInteractor> interactor = vtkRenderWindowInteractor::SafeDownCast(caller);
-	if (interactor->GetShiftKey())
-	{
-		int x, y;
-		interactor->GetEventPosition(x, y);
-		vtkSmartPointer<vtkCoordinate> coordinate = vtkSmartPointer<vtkCoordinate>::New();
-		coordinate->SetCoordinateSystemToDisplay();
-		coordinate->SetValue(x, y, 0);
-		double* current_world_position = coordinate->GetComputedWorldValue(pipeline->Renderer);
-
-		double dx = current_world_position[0] - start_world_position[0];
-		double dy = current_world_position[1] - start_world_position[1];
-		double dz = current_world_position[2] - start_world_position[2];
-
-		double angle = std::sqrt(dx * dx + dy * dy + dz * dz) * 0.05;  // 角度计算，可能需要调整系数
-
-		if (angle > 0.0)
-		{
-			double axis[3] = { dy, -dx, 0 };  // 计算旋转轴，这里假设围绕Z轴旋转
-			transform->Identity();
-			//transform->Translate(-start_world_position[0], -start_world_position[1], -start_world_position[2]);
-			transform->RotateWXYZ(angle, axis);
-			//transform->Translate(start_world_position[0], start_world_position[1], start_world_position[2]);
-
-			plane_actor->SetUserTransform(transform);
-
-			pipeline->Renderer->GetRenderWindow()->Render();
-		}
-	}
+	plane_movement_interactor.caller = caller;
+	plane_movement_interactor.OnMouseMove();
 }
 void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
+	plane_movement_interactor.caller = caller;
+	plane_movement_interactor.OnLeftButtonUp();
+	double3 center;
+	vtkSmartPointer<vtkPolyData> pd = plane_movement_interactor.GetPolyData();
+	pd->GetCenter(center.data);
+	SurfaceMesh sm = VTK_PolyData2CGAL_Surface_Mesh(pd);
+	face_descriptor face = *(sm.faces_begin());
+	normal = PMP::compute_face_normal(face, sm);
+	Point_3 source_point(center[0], center[1], center[2]);
+	Point_3 target_point = source_point + normal * 20;
+
+	line_actor = RenderLine(source_point, target_point, pipeline->Renderer, 1, 1, 0, 1);
+	pipeline->Renderer->RemoveActor(line_actor);
+	line_actor->GetProperty()->SetLineWidth(2);
+	pipeline->Renderer->AddActor(line_actor);
+	pipeline->RenderWindow->Render();
 }
 	
 
@@ -106,16 +92,36 @@ int main()
 
 	plane_pd = plane->GetOutput();
 	
-	vtkNew<vtkPolyDataMapper> mapper;
-	mapper->SetInputData(plane_pd);
+	double3 center;
+	plane_pd->GetCenter(center.data);
+	SurfaceMesh sm = VTK_PolyData2CGAL_Surface_Mesh(plane_pd);
+	face_descriptor face = *(sm.faces_begin());
+	Vector_3 normal = PMP::compute_face_normal(face, sm);
+	Point_3 source_point(center[0], center[1], center[2]);
+	Point_3 target_point = source_point + normal * 20;
 
-	plane_actor = vtkSmartPointer<vtkActor>::New();
-	plane_actor->SetMapper(mapper);
-	plane_actor->GetProperty()->SetColor(0.5, 0.5, 0.5);
-	plane_actor->GetProperty()->SetOpacity(0.8);
+	line_actor = RenderLine(source_point, target_point, pipeline->Renderer, 1, 1, 0, 1);
+	pipeline->Renderer->RemoveActor(line_actor);
+	line_actor->GetProperty()->SetLineWidth(2);
+	pipeline->Renderer->AddActor(line_actor);
 
-	pipeline->Renderer->AddActor(plane_actor);
+	//vtkNew<vtkPolyDataMapper> mapper;
+	//mapper->SetInputData(plane_pd);
+
+	//plane_actor = vtkSmartPointer<vtkActor>::New();
+	//plane_actor->SetMapper(mapper);
+	//plane_actor->GetProperty()->SetColor(0, 0.5, 0.5);
+	//plane_actor->GetProperty()->SetOpacity(1);
+	//pipeline->Renderer->AddActor(plane_actor);
 	
+	plane_movement_interactor.SetRenderer(pipeline->Renderer);
+	plane_movement_interactor.SetRenderWindow(pipeline->RenderWindow);
+	plane_movement_interactor.SetCorrectedOcclusalDirection(double3(0, 1, 0));
+	plane_movement_interactor.SetColor(CGAL::Color(0, 255, 255));
+	plane_movement_interactor.SetOpacity(1);
+	plane_movement_interactor.SetPolyDataAndRender(plane_pd);
+
+
 	std::vector<std::vector<SurfaceMesh> > meshes_vec;
 	std::vector<vtkSmartPointer<vtkPoints> > teeth_center_vec;
 	std::vector<std::vector<vtkSmartPointer<vtkPolyData> > > meshes_pd_vec;
@@ -146,9 +152,22 @@ int main()
 	{
 		vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
 		vtkIdType id = 0;
+
+		bool render_flag = false;
+		if (meshes_pd == *(meshes_pd_vec.begin()))
+		{
+			render_flag = true;
+		}
+		else
+		{
+			render_flag = false;
+		}
 		for (auto& mesh_pd : meshes_pd)
 		{
-			RenderPolydata(mesh_pd, pipeline->Renderer, r, g, b, opacity);
+			if (render_flag)
+			{
+				RenderPolydata(mesh_pd, pipeline->Renderer, r, g, b, opacity);
+			}
 			double* bound = mesh_pd->GetBounds();
 			double center[3] = {
 				(bound[0] + bound[1]) / 2,
@@ -170,6 +189,9 @@ int main()
 	}
 
 	vtkIdType spline_id = 0;
+	vtkIdType arch_id = 1;
+	vtkIdType teeth_id = 1;
+	std::ofstream ofs("data/teeth_data.ini");
 	for (auto& meshes_pd : meshes_pd_vec)
 	{
 		vtkSmartPointer<vtkPoints> teeth_center = teeth_center_vec[spline_id++];
@@ -245,19 +267,24 @@ int main()
 			}
 			teeth_center_id_in_spline.push_back(min_distance_id);
 		}
+		teeth_id = 1;
 		for (auto it = teeth_center_id_in_spline.begin(); it != teeth_center_id_in_spline.end(); ++it)
 		{	
 			auto id = *it;
 			spline_teeth_center_nearest_points->InsertNextPoint(all_spline_points[id][0], all_spline_points[id][1], all_spline_points[id][2]);
-			std::cout << " " << id << " ";
+			int teeth_fdi = 10 * arch_id + teeth_id;
+			std::cout << "Teeth " << teeth_fdi << " ";
+			ofs << teeth_fdi << "="; 
+			Vector_3 direction;
 			if (it == teeth_center_id_in_spline.end() - 1)  // Reached the last element
 			{
 				vtkIdType prev_id = id - 1;
 				Point_3 prev_point(all_spline_points[prev_id][0], all_spline_points[prev_id][1], all_spline_points[prev_id][2]);
 				Point_3 curr_point(all_spline_points[id][0], all_spline_points[id][1], all_spline_points[id][2]);
-				Vector_3 direction(prev_point, curr_point);
+				direction = Vector_3(prev_point, curr_point);
 				direction = direction / std::sqrt(direction.squared_length());
 				std::cout << direction << std::endl;
+				ofs << direction << std::endl;
 
 				Point_3 source_point(prev_point);
 				Point_3 target_point(prev_point + direction * 10);
@@ -268,17 +295,20 @@ int main()
 				vtkIdType next_id = id + 1;
 				Point_3 curr_point(all_spline_points[id][0], all_spline_points[id][1], all_spline_points[id][2]);
 				Point_3 next_point(all_spline_points[next_id][0], all_spline_points[next_id][1], all_spline_points[next_id][2]);
-				Vector_3 direction(curr_point, next_point);
+				direction = Vector_3(curr_point, next_point);
 				direction = direction / std::sqrt(direction.squared_length());
 				std::cout << direction << std::endl;
+				ofs << direction << std::endl;
 
 				Point_3 source_point(curr_point);
 				Point_3 target_point(curr_point + direction * 10);
 				RenderLine(source_point, target_point, pipeline->Renderer, 0, 1, 0, 1);
 			}
+			ofs.flush();
+			teeth_id++;
 		}
 		std::cout << std::endl;
-		
+		arch_id++;
 		// Glyph the points
 		vtkNew<vtkSphereSource> points_actor;
 		points_actor->SetPhiResolution(21);
@@ -351,8 +381,10 @@ int main()
 		//m_spline_actor_vec.push_back(line_actor);
 		//pipeline->Renderer->AddActor(point_actor);
 		pipeline->Renderer->AddActor(line_actor);
+
 	}
 	
+	ofs.close();
 
 	// Set up the camera and interactor.
 	pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
