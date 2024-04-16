@@ -90,7 +90,7 @@
 #include <CGAL/Polygon_mesh_processing/compute_normal.h>
 #include <CGAL/Polygon_mesh_processing/self_intersections.h>
 #include <CGAL/Polygon_mesh_processing/remesh.h>
-
+#include <CGAL/convex_hull_3.h>
 #include <boost/optional.hpp>
 #include <Eigen/Geometry>
 #include <Windows.h>
