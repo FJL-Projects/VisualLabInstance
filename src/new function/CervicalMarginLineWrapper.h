@@ -9,6 +9,7 @@
 #include <CGAL/Segment_3.h>
 #include <CGAL/Ray_3.h>
 #include <CGAL/convex_hull_2.h>
+#include <CGAL/convex_hull_3.h>
 #include <CGAL/IO/Color.h>
 
 #include <vtkPolyData.h>
@@ -49,25 +50,24 @@
 #include "Timer.hpp"
 //#define ENABLE_TIMER_H
 
-typedef CGAL::Simple_cartesian<double>											Kernel;
-typedef Kernel::Point_2															Point_2;
-typedef Kernel::Point_3															Point_3;
-typedef Kernel::Vector_3														Vector_3;
-typedef Kernel::Ray_3															Ray_3;
-typedef Kernel::Segment_3														Segment_3;
-typedef CGAL::Surface_mesh<Kernel::Point_3>										SurfaceMesh;
-typedef boost::graph_traits<SurfaceMesh>::vertex_descriptor						vertex_descriptor;
-typedef boost::graph_traits<SurfaceMesh>::halfedge_descriptor					halfedge_descriptor;
-typedef boost::graph_traits<SurfaceMesh>::vertex_iterator						vertex_iterator;
-typedef boost::graph_traits<SurfaceMesh>::face_descriptor						face_descriptor;
-typedef boost::graph_traits<SurfaceMesh>::edge_descriptor						edge_descriptor;
-typedef CGAL::AABB_face_graph_triangle_primitive<SurfaceMesh>					Primitive;
-typedef CGAL::AABB_traits<Kernel, Primitive>									Traits;
-typedef CGAL::AABB_tree<Traits>													Tree;
-typedef Tree::Primitive_id														Primitive_id;
-typedef Kernel::Ray_3 Ray_3;
-typedef boost::optional<Tree::Intersection_and_primitive_id<Ray_3>::Type>		Ray_intersection;
-typedef boost::optional<Tree::Intersection_and_primitive_id<Segment_3>::Type>	Segment_intersection;
+using Kernel = CGAL::Simple_cartesian<double>;
+using Point_2 = Kernel::Point_2;
+using Point_3 = Kernel::Point_3;
+using Vector_3 = Kernel::Vector_3;
+using Ray_3 = Kernel::Ray_3;
+using Segment_3 = Kernel::Segment_3;
+using SurfaceMesh = CGAL::Surface_mesh<Kernel::Point_3>;
+using vertex_descriptor = boost::graph_traits<SurfaceMesh>::vertex_descriptor;
+using halfedge_descriptor = boost::graph_traits<SurfaceMesh>::halfedge_descriptor;
+using vertex_iterator = boost::graph_traits<SurfaceMesh>::vertex_iterator;
+using face_descriptor = boost::graph_traits<SurfaceMesh>::face_descriptor;
+using edge_descriptor = boost::graph_traits<SurfaceMesh>::edge_descriptor;
+using Primitive = CGAL::AABB_face_graph_triangle_primitive<SurfaceMesh>;
+using Traits = CGAL::AABB_traits<Kernel, Primitive>;
+using Tree = CGAL::AABB_tree<Traits>;
+using Primitive_id = Tree::Primitive_id;
+using Ray_intersection = boost::optional<Tree::Intersection_and_primitive_id<Ray_3>::Type>;
+using Segment_intersection = boost::optional<Tree::Intersection_and_primitive_id<Segment_3>::Type>;
 
 /**
  * @class CervicalMarginLineWrapper
@@ -81,7 +81,7 @@ typedef boost::optional<Tree::Intersection_and_primitive_id<Segment_3>::Type>	Se
 class CervicalMarginLineWrapper
 {
 private:
-	SurfaceMesh*												m_arch_sm; ///< Pointer to the dental arch surface mesh.
+	SurfaceMesh* m_arch_sm; ///< Pointer to the dental arch surface mesh.
 	SurfaceMesh													m_abutment_sm; ///< Surface mesh of the abutment.
 	vtkSmartPointer<vtkPolyData>								m_abutment_pd; ///< PolyData of the abutment.
 	vtkSmartPointer<vtkPolyData>								m_arch_pd; ///< PolyData of the dental arch.
@@ -96,7 +96,7 @@ private:
 	double														m_max_detection_distance = 2.0; ///< Maximum detection distance for margin line expansion.
 	Vector_3													m_projection_direction; ///< Projection direction for the margin line.
 	int															m_selected_id = 0; ///< Selected identifier for internal use.
-	
+
 	vtkSmartPointer<vtkRenderer>								m_renderer; ///< VTK renderer for visualization.
 	vtkSmartPointer<vtkRenderWindow>							m_render_win; ///< VTK render window for visualization.
 
@@ -107,10 +107,10 @@ private:
 	std::map<unsigned int, edge_descriptor>						m_emap; ///< Edge map for internal use.
 	std::map<unsigned int, halfedge_descriptor>					m_hemap; ///< Half-edge map for internal use.
 
-	ClosedSplineDesignInteractorStyle*							m_cervical_margin_line_interactor_style; ///< Interactor style for margin line design.
-	ClosedMeshSpline*											m_abutment_edge_spline; ///< Spline along the abutment edge.
+	ClosedSplineDesignInteractorStyle* m_cervical_margin_line_interactor_style; ///< Interactor style for margin line design.
+	ClosedMeshSpline* m_abutment_edge_spline; ///< Spline along the abutment edge.
 	vertex_descriptor											m_bfs_start_vd; ///< Starting vertex descriptor for BFS operations.
-	double														m_ctrl_pt_density_coefficient = 0.5; ///< Control point density coefficient for spline generation [0.2, 2.0].
+	double														m_ctrl_pt_density_coefficient = 0.3; ///< Control point density coefficient for spline generation [0.1, 1.0].
 	Eigen::MatrixXd												m_V; ///< Eigen matrix for vertices.
 	Eigen::MatrixXi												m_F; ///< Eigen matrix for faces.
 	bool														m_is_initialed; ///< Flag indicating if the wrapper has been initialized.
@@ -118,7 +118,7 @@ private:
 	CGAL::Color 												m_ctrl_point_color = CGAL::blue(); ///< Color of the control points.
 	double                                                      m_margin_line_opacity = 1.0; ///< Opacity of the margin line.
 	double 													    m_ctrl_point_opacity = 1.0; ///< Opacity of the control points.
-	
+
 	void CGALSurfaceMeshToEigen(const SurfaceMesh& sm, Eigen::MatrixXd& V, Eigen::MatrixXi& F);
 	bool BFSMeanCurvatureExtraction(
 		SurfaceMesh& mesh,
@@ -158,14 +158,19 @@ private:
 	std::vector<vertex_descriptor> EquallyDistributeVertices(
 		const SurfaceMesh& mesh,
 		const std::vector<vertex_descriptor>& input_vertices
-	);
+	) const;
+	std::vector<vertex_descriptor> UniformSampling(
+		const SurfaceMesh& mesh,
+		const std::vector<vertex_descriptor>& input_vertices,
+		const unsigned num
+	) const;
 
 	int PolyDataToSurfaceMesh(vtkPolyData* polyData, SurfaceMesh& surfaceMesh);
-	SurfaceMesh* AreaExpander(
+	std::shared_ptr<SurfaceMesh> AreaExpander(
 		SurfaceMesh& mesh,
 		const vtkSmartPointer<vtkPolyData> pd,
 		int n,
-		std::unordered_map<face_descriptor,face_descriptor>& face_map,
+		std::unordered_map<face_descriptor, face_descriptor>& face_map,
 		std::unordered_map<vertex_descriptor, vertex_descriptor>& vertex_map,
 		unsigned expansion_level
 	);

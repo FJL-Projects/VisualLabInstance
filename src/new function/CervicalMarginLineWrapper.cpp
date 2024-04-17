@@ -37,12 +37,12 @@ void CervicalMarginLineWrapper::SetProjectionDirection(const Vector_3 projection
 
 void CervicalMarginLineWrapper::SetArchPolyData(vtkSmartPointer<vtkPolyData> arch_pd)
 {
-	m_arch_pd = arch_pd;
+    m_arch_pd = arch_pd;
 }
 
 void CervicalMarginLineWrapper::SetCervicalMarginLineInteractorStyle(ClosedSplineDesignInteractorStyle* cervical_margin_line_interactor_style)
 {
-   m_cervical_margin_line_interactor_style = cervical_margin_line_interactor_style;
+    m_cervical_margin_line_interactor_style = cervical_margin_line_interactor_style;
 }
 
 void CervicalMarginLineWrapper::SetExpansionDistance(const double distance)
@@ -62,7 +62,7 @@ void CervicalMarginLineWrapper::SetSelectedId(const int selected_id)
 
 void CervicalMarginLineWrapper::SetCtrlPtDensityCoefficient(const double coefficient)
 {
-	m_ctrl_pt_density_coefficient = coefficient;
+    m_ctrl_pt_density_coefficient = coefficient;
 }
 
 void CervicalMarginLineWrapper::SetMarginLineColor(const CGAL::Color& color)
@@ -73,8 +73,8 @@ void CervicalMarginLineWrapper::SetMarginLineColor(const CGAL::Color& color)
 void CervicalMarginLineWrapper::SetMarginLineColor(const double r, const double g, const double b)
 {
     auto double_to_color = [](double value) -> unsigned char {
-		return static_cast<unsigned char>(value * 255);
-	};
+        return static_cast<unsigned char>(value * 255);
+        };
     m_margin_line_color = CGAL::Color(double_to_color(r), double_to_color(g), double_to_color(b));
 }
 
@@ -86,9 +86,9 @@ void CervicalMarginLineWrapper::SetCtrlPointColor(const CGAL::Color& color)
 void CervicalMarginLineWrapper::SetCtrlPointColor(const double r, const double g, const double b)
 {
     auto double_to_color = [](double value) -> unsigned char {
-		return static_cast<unsigned char>(value * 255);
-	};
-	m_ctrl_point_color = CGAL::Color(double_to_color(r), double_to_color(g), double_to_color(b));
+        return static_cast<unsigned char>(value * 255);
+        };
+    m_ctrl_point_color = CGAL::Color(double_to_color(r), double_to_color(g), double_to_color(b));
 }
 
 void CervicalMarginLineWrapper::SetMarginLineOpacity(const double opacity)
@@ -103,7 +103,7 @@ void CervicalMarginLineWrapper::SetCtrlPointOpacity(const double opacity)
 
 void CervicalMarginLineWrapper::SetMinCurvatureThreshold(const double threshold)
 {
-	m_min_curvature_threshold = threshold;
+    m_min_curvature_threshold = threshold;
 }
 
 void CervicalMarginLineWrapper::SetMeanCurvatureThreshold(const double threshold)
@@ -130,7 +130,7 @@ CervicalMarginLineWrapper::ExtractSubmeshAndVertexMapping(
     std::unordered_map<vertex_descriptor, vertex_descriptor> new_to_original_vertex_map;
 
     // Add vertices to the new mesh and create the vertex mapping
-    for (vertex_descriptor v : extracted_vertices) 
+    for (vertex_descriptor v : extracted_vertices)
     {
         vertex_descriptor new_v = new_mesh.add_vertex(original_mesh.point(v));
         original_to_new_vertex_map[v] = new_v;
@@ -138,17 +138,17 @@ CervicalMarginLineWrapper::ExtractSubmeshAndVertexMapping(
     }
 
     // Iterate over faces in the original mesh
-    for (face_descriptor f : original_mesh.faces()) 
+    for (face_descriptor f : original_mesh.faces())
     {
         std::vector<vertex_descriptor> face_vertex_descriptors;
-        for (vertex_descriptor v : vertices_around_face(original_mesh.halfedge(f), original_mesh)) 
+        for (vertex_descriptor v : vertices_around_face(original_mesh.halfedge(f), original_mesh))
         {
             // Check if the current vertex is in the extracted vertices map
             if (original_to_new_vertex_map.find(v) != original_to_new_vertex_map.end())
             {
                 face_vertex_descriptors.push_back(original_to_new_vertex_map[v]);
             }
-            else 
+            else
             {
                 // If any vertex of the face is not in the extracted list, discard the face
                 face_vertex_descriptors.clear();
@@ -156,7 +156,7 @@ CervicalMarginLineWrapper::ExtractSubmeshAndVertexMapping(
             }
         }
         // Add the face to the new mesh if all its vertices are in the extracted vertices
-        if (!face_vertex_descriptors.empty()) 
+        if (!face_vertex_descriptors.empty())
         {
             new_mesh.add_face(face_vertex_descriptors);
         }
@@ -416,7 +416,7 @@ std::map<Point_2, vertex_descriptor> CervicalMarginLineWrapper::ProjectToPlane(c
  * Note: This function does not necessarily result in vertices being exactly `min_interval` apart,
  * but no two consecutive vertices will be closer than `min_interval`.
  */
-std::vector<vertex_descriptor> CervicalMarginLineWrapper::EquallyDistributeVertices(const SurfaceMesh& mesh, const std::vector<vertex_descriptor>& input_vertices)
+std::vector<vertex_descriptor> CervicalMarginLineWrapper::EquallyDistributeVertices(const SurfaceMesh& mesh, const std::vector<vertex_descriptor>& input_vertices) const
 {
     std::vector<vertex_descriptor> output_vertices;
     output_vertices.push_back(input_vertices[0]);
@@ -434,7 +434,7 @@ std::vector<vertex_descriptor> CervicalMarginLineWrapper::EquallyDistributeVerti
     double min_interval = m_ctrl_pt_density_coefficient * total_distance / input_vertices.size();
 
     double distance = 0.0;
-    for (int i = 0; i < input_vertices.size(); ++i)
+    for (int i = 0; i < input_vertices.size() - 1; ++i)
     {
         Point_3 point_a = mesh.point(input_vertices[i]);
         Point_3 point_b = mesh.point(input_vertices[(i + 1) % input_vertices.size()]);
@@ -442,11 +442,66 @@ std::vector<vertex_descriptor> CervicalMarginLineWrapper::EquallyDistributeVerti
 
         if (distance < 1.5)
         {
-            //std::cout << "Skipping vertex " << i << " with distance " << distance << std::endl;
             continue;
         }
-        output_vertices.push_back(input_vertices[(i + 1) % input_vertices.size()]);
+
+        vertex_descriptor next_vertex = input_vertices.at((i + 1) % input_vertices.size());
+        output_vertices.push_back(next_vertex);
         distance = 0.0;
+    }
+
+    return output_vertices;
+}
+
+std::vector<vertex_descriptor> CervicalMarginLineWrapper::UniformSampling(
+    const SurfaceMesh& mesh,
+    const std::vector<vertex_descriptor>& input_vertices,
+    const unsigned num
+) const
+{
+    std::vector<vertex_descriptor> output_vertices;
+    size_t num_input_vertices = input_vertices.size();
+    if (num_input_vertices < static_cast<size_t>(2))
+    {
+        return input_vertices;
+    }
+    // Calculate total length of the polyline
+    double total_length = 0;
+    for (size_t i = 1; i < num_input_vertices; i++)
+    {
+        const Point_3 curr_point = mesh.point(input_vertices[i]);
+        const Point_3 prev_point = mesh.point(input_vertices[i - 1]);
+
+        total_length += std::sqrt(CGAL::squared_distance(curr_point, prev_point));
+    }
+
+    // Calculate the sample distance
+    double sample_distance = total_length / (num - 1);
+
+    // Store the first point
+    output_vertices.push_back(input_vertices[0]);
+
+    // Iterate over the input points and sample the points
+    double current_length = 0;
+    for (size_t i = 1; i < num_input_vertices; i++)
+    {
+        const Point_3 curr_point = mesh.point(input_vertices[i]);
+        const Point_3 prev_point = mesh.point(input_vertices[i - 1]);
+        double segment_length = std::sqrt(CGAL::squared_distance(curr_point, prev_point));
+
+        if (current_length > sample_distance)
+        {
+            output_vertices.push_back(input_vertices[i]);
+            current_length = 0.0;
+        }
+
+        current_length += segment_length;
+    }
+
+    // Store the last point
+    if (output_vertices.back() != input_vertices.back())
+    {
+        output_vertices.push_back(input_vertices.back());
     }
 
     return output_vertices;
@@ -454,7 +509,7 @@ std::vector<vertex_descriptor> CervicalMarginLineWrapper::EquallyDistributeVerti
 
 void CervicalMarginLineWrapper::SetAbutmentPolyData(vtkSmartPointer<vtkPolyData> abutment_pd)
 {
-	m_abutment_pd = abutment_pd;
+    m_abutment_pd = abutment_pd;
 }
 
 /**
@@ -498,9 +553,9 @@ void CervicalMarginLineWrapper::Init()
 #endif
     if (!m_arch_sm)
     {
-		std::cerr << "Arch surface mesh is not set." << std::endl;
-		return;
-	}
+        std::cerr << "Arch surface mesh is not set." << std::endl;
+        return;
+    }
     if (!m_abutment_pd)
     {
         std::cerr << "Abutment polydata is not set." << std::endl;
@@ -508,19 +563,19 @@ void CervicalMarginLineWrapper::Init()
     }
     if (!m_arch_pd)
     {
-		std::cerr << "Arch polydata is not set." << std::endl;
-		return;
-	}
+        std::cerr << "Arch polydata is not set." << std::endl;
+        return;
+    }
     if (!m_renderer)
     {
-		std::cerr << "Renderer is not set." << std::endl;
+        std::cerr << "Renderer is not set." << std::endl;
         return;
-	}
+    }
     if (!m_render_win)
     {
-		std::cerr << "Render window is not set." << std::endl;
+        std::cerr << "Render window is not set." << std::endl;
         return;
-	}
+    }
     if (m_projection_direction == Vector_3(0, 0, 0))
     {
         std::cerr << "Projection direction is not set." << std::endl;
@@ -533,16 +588,16 @@ void CervicalMarginLineWrapper::Init()
     }
     if (!m_cervical_margin_line_interactor_style)
     {
-		std::cerr << "Cervical margin line interactor style is not set." << std::endl;
-		return;
-	}
+        std::cerr << "Cervical margin line interactor style is not set." << std::endl;
+        return;
+    }
     if (!m_selected_id)
     {
         std::cerr << "Selected id is not set." << std::endl;
         return;
     }
 
-	// Convert the abutment polydata to a CGAL surface mesh
+    // Convert the abutment polydata to a CGAL surface mesh
     PolyDataToSurfaceMesh(m_abutment_pd, m_abutment_sm);
 
     halfedge_descriptor bhd = CGAL::Polygon_mesh_processing::longest_border(*m_arch_sm).first;
@@ -558,7 +613,7 @@ void CervicalMarginLineWrapper::Init()
     bool found;
     boost::tie(uv_map, found) = m_arch_sm->property_map<vertex_descriptor, Point_2>("h:uv");
     // If it doesn't exist, add the property map
-    if (!found) 
+    if (!found)
     {
         uv_map = m_arch_sm->add_property_map<vertex_descriptor, Point_2>("h:uv").first;
     }
@@ -594,9 +649,9 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
 {
     if (!m_is_initialed)
     {
-		std::cerr << "The CervicalMarginLineWrapper is not initialed." << std::endl;
-		return;
-	}
+        std::cerr << "The CervicalMarginLineWrapper is not initialed." << std::endl;
+        return;
+    }
 
     using namespace Eigen;
 
@@ -610,7 +665,7 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
     double abutment_center[3];
     m_abutment_pd->GetCenter(abutment_center);
     Point_3 abutment_center_point(abutment_center[0], abutment_center[1], abutment_center[2]);
-    Vector_3 ray_direction = m_projection_direction;
+    Vector_3 ray_direction = -m_projection_direction;
     Ray_3 ray(abutment_center_point, ray_direction);
     Tree tree(faces(m_expanded_abutment_sm).first, faces(m_expanded_abutment_sm).second, m_expanded_abutment_sm);
     auto intersection = tree.first_intersection(ray);
@@ -623,22 +678,9 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
     }
     else
     {
-        ray_direction = -ray_direction;
-        //std::cout << "Changing ray direction to " << ray_direction << std::endl;
-        Ray_3 reverse_ray(abutment_center_point, ray_direction);
-        auto reverse_intersection = tree.first_intersection(reverse_ray);
-        if (reverse_intersection)
-        {
-            //std::cout << "Intersection with mesh at " << reverse_intersection->first << std::endl;
-            face_descriptor fd = reverse_intersection->second;
-            CGAL::Halfedge_around_face_circulator<SurfaceMesh> circ(m_expanded_abutment_sm.halfedge(fd), m_expanded_abutment_sm), done(circ);
-            m_bfs_start_vd = source(*circ, m_expanded_abutment_sm);
-        }
-        else
-        {
-            std::cout << "No intersection with mesh" << std::endl;
-            return;
-        }
+
+        std::cerr << "No intersection with mesh" << std::endl;
+        return;
     }
     Point_3 bfs_start_point = m_expanded_abutment_sm.point(m_bfs_start_vd);
 
@@ -713,7 +755,7 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
 
         // Traverse adjacent vertices
         auto circ = m_expanded_abutment_sm.vertices_around_target(m_expanded_abutment_sm.halfedge(vd));
-        for (auto vic = circ.begin(); vic != circ.end(); ++vic) 
+        for (auto vic = circ.begin(); vic != circ.end(); ++vic)
         {
             h5_sum += H5[vic->idx()];
             h10_sum += H10[vic->idx()];
@@ -737,9 +779,9 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
             mean_curvature[vd] = H15[vd.idx()];
         }
         catch (const std::out_of_range& e)
-		{
-			//std::cerr << "Error: Vertex descriptor: " << vd.idx()  << " not found in the mapping!" << std::endl;
-		}
+        {
+            //std::cerr << "Error: Vertex descriptor: " << vd.idx()  << " not found in the mapping!" << std::endl;
+        }
     }
 
     std::vector<vertex_descriptor> extracted_vertices;
@@ -759,18 +801,31 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
         std::cout << "Mean curvature extraction method is used!" << std::endl;
     }
 
+
     std::ofstream extracted_vertices_ofs("extracted_vertices.xyz");
     for (const auto& vd : extracted_vertices)
-	{
-		extracted_vertices_ofs << m_expanded_abutment_sm.point(vd) << "\n";
-	}
+    {
+        extracted_vertices_ofs << m_expanded_abutment_sm.point(vd) << "\n";
+    }
     extracted_vertices_ofs.close();
 
     // Extract the submesh and the vertex mapping of the extracted to the original mesh
     std::pair<SurfaceMesh, std::unordered_map<vertex_descriptor, vertex_descriptor>> extracted_mesh_pair = ExtractSubmeshAndVertexMapping(m_expanded_abutment_sm, extracted_vertices);
     m_abutment_sm = extracted_mesh_pair.first;
     m_abutment_to_arch_vd_map = extracted_mesh_pair.second;
-    CGAL::IO::write_PLY("extracted_abutment.ply", m_abutment_sm);
+    //CGAL::IO::write_PLY("extracted_abutment.ply", m_abutment_sm);
+
+    // First inflate the abutment and get a convex hull SurfaceMesh enveloping the abutment
+    // Second extract all the vertices contained in the inflated abutment convex hull
+    SurfaceMesh inflated_abutment_sm = m_abutment_sm;
+    SurfaceMesh convex_hull_sm;
+    auto& normal_map = inflated_abutment_sm.add_property_map<vertex_descriptor, Vector_3>("v:normal", Vector_3(0, 0, 0)).first;
+    PMP::compute_vertex_normals(inflated_abutment_sm, normal_map);
+    for (auto& v : inflated_abutment_sm.vertices())
+    {
+        inflated_abutment_sm.point(v) += normal_map[v] * 0.05;
+    }
+
 }
 
 /**
@@ -804,22 +859,25 @@ void CervicalMarginLineWrapper::GenerateAbutmentEdgeSpline()
 #ifdef ENABLE_TIMER_H
     Timer timer("Generate abutment edge spline");
 #endif
+    
+
+
 
     CalculateEdgeBorder(m_abutment_sm, m_abutment_border);
-    std::cout << "Abutment border vertices: " << m_abutment_border.size() << std::endl;
-    std::ofstream border_vertices_ofs("border_vertices.xyz");
-    for (const auto& vd : m_abutment_border)
-    {
-        // m_abutment_to_arch_vd_map may not contain the vertex descriptor, so we need to check and drop it
-        if (m_abutment_to_arch_vd_map.find(vd) == m_abutment_to_arch_vd_map.end())
-        {
-            m_abutment_to_arch_vd_map.erase(vd);
-            continue;
-        }
-        vertex_descriptor origin_vd = m_abutment_to_arch_vd_map.at(vd);
-        border_vertices_ofs << m_expanded_abutment_sm.point(origin_vd) << "\n";
-    }
-    border_vertices_ofs.close();
+    //std::cout << "Abutment border vertices: " << m_abutment_border.size() << std::endl;
+    //std::ofstream border_vertices_ofs("border_vertices.xyz");
+    //for (const auto& vd : m_abutment_border)
+    //{
+    //    // m_abutment_to_arch_vd_map may not contain the vertex descriptor, so we need to check and drop it
+    //    if (m_abutment_to_arch_vd_map.find(vd) == m_abutment_to_arch_vd_map.end())
+    //    {
+    //        m_abutment_to_arch_vd_map.erase(vd);
+    //        continue;
+    //    }
+    //    vertex_descriptor origin_vd = m_abutment_to_arch_vd_map.at(vd);
+    //    border_vertices_ofs << m_expanded_abutment_sm.point(origin_vd) << "\n";
+    //}
+    //border_vertices_ofs.close();
     std::cout << "Abutment border vertices(cleansed): " << m_abutment_border.size() << std::endl;
 
     std::ofstream cleansed_border_vertices_ofs("cleansed_border_vertices.xyz");
@@ -829,35 +887,45 @@ void CervicalMarginLineWrapper::GenerateAbutmentEdgeSpline()
     }
     cleansed_border_vertices_ofs.close();
 
-    //std::vector<Point_2> projected_points;
-    //std::vector<Point_2> convex_hull_points;
-    //std::vector<vertex_descriptor> convex_hull_vertices;
+    std::vector<Point_2> projected_points;
+    std::vector<Point_2> convex_hull_points;
+    std::vector<vertex_descriptor> convex_hull_vertices;
 
-    //// Project the border vertices to the plane and find the convex hull
-    //std::map<Point_2, vertex_descriptor> point2_vd_map = ProjectToPlane(m_expanded_abutment_sm, m_abutment_border, projected_points);
-    //CGAL::convex_hull_2(projected_points.begin(), projected_points.end(), std::back_inserter(convex_hull_points));
+    // Project the border vertices to the plane and find the convex hull
+    std::map<Point_2, vertex_descriptor> point2_vd_map = ProjectToPlane(m_expanded_abutment_sm, m_abutment_border, projected_points);
+    CGAL::convex_hull_2(projected_points.begin(), projected_points.end(), std::back_inserter(convex_hull_points));
+    std::ofstream convex_hull_points_ofs("convex_hull_points.xyz");
+    // Map the convex hull points to the original mesh
+    for (const auto& point : convex_hull_points)
+    {
+        if (point2_vd_map.find(point) == point2_vd_map.end())
+        {
+            continue;
+        }
+        vertex_descriptor vd = point2_vd_map.at(point);
+        convex_hull_vertices.push_back(vd);
+        convex_hull_points_ofs << m_expanded_abutment_sm.point(vd) << "\n";
+    }
+    std::cout << "Convex hull vertices: " << convex_hull_vertices.size() << std::endl;
+    convex_hull_points_ofs.close();
 
-    //// Map the convex hull points to the original mesh
-    //for (const auto& point : convex_hull_points)
-    //{
-    //    if (point2_vd_map.find(point) == point2_vd_map.end())
-    //    {
-    //        continue;
-    //    }
-    //    vertex_descriptor vd = point2_vd_map.at(point);
-    //    convex_hull_vertices.push_back(vd);
-    //}
-    //std::cout << "Convex hull vertices: " << convex_hull_vertices.size() << std::endl;
     // Filter the convex_hull_vertices to avoid zigzagging spline cause by proximal vertices
     //std::vector<vertex_descriptor> equally_distributed_vertices = EquallyDistributeVertices(m_expanded_abutment_sm, convex_hull_vertices);
-    std::vector<vertex_descriptor> equally_distributed_vertices = EquallyDistributeVertices(m_expanded_abutment_sm, m_abutment_border);
+    //std::vector<vertex_descriptor> equally_distributed_vertices = EquallyDistributeVertices(m_expanded_abutment_sm, m_abutment_border);
+    std::vector<vertex_descriptor> equally_distributed_vertices = UniformSampling(m_expanded_abutment_sm, m_abutment_border, static_cast<unsigned>(m_ctrl_pt_density_coefficient));
     //std::vector<vertex_descriptor> equally_distributed_vertices = convex_hull_vertices;
-    
     std::cout << "Equally distributed vertices: " << equally_distributed_vertices.size() << std::endl;
+
+    std::ofstream equally_distributed_vertices_ofs("equally_distributed_vertices.xyz");
+    for (auto v : equally_distributed_vertices)
+    {
+        equally_distributed_vertices_ofs << m_expanded_abutment_sm.point(v) << std::endl;
+    }
+    equally_distributed_vertices_ofs.close();
 
     auto weighted_point = [](Point_3& p1, Point_3& p2, Point_3& p3, double w1, double w2, double w3) -> Point_3
         {
-            assert((1.0 - w1 - w2 - w3) < 1E-3);
+            assert(std::fabs(1.0 - w1 - w2 - w3) < 1E-3);
             return Point_3(w1 * p1.x() + w2 * p2.x() + w3 * p3.x(),
                 w1 * p1.y() + w2 * p2.y() + w3 * p3.y(),
                 w1 * p1.z() + w2 * p2.z() + w3 * p3.z());
@@ -946,6 +1014,7 @@ void CervicalMarginLineWrapper::GenerateAbutmentEdgeSpline()
 
             //std::cout << "Add ctrl pt: face_descriptor: " << fd_new.idx() << std::endl;
 
+            //std::cout << m_expanded_to_arch_fd_map.at(face_descriptor(ctrl_pt.nTriId)).idx() << " " << ctrl_pt.xyz[0] << " " << ctrl_pt.xyz[1] << " " << ctrl_pt.xyz[2] << std::endl;
             m_abutment_edge_spline->add(m_expanded_to_arch_fd_map.at(face_descriptor(ctrl_pt.nTriId)).idx(), ctrl_pt.xyz);
             /*vtkSmartPointer<vtkPolyDataNormals> vtkNormal = vtkSmartPointer<vtkPolyDataNormals>::New();
             vtkNormal->SetInputConnection(abutment_edge_spline.CtrlPointSphere.back()->GetOutputPort());
@@ -1017,29 +1086,18 @@ void CervicalMarginLineWrapper::GenerateCervicalMarginLine()
     //uv_map = m_cervical_margin_line_interactor_style->uv_map;
     // Todo: Add the expansion distance adjustment
     MeshSplineExpander mesh_spline_expander(
-        m_abutment_edge_spline->vtCtrlPoints,
+        *m_abutment_edge_spline,
         *m_arch_sm,
         m_expansion_distance,
         1,
         is_clockwise,
-        m_abutment_edge_spline->vtEquidistantSpline,
         m_fmap,
         m_vmap,
         m_emap,
-        m_hemap
+        m_hemap,
+        false
     );
-    //MeshSplineExpander mesh_spline_expander(
-    //    m_abutment_edge_spline->vtCtrlPoints,
-    //    *m_arch_sm,
-    //    2,
-    //    is_clockwise,
-    //    m_abutment_edge_spline->vtEquidistantSpline,
-    //    m_fmap,
-    //    m_vmap,
-    //    m_emap,
-    //    m_hemap,
-    //    uv_map
-    //);
+
     mesh_spline_expander.SetRenderer(m_renderer);
     mesh_spline_expander.SetRenderWin(m_render_win);
     bool success = mesh_spline_expander.ExpandSpline();
@@ -1118,6 +1176,16 @@ void CervicalMarginLineWrapper::GenerateImprovedMarginLine()
 #ifdef ENABLE_TIMER_H
     Timer timer("Generate cervical margin line");
 #endif
+    bool use_neighboring = true;
+    std::vector<Point_3> vertices;
+    vertices.reserve(m_abutment_sm.number_of_vertices());
+
+    for (auto v : m_abutment_sm.vertices()) {
+        vertices.push_back(m_abutment_sm.point(v));
+    }
+
+    Point_3 centroid = CGAL::centroid(vertices.begin(), vertices.end(), CGAL::Dimension_tag<0>());
+
     {
         double margin_line_color[3] = { m_margin_line_color.r() / 255.0, m_margin_line_color.g() / 255.0, m_margin_line_color.b() / 255.0 };
         double ctrl_point_color[3] = { m_ctrl_point_color.r() / 255.0, m_ctrl_point_color.g() / 255.0, m_ctrl_point_color.b() / 255.0 };
@@ -1127,17 +1195,18 @@ void CervicalMarginLineWrapper::GenerateImprovedMarginLine()
         //uv_map = m_cervical_margin_line_interactor_style->uv_map;
         // Todo: Add the expansion distance adjustment
         MeshSplineExpander mesh_spline_expander(
-            m_abutment_edge_spline->vtCtrlPoints,
+            *m_abutment_edge_spline,
             *m_arch_sm,
             m_expansion_distance,
             1,
             is_clockwise,
-            m_abutment_edge_spline->vtEquidistantSpline,
             m_fmap,
             m_vmap,
             m_emap,
-            m_hemap
+            m_hemap,
+            use_neighboring
         );
+        mesh_spline_expander.SetExpansionSourceCenter(centroid);
         mesh_spline_expander.SetRenderer(m_renderer);
         mesh_spline_expander.SetRenderWin(m_render_win);
         bool success = mesh_spline_expander.ExpandSpline();
@@ -1209,105 +1278,107 @@ void CervicalMarginLineWrapper::GenerateImprovedMarginLine()
 
         m_renderer->AddActor(m_cervical_margin_line_interactor_style->spline->SplineActor);
         m_cervical_margin_line_interactor_style->OnLeftButtonUp();
+
+        std::cout << "expanded_spline_mp size: " << expanded_spline_mp.size() << std::endl;
     }
-    {
-        //std::cout << "Abutment Edge Spline size: " << m_abutment_edge_spline->uvSpline.size() << std::endl;
-        Polygon_2 polygon(m_abutment_edge_spline->uvSpline.begin(), m_abutment_edge_spline->uvSpline.end());
+    //{
+    //    //std::cout << "Abutment Edge Spline size: " << m_abutment_edge_spline->uvSpline.size() << std::endl;
+    //    Polygon_2 polygon(m_abutment_edge_spline->uvSpline.begin(), m_abutment_edge_spline->uvSpline.end());
 
-        bool is_clockwise = polygon.is_clockwise_oriented();
-        //uv_map = m_cervical_margin_line_interactor_style->uv_map;
-        // Todo: Add the expansion distance adjustment
+    //    bool is_clockwise = polygon.is_clockwise_oriented();
+    //    //uv_map = m_cervical_margin_line_interactor_style->uv_map;
 
-        //SurfaceMesh::Property_map<vertex_descriptor, double> min_curvature = m_arch_sm->add_property_map<vertex_descriptor, double>("v:min_curvature", 0.0).first;
-        MeshSplineExpander mesh_spline_expander(
-            m_abutment_edge_spline->vtCtrlPoints,
-            *m_arch_sm,
-            m_max_detection_distance,
-            is_clockwise,
-            m_abutment_edge_spline->vtEquidistantSpline,
-            m_fmap,
-            m_vmap,
-            m_emap,
-            m_hemap
-        );
+    //    //SurfaceMesh::Property_map<vertex_descriptor, double> min_curvature = m_arch_sm->add_property_map<vertex_descriptor, double>("v:min_curvature", 0.0).first;
+    //    MeshSplineExpander mesh_spline_expander(
+    //        *m_abutment_edge_spline,
+    //        *m_arch_sm,
+    //        m_max_detection_distance,
+    //        is_clockwise,
+    //        m_fmap,
+    //        m_vmap,
+    //        m_emap,
+    //        m_hemap,
+    //        use_neighboring
+    //    );
+    //    mesh_spline_expander.SetExpansionSourceCenter(centroid);
+    //    mesh_spline_expander.SetRenderer(m_renderer);
+    //    mesh_spline_expander.SetRenderWin(m_render_win);
+    //    bool success = mesh_spline_expander.ExpandToLowestCurvature();
 
-        mesh_spline_expander.SetRenderer(m_renderer);
-        mesh_spline_expander.SetRenderWin(m_render_win);
-        bool success = mesh_spline_expander.ExpandToLowestCurvature();
-        //bool success = mesh_spline_expander.ExpandToLowestCurvature();
-        //std::vector<ClosedMeshSpline> expanded_splines = mesh_spline_expander.GetExpandedSplines();
-        //for (auto expanded_spline : expanded_splines)
-        //{
-        //    Renderer->AddActor(expanded_spline.SplineActor);
-        //}
-        //std::vector<MeshPoint> expanded_spline_mp = mesh_spline_expander.GetExpandedSplinesMP()[0];
-        //for (MeshPoint& mp : expanded_spline_mp)
-        //{
-        //    m_cervical_margin_line_interactor_style->spline->add(mp.nTriId, mp.xyz);
-        //    vtkSmartPointer<vtkPolyDataNormals> mp_normal = vtkSmartPointer<vtkPolyDataNormals>::New();
-        //    mp_normal->SetInputConnection(m_cervical_margin_line_interactor_style->spline->CtrlPointSphere.back()->GetOutputPort());
-        //    mp_normal->SetComputePointNormals(1);
-        //    mp_normal->SetComputeCellNormals(1);
-        //    mp_normal->SetAutoOrientNormals(1);
-        //    mp_normal->SetSplitting(0);
-        //    mp_normal->FlipNormalsOff();
-        //    mp_normal->Update();
-        //    vtkSmartPointer<vtkPolyDataMapper> mp_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-        //    mp_mapper->SetInputConnection(mp_normal->GetOutputPort());
-        //    mp_mapper->Update();
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->SetMapper(mp_mapper);
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetColor(0, 0, 1);
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetAmbient(0.5);
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetSpecularPower(100);
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetSpecular(0.5);
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetDiffuse(0.5);
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetOpacity(1.0);
-        //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->PickableOn();
-        //    m_renderer->AddActor(m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back());
-        //}
-        //m_cervical_margin_line_interactor_style->spline->bClosed = true;
-        //m_cervical_margin_line_interactor_style->spline->UpdateSpline(m_cervical_margin_line_interactor_style->spline->vtEquidistantSpline);
+    //    //bool success = mesh_spline_expander.ExpandToLowestCurvature();
+    //    //std::vector<ClosedMeshSpline> expanded_splines = mesh_spline_expander.GetExpandedSplines();
+    //    //for (auto expanded_spline : expanded_splines)
+    //    //{
+    //    //    Renderer->AddActor(expanded_spline.SplineActor);
+    //    //}
+    //    //std::vector<MeshPoint> expanded_spline_mp = mesh_spline_expander.GetExpandedSplinesMP()[0];
+    //    //for (MeshPoint& mp : expanded_spline_mp)
+    //    //{
+    //    //    m_cervical_margin_line_interactor_style->spline->add(mp.nTriId, mp.xyz);
+    //    //    vtkSmartPointer<vtkPolyDataNormals> mp_normal = vtkSmartPointer<vtkPolyDataNormals>::New();
+    //    //    mp_normal->SetInputConnection(m_cervical_margin_line_interactor_style->spline->CtrlPointSphere.back()->GetOutputPort());
+    //    //    mp_normal->SetComputePointNormals(1);
+    //    //    mp_normal->SetComputeCellNormals(1);
+    //    //    mp_normal->SetAutoOrientNormals(1);
+    //    //    mp_normal->SetSplitting(0);
+    //    //    mp_normal->FlipNormalsOff();
+    //    //    mp_normal->Update();
+    //    //    vtkSmartPointer<vtkPolyDataMapper> mp_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    //    //    mp_mapper->SetInputConnection(mp_normal->GetOutputPort());
+    //    //    mp_mapper->Update();
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->SetMapper(mp_mapper);
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetColor(0, 0, 1);
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetAmbient(0.5);
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetSpecularPower(100);
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetSpecular(0.5);
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetDiffuse(0.5);
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetOpacity(1.0);
+    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->PickableOn();
+    //    //    m_renderer->AddActor(m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back());
+    //    //}
+    //    //m_cervical_margin_line_interactor_style->spline->bClosed = true;
+    //    //m_cervical_margin_line_interactor_style->spline->UpdateSpline(m_cervical_margin_line_interactor_style->spline->vtEquidistantSpline);
 
-        //vtkSmartPointer<vtkTubeFilter> margin_line_tube_filter = vtkSmartPointer<vtkTubeFilter>::New();
-        //margin_line_tube_filter->SetInputData(m_cervical_margin_line_interactor_style->spline->SplinePolydata);
-        //margin_line_tube_filter->SetRadius(0.025);
-        //margin_line_tube_filter->SetNumberOfSides(16);
-        //margin_line_tube_filter->Update();
-        //vtkSmartPointer<vtkPolyDataNormals> margin_line_tube_normal = vtkSmartPointer<vtkPolyDataNormals>::New();
-        //margin_line_tube_normal->SetInputConnection(margin_line_tube_filter->GetOutputPort());
-        //margin_line_tube_normal->SetComputePointNormals(1);
-        //margin_line_tube_normal->SetComputeCellNormals(1);
-        //margin_line_tube_normal->SetAutoOrientNormals(1);
-        //margin_line_tube_normal->SetSplitting(0);
-        //margin_line_tube_normal->FlipNormalsOff();
-        //margin_line_tube_normal->Update();
-        //vtkSmartPointer<vtkPolyDataMapper> abutment_line_tube_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-        //abutment_line_tube_mapper->SetInputConnection(margin_line_tube_normal->GetOutputPort());
-        //abutment_line_tube_mapper->Update();
+    //    //vtkSmartPointer<vtkTubeFilter> margin_line_tube_filter = vtkSmartPointer<vtkTubeFilter>::New();
+    //    //margin_line_tube_filter->SetInputData(m_cervical_margin_line_interactor_style->spline->SplinePolydata);
+    //    //margin_line_tube_filter->SetRadius(0.025);
+    //    //margin_line_tube_filter->SetNumberOfSides(16);
+    //    //margin_line_tube_filter->Update();
+    //    //vtkSmartPointer<vtkPolyDataNormals> margin_line_tube_normal = vtkSmartPointer<vtkPolyDataNormals>::New();
+    //    //margin_line_tube_normal->SetInputConnection(margin_line_tube_filter->GetOutputPort());
+    //    //margin_line_tube_normal->SetComputePointNormals(1);
+    //    //margin_line_tube_normal->SetComputeCellNormals(1);
+    //    //margin_line_tube_normal->SetAutoOrientNormals(1);
+    //    //margin_line_tube_normal->SetSplitting(0);
+    //    //margin_line_tube_normal->FlipNormalsOff();
+    //    //margin_line_tube_normal->Update();
+    //    //vtkSmartPointer<vtkPolyDataMapper> abutment_line_tube_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+    //    //abutment_line_tube_mapper->SetInputConnection(margin_line_tube_normal->GetOutputPort());
+    //    //abutment_line_tube_mapper->Update();
 
-        //vtkSmartPointer<vtkPolyData> margin_line_tube = abutment_line_tube_mapper->GetInput();
-        //vtkSmartPointer<vtkPLYWriter> margin_line_tube_writer = vtkSmartPointer<vtkPLYWriter>::New();
-        //margin_line_tube_writer->SetFileName("margin_line.ply");
-        //margin_line_tube_writer->SetInputData(margin_line_tube);
-        //margin_line_tube_writer->Write();
+    //    //vtkSmartPointer<vtkPolyData> margin_line_tube = abutment_line_tube_mapper->GetInput();
+    //    //vtkSmartPointer<vtkPLYWriter> margin_line_tube_writer = vtkSmartPointer<vtkPLYWriter>::New();
+    //    //margin_line_tube_writer->SetFileName("margin_line.ply");
+    //    //margin_line_tube_writer->SetInputData(margin_line_tube);
+    //    //margin_line_tube_writer->Write();
 
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->SetMapper(abutment_line_tube_mapper);
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetColor(1, 1, 0);
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetAmbient(0.5);
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetSpecularPower(100);
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetSpecular(0.5);
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetDiffuse(0.5);
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetOpacity(1.0);
-        //m_cervical_margin_line_interactor_style->spline->SplineActor->PickableOff();
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->SetMapper(abutment_line_tube_mapper);
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetColor(1, 1, 0);
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetAmbient(0.5);
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetSpecularPower(100);
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetSpecular(0.5);
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetDiffuse(0.5);
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetOpacity(1.0);
+    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->PickableOff();
 
-        //m_renderer->AddActor(m_cervical_margin_line_interactor_style->spline->SplineActor);
-        //m_cervical_margin_line_interactor_style->OnLeftButtonUp();
-    }
+    //    //m_renderer->AddActor(m_cervical_margin_line_interactor_style->spline->SplineActor);
+    //    //m_cervical_margin_line_interactor_style->OnLeftButtonUp();
+    //}
 }
 
 void CervicalMarginLineWrapper::SetArchSurfaceMesh(SurfaceMesh* arch_sm)
 {
-	m_arch_sm = arch_sm;
+    m_arch_sm = arch_sm;
 }
 
 /**
@@ -1497,7 +1568,7 @@ bool CervicalMarginLineWrapper::BFSMeanCurvatureExtraction(
     std::set<vertex_descriptor> mesh_vertex_set(mesh.vertices().begin(), mesh.vertices().end());
     std::set<vertex_descriptor> extracted_vertex_set(extracted_vertices.begin(), extracted_vertices.end());
     std::set_difference(mesh_vertex_set.begin(), mesh_vertex_set.end(), extracted_vertex_set.begin(), extracted_vertex_set.end(), std::inserter(difference_vertices, difference_vertices.begin()));
-	
+
     return true;
 }
 
@@ -1657,8 +1728,9 @@ int CervicalMarginLineWrapper::PolyDataToSurfaceMesh(vtkPolyData* polyData, Surf
  * @param[out] vertex_map An unordered_map mapping vertices in the new mesh to the corresponding vertices in the input mesh.
  * @param[in] expansion_level The number of iterations for the expansion process.
  *
- * @return Returns a pointer to a new SurfaceMesh object that contains only the expanded selection of faces.
- */SurfaceMesh* CervicalMarginLineWrapper::AreaExpander(
+ * @return Returns a shared pointer to a new SurfaceMesh object that contains only the expanded selection of faces.
+ */
+std::shared_ptr<SurfaceMesh> CervicalMarginLineWrapper::AreaExpander(
     SurfaceMesh& mesh,
     const vtkSmartPointer<vtkPolyData> pd,
     int n,
@@ -1673,7 +1745,7 @@ int CervicalMarginLineWrapper::PolyDataToSurfaceMesh(vtkPolyData* polyData, Surf
     {
         if (static_cast<int>(labels->GetTuple(i)[0]) == n)
         {
-            selection[face_descriptor(i)] = true;
+            selection[face_descriptor(static_cast<uint32_t>(i))] = true;
         }
     }
     std::vector<face_descriptor> expand_area;
@@ -1682,7 +1754,7 @@ int CervicalMarginLineWrapper::PolyDataToSurfaceMesh(vtkPolyData* polyData, Surf
         expand_area.clear();
         for (auto he : mesh.halfedges())
         {
-            if (mesh.is_border(he) || mesh.is_border(mesh.opposite(he))) 
+            if (mesh.is_border(he) || mesh.is_border(mesh.opposite(he)))
             {
                 continue;
             }
@@ -1696,7 +1768,7 @@ int CervicalMarginLineWrapper::PolyDataToSurfaceMesh(vtkPolyData* polyData, Surf
             selection[f] = true;
         }
     }
-    SurfaceMesh* sm_new = new SurfaceMesh;
+    std::shared_ptr<SurfaceMesh> sm_new = std::make_shared<SurfaceMesh>();
     std::vector<int> visit(mesh.number_of_vertices(), -1);
 
     for (auto f : mesh.faces())
@@ -1706,7 +1778,9 @@ int CervicalMarginLineWrapper::PolyDataToSurfaceMesh(vtkPolyData* polyData, Surf
             auto v0 = mesh.source(mesh.halfedge(f));
             auto v1 = mesh.target(mesh.halfedge(f));
             auto v2 = mesh.target(mesh.next(mesh.halfedge(f)));
-            vertex_descriptor v0_new, v1_new, v2_new;
+            vertex_descriptor v0_new;
+            vertex_descriptor v1_new;
+            vertex_descriptor v2_new;
             if (visit[v0.idx()] == -1)
             {
                 v0_new = sm_new->add_vertex(mesh.point(v0));

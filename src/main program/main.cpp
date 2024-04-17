@@ -66,7 +66,7 @@ int main()
 	pipeline = new vtkRenderPipeline();
 
 
-	const std::string FILE_NAME("19486.vtp");
+	const std::string FILE_NAME("38381.vtp");
 	std::map<std::string, int> filename_teeth_id_map;
 	filename_teeth_id_map["5410.vtp"] = 5;
 	filename_teeth_id_map["4746.vtp"] = 6;
@@ -82,6 +82,7 @@ int main()
 	filename_teeth_id_map["13067.vtp"] = 6;
 	filename_teeth_id_map["19486.vtp"] = 4;
 	filename_teeth_id_map["34554.vtp"] = 5;
+	filename_teeth_id_map["38381.vtp"] = 1;
 
 
 	int selected_id = filename_teeth_id_map.at(FILE_NAME);
@@ -95,7 +96,6 @@ int main()
 	
 	RenderPolydata(arch_pd, pipeline->Renderer, 1, 1, 1, 0.8);
 	SurfaceMesh arch_sm = VTK_PolyData2CGAL_Surface_Mesh(arch_pd);
-	
 
 	TeethDataInitialization teeth_data_initialization(arch_pd, arch_sm);
 	teeth_data_initialization.SetRenderer(pipeline->Renderer);
@@ -154,7 +154,7 @@ int main()
 	improved_margin_line_wrapper.SetMarginLineOpacity(0.5);
 	improved_margin_line_wrapper.SetCtrlPointColor(CGAL::red());
 	improved_margin_line_wrapper.SetCtrlPointOpacity(0.5);
-	improved_margin_line_wrapper.SetCtrlPtDensityCoefficient(1.0);
+	improved_margin_line_wrapper.SetCtrlPtDensityCoefficient(30);
 	improved_margin_line_wrapper.Init();
 
 	improved_margin_line_wrapper.ExtractAbutmentSurfaceMesh();
