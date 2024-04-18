@@ -66,7 +66,7 @@ int main()
 	pipeline = new vtkRenderPipeline();
 
 
-	const std::string FILE_NAME("38381.vtp");
+	const std::string FILE_NAME("1773.vtp");
 	std::map<std::string, int> filename_teeth_id_map;
 	filename_teeth_id_map["5410.vtp"] = 5;
 	filename_teeth_id_map["4746.vtp"] = 6;
@@ -149,6 +149,7 @@ int main()
 	improved_margin_line_wrapper.SetAbutmentPolyData(teeth_data_initialization.m_labeledPolyData[selected_id]);
 	improved_margin_line_wrapper.SetSelectedId(selected_id);
 	improved_margin_line_wrapper.SetProjectionDirection(projection_direction_v3);
+	improved_margin_line_wrapper.SetExpansionDistance(0.8);
 	improved_margin_line_wrapper.SetMaxDetectionDistance(1.5);
 	improved_margin_line_wrapper.SetMarginLineColor(CGAL::violet());
 	improved_margin_line_wrapper.SetMarginLineOpacity(0.5);

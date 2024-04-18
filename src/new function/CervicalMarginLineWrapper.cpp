@@ -678,9 +678,16 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
     }
     else
     {
-
-        std::cerr << "No intersection with mesh" << std::endl;
-        return;
+        ray_direction = -ray_direction;
+        Ray_3 ray(abutment_center_point, ray_direction);
+        auto intersection = tree.first_intersection(ray);
+        if (intersection)
+        {
+            //std::cout << "Intersection with mesh at " << intersection->first << std::endl;
+            face_descriptor fd = intersection->second;
+            CGAL::Halfedge_around_face_circulator<SurfaceMesh> circ(m_expanded_abutment_sm.halfedge(fd), m_expanded_abutment_sm), done(circ);
+            m_bfs_start_vd = source(*circ, m_expanded_abutment_sm);
+        }
     }
     Point_3 bfs_start_point = m_expanded_abutment_sm.point(m_bfs_start_vd);
 
@@ -812,20 +819,47 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
     // Extract the submesh and the vertex mapping of the extracted to the original mesh
     std::pair<SurfaceMesh, std::unordered_map<vertex_descriptor, vertex_descriptor>> extracted_mesh_pair = ExtractSubmeshAndVertexMapping(m_expanded_abutment_sm, extracted_vertices);
     m_abutment_sm = extracted_mesh_pair.first;
-    m_abutment_to_arch_vd_map = extracted_mesh_pair.second;
+    //m_abutment_to_arch_vd_map = extracted_mesh_pair.second;
     //CGAL::IO::write_PLY("extracted_abutment.ply", m_abutment_sm);
 
     // First inflate the abutment and get a convex hull SurfaceMesh enveloping the abutment
     // Second extract all the vertices contained in the inflated abutment convex hull
     SurfaceMesh inflated_abutment_sm = m_abutment_sm;
     SurfaceMesh convex_hull_sm;
+    std::vector<vertex_descriptor> expanded_extracted_vertices;
     auto& normal_map = inflated_abutment_sm.add_property_map<vertex_descriptor, Vector_3>("v:normal", Vector_3(0, 0, 0)).first;
     PMP::compute_vertex_normals(inflated_abutment_sm, normal_map);
     for (auto& v : inflated_abutment_sm.vertices())
     {
         inflated_abutment_sm.point(v) += normal_map[v] * 0.05;
     }
+    CGAL::convex_hull_3(inflated_abutment_sm, convex_hull_sm);
+    Tree convex_hull_tree(faces(convex_hull_sm).first, faces(convex_hull_sm).second, convex_hull_sm);
+    for (auto& v : m_expanded_abutment_sm.vertices())
+    {
+		Point_3 p = m_expanded_abutment_sm.point(v);
+        Ray_3 ray = Ray_3(p, m_projection_direction);
+        std::vector<Primitive_id> intersections;
+        convex_hull_tree.all_intersected_primitives(ray, std::back_inserter(intersections));
+        if (intersections.size() % 2 == 1)  // Convex_hull_sm contains the point
+        {
+            expanded_extracted_vertices.push_back(v);
+		}
+    }
 
+    // Write expanded_extracted_vertices to file
+    std::ofstream expanded_extracted_vertices_ofs("expanded_extracted_vertices.xyz");
+    for (const auto& vd : expanded_extracted_vertices)
+    {
+		expanded_extracted_vertices_ofs << m_expanded_abutment_sm.point(vd) << "\n";
+	}
+    expanded_extracted_vertices_ofs.close();
+
+    // Extract the submesh and the vertex mapping of the extracted to the original mesh
+    extracted_mesh_pair = ExtractSubmeshAndVertexMapping(m_expanded_abutment_sm, expanded_extracted_vertices);
+    m_abutment_sm = extracted_mesh_pair.first;
+    m_abutment_to_arch_vd_map = extracted_mesh_pair.second;
+    CGAL::IO::write_PLY("extracted_abutment.ply", m_abutment_sm);
 }
 
 /**
@@ -859,10 +893,6 @@ void CervicalMarginLineWrapper::GenerateAbutmentEdgeSpline()
 #ifdef ENABLE_TIMER_H
     Timer timer("Generate abutment edge spline");
 #endif
-    
-
-
-
     CalculateEdgeBorder(m_abutment_sm, m_abutment_border);
     //std::cout << "Abutment border vertices: " << m_abutment_border.size() << std::endl;
     //std::ofstream border_vertices_ofs("border_vertices.xyz");
