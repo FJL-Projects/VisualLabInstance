@@ -57,7 +57,28 @@ void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData,
 
 int main()
 {
+	using namespace Eigen;
+
 	pipeline = new vtkRenderPipeline();
+
+	vtkSmartPointer<vtkXMLPolyDataReader> reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
+	reader->SetFileName("data/sample_upper_left_upsampled.vtp");
+	reader->Update();
+	vtkSmartPointer<vtkPolyData> arch_pd = reader->GetOutput();
+
+	SurfaceMesh arch_sm;
+	CGAL::IO::read_VTP("data/sample_upper_left_upsampled.vtp", arch_sm);
+	MatrixXd HN;
+	SparseMatrix<double> L, M, Minv;
+	Eigen::MatrixXd	m_V; ///< Eigen matrix for vertices.
+	Eigen::MatrixXi	m_F; ///< Eigen matrix for faces.
+
+	CGALSurfaceMeshToEigen(arch_sm, m_V, m_F);
+	igl::cotmatrix(m_V, m_F, L);
+	igl::massmatrix(m_V, m_F, igl::MASSMATRIX_TYPE_VORONOI, M);
+	igl::invert_diag(M, Minv);
+
+
 
 	// Set up the camera and interactor.
 	pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);

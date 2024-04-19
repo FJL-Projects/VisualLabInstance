@@ -94,3 +94,53 @@ SurfaceMesh VTK_PolyData2CGAL_Surface_Mesh(const vtkSmartPointer<vtkPolyData>& P
 
 	return M;
 }
+
+/**
+ * @brief Converts a CGAL SurfaceMesh to Eigen matrix representations.
+ *
+ * This function takes a CGAL SurfaceMesh object and converts it into two Eigen matrices, one
+ * for the vertices (V) and one for the faces (F). The vertex matrix (V) contains the x, y, and z
+ * coordinates of each vertex, and the face matrix (F) contains indices into V that define each face.
+ *
+ * @param sm The input CGAL SurfaceMesh to convert.
+ * @param[out] V An Eigen::MatrixXd that will contain the vertex coordinates after conversion.
+ *               It will have as many rows as there are vertices in the mesh, and each row will
+ *               have 3 columns corresponding to the x, y, and z coordinates of the vertex.
+ * @param[out] F An Eigen::MatrixXi that will contain the indices of the vertices defining each face
+ *               of the mesh after conversion. It will have as many rows as there are faces in the
+ *               mesh, and each row will have 3 columns corresponding to the indices of the vertices
+ *               that form the triangular face.
+ */
+void CGALSurfaceMeshToEigen(const SurfaceMesh& sm, Eigen::MatrixXd& V, Eigen::MatrixXi& F)
+{
+	// Get the number of vertices and faces
+	size_t num_vertices = sm.number_of_vertices();
+	size_t num_faces = sm.number_of_faces();
+
+	// Initialize Eigen matrices
+	V.resize(num_vertices, 3);
+	F.resize(num_faces, 3);
+
+	// Map for storing vertex indices (CGAL vertex descriptor -> continuous index)
+	std::unordered_map<vertex_descriptor, Eigen::Index> vertex_indices;
+	// Extract vertices
+	Eigen::Index v_index = 0;
+	for (auto vd : sm.vertices())
+	{
+		const auto& point = sm.point(vd);
+		V.row(v_index) << point.x(), point.y(), point.z();
+		vertex_indices[vd] = v_index++; // Save the index mapping
+	}
+
+	// Extract faces
+	int f_index = 0;
+	for (auto f : sm.faces())
+	{
+		int inner_index = 0;
+		for (auto v : CGAL::vertices_around_face(sm.halfedge(f), sm))
+		{
+			F(f_index, inner_index++) = vertex_indices[v];
+		}
+		++f_index;
+	}
+}
