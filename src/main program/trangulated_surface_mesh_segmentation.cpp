@@ -5,7 +5,15 @@
 #include "IOManip.hpp"
 
 #include <CGAL/mesh_segmentation.h>
+#include <CGAL/Poisson_surface_reconstruction.h>
+
+#include <CGAL/Point_with_normal_3.h>
+#include <CGAL/compute_average_spacing.h>
+#include <CGAL/make_surface_mesh.h>
+
 #define ENABLE_TIMER_H
+
+typedef CGAL::Point_with_normal_3<Kernel> Point_with_normal;
 
 vtkRenderPipeline* pipeline;
 using Facet_double_map = SurfaceMesh::Property_map<face_descriptor, double>;
@@ -222,6 +230,8 @@ std::pair<vtkSmartPointer<vtkPolyData>, vtkSmartPointer<vtkFloatArray> > Surface
 
     return { polydata, color_array };
 }
+
+
 int main()
 {
     using namespace Eigen;
@@ -236,22 +246,47 @@ int main()
     SurfaceMesh arch_sm;
     CGAL::IO::read_VTP("data/sample_lower_left_upsampled.vtp", arch_sm);
 
-    std::vector<halfedge_descriptor> border_halfedges;
+    auto& vertex_normals = arch_sm.add_property_map<vertex_descriptor, Vector_3>("v:normal", Vector_3(0, 0, 0)).first;
 
-    for (auto& h : arch_sm.halfedges())
+    PMP::compute_vertex_normals(
+        arch_sm,
+        vertex_normals
+    );
+
+    std::vector<Point_with_normal> points;
+    for (vertex_descriptor v : arch_sm.vertices()) 
     {
-        if (arch_sm.is_border(h))
+        if (arch_sm.is_border(v))
         {
-			border_halfedges.push_back(h);
-		}
+            Point_3 p = arch_sm.point(v);
+            Vector_3 n = vertex_normals[v];
+            points.push_back(Point_with_normal(p, n));
+        }
     }
 
-    std::vector<face_descriptor> new_faces;
-    CGAL::Polygon_mesh_processing::triangulate_hole(
-        arch_sm,
-        *(border_halfedges.begin()),
-        std::back_inserter(new_faces)
-    );
+    typedef SurfaceMesh::Property_map<vertex_descriptor, Point_3> PointPMap;
+    PointPMap point_pmap = arch_sm.points();
+
+
+    CGAL::Poisson_reconstruction_function<Kernel> poisson(points.begin(), points.end(), arch_sm.points(), vertex_normals);
+    if (!poisson.compute_implicit_function()) {
+        std::cerr << "Error: unable to compute implicit function" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    SurfaceMesh surface;
+    double spacing = CGAL::compute_average_spacing<CGAL::Sequential_tag>(
+        arch_sm.points(), 6);
+
+    if (!CGAL::make_surface_mesh(surface, poisson, CGAL::parameters::spacing(spacing))) {
+        std::cerr << "Error: unable to create surface mesh" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // 输出网格到OFF文件
+    std::ofstream out("reconstructed.off");
+    out << surface;
+    out.close();
 
     RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(arch_sm), pipeline->Renderer);
     //Facet_double_map sdf_property_map;
