@@ -57,20 +57,25 @@ void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData,
 
 int main()
 {
-	pipeline = new vtkRenderPipeline();
+	//pipeline = new vtkRenderPipeline();
 
-	// Set up the camera and interactor.
-	pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
-	pipeline->Renderer->ResetCamera();
-	// Set up the callback functions for mouse events.
-	pipeline->addObserver(vtkCommand::LeftButtonPressEvent, LeftPress);
-	pipeline->addObserver(vtkCommand::MouseMoveEvent, MouseMove);
-	pipeline->addObserver(vtkCommand::LeftButtonReleaseEvent, LeftRelease);
-	pipeline->addObserver(vtkCommand::RightButtonPressEvent, RightPress);
-	pipeline->addObserver(vtkCommand::RightButtonReleaseEvent, RightRelease);
+	SurfaceMesh mesh;
+	CGAL::IO::read_VTP("data/sample_upper_right_upsampled.vtp", mesh);
 
-	pipeline->RenderWindowInteractor->Start();
+	CGAL::IO::write_PLY("data/sample_upper_right_upsampled.ply", mesh);
 
-	// Clean up the pipeline after each run.
-	delete pipeline;
+	//// Set up the camera and interactor.
+	//pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
+	//pipeline->Renderer->ResetCamera();
+	//// Set up the callback functions for mouse events.
+	//pipeline->addObserver(vtkCommand::LeftButtonPressEvent, LeftPress);
+	//pipeline->addObserver(vtkCommand::MouseMoveEvent, MouseMove);
+	//pipeline->addObserver(vtkCommand::LeftButtonReleaseEvent, LeftRelease);
+	//pipeline->addObserver(vtkCommand::RightButtonPressEvent, RightPress);
+	//pipeline->addObserver(vtkCommand::RightButtonReleaseEvent, RightRelease);
+
+	//pipeline->RenderWindowInteractor->Start();
+
+	//// Clean up the pipeline after each run.
+	//delete pipeline;
 }

@@ -157,7 +157,6 @@
     <ClCompile Include="src\main program\main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="src\new function\TeethWrapper.cpp" />
     <ClCompile Include="src\stdafx\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
@@ -168,7 +167,6 @@
     <ClInclude Include="src\algorithm\Rotation.h" />
     <ClInclude Include="src\algorithm\Timer.hpp" />
     <ClInclude Include="src\algorithm\vectorAlgorithm.h" />
-    <ClInclude Include="src\new function\TeethWrapper.h" />
     <ClInclude Include="src\rendering pipeline\simpleRender.h" />
     <ClInclude Include="src\rendering pipeline\vtkRenderPipeline.h" />
     <ClInclude Include="src\stdafx\stdafx.h" />
