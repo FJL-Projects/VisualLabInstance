@@ -236,6 +236,24 @@ int main()
     SurfaceMesh arch_sm;
     CGAL::IO::read_VTP("data/sample_lower_left_upsampled.vtp", arch_sm);
 
+    std::vector<halfedge_descriptor> border_halfedges;
+
+    for (auto& h : arch_sm.halfedges())
+    {
+        if (arch_sm.is_border(h))
+        {
+			border_halfedges.push_back(h);
+		}
+    }
+
+    std::vector<face_descriptor> new_faces;
+    CGAL::Polygon_mesh_processing::triangulate_hole(
+        arch_sm,
+        *(border_halfedges.begin()),
+        std::back_inserter(new_faces)
+    );
+
+    RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(arch_sm), pipeline->Renderer);
     //Facet_double_map sdf_property_map;
     //sdf_property_map = arch_sm.add_property_map<face_descriptor, double>("f:sdf").first;
     //CGAL::sdf_values(arch_sm, sdf_property_map);
@@ -264,63 +282,63 @@ int main()
 
 
 
-    //RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(arch_sm), pipeline->Renderer);
-    Facet_double_map sdf_property_map;
-    sdf_property_map = arch_sm.add_property_map<face_descriptor, double>("f:sdf").first;
-    // compute SDF values
-    // We can't use default parameters for number of rays, and cone angle
-    // and the postprocessing
-    CGAL::sdf_values(arch_sm, sdf_property_map, 2.0 / 3.0 * CGAL_PI, 40, true);
- 
-    Facet_int_map segment_property_map = arch_sm.add_property_map<face_descriptor, std::size_t>("f:sid").first;
-    // segment the mesh using default parameters for number of levels, and smoothing lambda
-    // Any other scalar values can be used instead of using SDF values computed using the CGAL function
-    //std::size_t number_of_segments = CGAL::segmentation_from_sdf_values(arch_sm, sdf_property_map, segment_property_map);
+ //   //RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(arch_sm), pipeline->Renderer);
+ //   Facet_double_map sdf_property_map;
+ //   sdf_property_map = arch_sm.add_property_map<face_descriptor, double>("f:sdf").first;
+ //   // compute SDF values
+ //   // We can't use default parameters for number of rays, and cone angle
+ //   // and the postprocessing
+ //   CGAL::sdf_values(arch_sm, sdf_property_map, 2.0 / 3.0 * CGAL_PI, 40, true);
+ //
+ //   Facet_int_map segment_property_map = arch_sm.add_property_map<face_descriptor, std::size_t>("f:sid").first;
+ //   // segment the mesh using default parameters for number of levels, and smoothing lambda
+ //   // Any other scalar values can be used instead of using SDF values computed using the CGAL function
+ //   //std::size_t number_of_segments = CGAL::segmentation_from_sdf_values(arch_sm, sdf_property_map, segment_property_map);
 
-    //std::cout << "Number of segments: " << number_of_segments << std::endl;
+ //   //std::cout << "Number of segments: " << number_of_segments << std::endl;
 
-    const std::size_t number_of_clusters = 8;       // use 4 clusters in soft clustering
-    const double smoothing_lambda = 0.3;  // importance of surface features, suggested to be in-between [0,1]
-    // Note that we can use the same SDF values (sdf_property_map) over and over again for segmentation.
-    // This feature is relevant for segmenting the mesh several times with different parameters.
-    CGAL::segmentation_from_sdf_values(arch_sm, sdf_property_map, segment_property_map, number_of_clusters, smoothing_lambda);
+ //   const std::size_t number_of_clusters = 8;       // use 4 clusters in soft clustering
+ //   const double smoothing_lambda = 0.3;  // importance of surface features, suggested to be in-between [0,1]
+ //   // Note that we can use the same SDF values (sdf_property_map) over and over again for segmentation.
+ //   // This feature is relevant for segmenting the mesh several times with different parameters.
+ //   CGAL::segmentation_from_sdf_values(arch_sm, sdf_property_map, segment_property_map, number_of_clusters, smoothing_lambda);
 
-    std::set<std::size_t> segment_ids;
+ //   std::set<std::size_t> segment_ids;
 
-    for (face_descriptor fd : arch_sm.faces())
-    {
-		segment_ids.insert(segment_property_map[fd]);
-	}
+ //   for (face_descriptor fd : arch_sm.faces())
+ //   {
+	//	segment_ids.insert(segment_property_map[fd]);
+	//}
 
-    std::cout << "Segment count: " << segment_ids.size() << std::endl;
+ //   std::cout << "Segment count: " << segment_ids.size() << std::endl;
 
-    vtkSmartPointer<vtkPolyData> colored_arch_pd;
-    vtkSmartPointer<vtkFloatArray> color_array;
-    std::tie(colored_arch_pd, color_array) = SurfaceMeshToPolyDataWithColor(arch_sm);
+ //   vtkSmartPointer<vtkPolyData> colored_arch_pd;
+ //   vtkSmartPointer<vtkFloatArray> color_array;
+ //   std::tie(colored_arch_pd, color_array) = SurfaceMeshToPolyDataWithColor(arch_sm);
 
-    vtkSmartPointer<vtkLookupTable> color_lut = vtkSmartPointer<vtkLookupTable>::New();
-    color_lut->SetNumberOfColors(segment_ids.size()); // Set the number of colors
-    color_lut->SetHueRange(1.0, 0.0); // Green to Red
-    color_lut->Build(); // Generate lookup table
+ //   vtkSmartPointer<vtkLookupTable> color_lut = vtkSmartPointer<vtkLookupTable>::New();
+ //   color_lut->SetNumberOfColors(segment_ids.size()); // Set the number of colors
+ //   color_lut->SetHueRange(1.0, 0.0); // Green to Red
+ //   color_lut->Build(); // Generate lookup table
 
-    //color_lut->SetTableValue(color_lut->GetIndex(0), 1.0, 0.0, 1.0, 1.0);  
-    color_lut->SetTableValue(color_lut->GetIndex(-1), 0 / 255.0, 238 / 255.0, 238 / 255.0, 1.0);  
+ //   //color_lut->SetTableValue(color_lut->GetIndex(0), 1.0, 0.0, 1.0, 1.0);  
+ //   color_lut->SetTableValue(color_lut->GetIndex(-1), 0 / 255.0, 238 / 255.0, 238 / 255.0, 1.0);  
 
 
-    int num = color_array->GetNumberOfValues();
-    std::cout << "Number of values: " << num << std::endl;
+ //   int num = color_array->GetNumberOfValues();
+ //   std::cout << "Number of values: " << num << std::endl;
 
-    vtkSmartPointer<vtkPolyDataMapper> colored_arch_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-    colored_arch_mapper->SetInputData(colored_arch_pd);
-    colored_arch_mapper->SetScalarRange(-1, segment_ids.size());
-    colored_arch_mapper->SetLookupTable(color_lut);
-    colored_arch_mapper->SetInterpolateScalarsBeforeMapping(1);
+ //   vtkSmartPointer<vtkPolyDataMapper> colored_arch_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+ //   colored_arch_mapper->SetInputData(colored_arch_pd);
+ //   colored_arch_mapper->SetScalarRange(-1, segment_ids.size());
+ //   colored_arch_mapper->SetLookupTable(color_lut);
+ //   colored_arch_mapper->SetInterpolateScalarsBeforeMapping(1);
 
-    vtkSmartPointer<vtkActor> colored_arch_actor = vtkSmartPointer<vtkActor>::New();
-    colored_arch_actor->SetMapper(colored_arch_mapper);
-    colored_arch_actor->GetProperty()->SetOpacity(1);
+ //   vtkSmartPointer<vtkActor> colored_arch_actor = vtkSmartPointer<vtkActor>::New();
+ //   colored_arch_actor->SetMapper(colored_arch_mapper);
+ //   colored_arch_actor->GetProperty()->SetOpacity(1);
 
-    pipeline->Renderer->AddActor(colored_arch_actor);
+ //   pipeline->Renderer->AddActor(colored_arch_actor);
 
     // Set up the camera and interactor.
     pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);

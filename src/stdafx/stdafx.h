@@ -90,6 +90,7 @@
 #include <CGAL/Polygon_mesh_processing/compute_normal.h>
 #include <CGAL/Polygon_mesh_processing/self_intersections.h>
 #include <CGAL/Polygon_mesh_processing/remesh.h>
+#include <CGAL/Polygon_mesh_processing/triangulate_hole.h>
 
 #include <igl/avg_edge_length.h>
 #include <igl/cotmatrix.h>
