@@ -3,6 +3,10 @@
 #include "meshTransform.h"
 #include "simpleRender.h"
 #include "IOManip.hpp"
+#include <MRMesh/MRMeshLoad.h>
+#include <MRMesh/MRId.h>
+#include <MRMesh/MRMesh.h>
+#include <MRMesh/MRBitSetParallelFor.h>
 
 vtkRenderPipeline* pipeline;
 
@@ -58,6 +62,9 @@ void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData,
 int main()
 {
 	pipeline = new vtkRenderPipeline();
+
+	MR::Mesh mesh = *MR::MeshLoad::fromAnySupportedFormat("data/11.stl");
+
 
 	// Set up the camera and interactor.
 	pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
