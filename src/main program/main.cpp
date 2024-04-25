@@ -7,6 +7,7 @@
 #include <MRMesh/MRId.h>
 #include <MRMesh/MRMesh.h>
 #include <MRMesh/MRBitSetParallelFor.h>
+#include <MRMesh/MRMeshTopology.h>
 
 vtkRenderPipeline* pipeline;
 
@@ -63,8 +64,26 @@ int main()
 {
 	pipeline = new vtkRenderPipeline();
 
-	MR::Mesh mesh = *MR::MeshLoad::fromAnySupportedFormat("data/11.stl");
-
+	SurfaceMesh sm;
+	MR::Mesh mrmesh = *MR::MeshLoad::fromAnySupportedFormat("data/11.stl");
+	std::vector<SurfaceMesh::Vertex_index> vertices_list(mrmesh.topology.vertSize());
+	MR::BitSetParallelFor(mrmesh.topology.getVertIds(nullptr), [&](MR::VertId v)
+		{
+			// Move each vertex
+			vertices_list[v.get()] = sm.add_vertex(Point_3(mrmesh.points[v].x, mrmesh.points[v].y, mrmesh.points[v].z));
+		});
+	MR::BitSetParallelFor(mrmesh.topology.getFaceIds(nullptr), [&](MR::FaceId f)
+		{
+			// Add each face
+			MR::VertId v0, v1, v2;
+			mrmesh.topology.getTriVerts(f, v0, v1, v2);
+			sm.add_face(vertices_list[v0.get()],
+				vertices_list[v1.get()],
+				vertices_list[v2.get()]);
+		});
+	
+	vtkSmartPointer<vtkPolyData> polydata = CGAL_Surface_Mesh2VTK_PolyData(sm);
+	RenderPolydata(polydata, pipeline->Renderer);
 
 	// Set up the camera and interactor.
 	pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
