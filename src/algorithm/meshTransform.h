@@ -144,3 +144,115 @@ void CGALSurfaceMeshToEigen(const SurfaceMesh& sm, Eigen::MatrixXd& V, Eigen::Ma
 		++f_index;
 	}
 }
+
+using namespace MR;
+SurfaceMesh MRMeshToSurfaceMesh(const Mesh& mrmesh)
+{
+	SurfaceMesh sm;
+	std::vector<vertex_descriptor> vertices_list(mrmesh.topology.vertSize());
+
+	for (auto v : mrmesh.topology.getValidVerts())
+	{
+		vertices_list[v.get()] = sm.add_vertex(Point_3(mrmesh.points[v].x, mrmesh.points[v].y, mrmesh.points[v].z));
+	}
+
+	for (auto f : mrmesh.topology.getValidFaces())
+	{
+		// Add each face
+		VertId v0, v1, v2;
+		mrmesh.topology.getTriVerts(f, v0, v1, v2);
+		sm.add_face(vertices_list[v0.get()],
+			vertices_list[v1.get()],
+			vertices_list[v2.get()]);
+	}
+	return sm;
+}
+
+Mesh SurfaceMeshToMRMesh(const SurfaceMesh& sm)
+{
+	VertCoords vert_coords(static_cast<size_t>(sm.number_of_vertices()));
+#pragma omp parallel for
+	for (int i = 0; i < sm.number_of_vertices(); ++i)
+	{
+		const Point_3& p = sm.point(vertex_descriptor(static_cast<uint32_t>(i)));
+		vert_coords[VertId(i)] = Vector3f(p.x(), p.y(), p.z());
+	}
+	
+	Triangulation triangulation(sm.number_of_faces());
+#pragma omp parallel for
+	for (int i = 0; i < sm.number_of_faces(); ++i)
+	{
+		auto f = face_descriptor(static_cast<uint32_t>(i));
+		auto h = halfedge_descriptor(sm.halfedge(f));
+		auto v0 = sm.target(h);
+		auto v1 = sm.target(sm.next(h));
+		auto v2 = sm.target(sm.next(sm.next(h)));
+		//triangulation[FaceId(i)] = ThreeVertIds(VertId(static_cast<size_t>(v0.idx())), VertId(static_cast<size_t>(v1.idx())), VertId(static_cast<size_t>(v2.idx())));
+		// Same as the upper line, but more readable.
+		triangulation[FaceId(i)] = { 
+			VertId(static_cast<size_t>(v0.idx())),
+			VertId(static_cast<size_t>(v1.idx())),
+			VertId(static_cast<size_t>(v2.idx()))
+		};
+	}
+
+	return Mesh::fromTriangles(vert_coords, triangulation);
+}
+
+vtkSmartPointer<vtkPolyData> MRMeshToPolyData(const Mesh& mrmesh)
+{
+	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+	vtkSmartPointer<vtkCellArray> triangle_polys = vtkSmartPointer<vtkCellArray>::New();
+	vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
+
+	for (auto v : mrmesh.topology.getValidVerts())
+	{
+		points->InsertNextPoint(mrmesh.points[v].x, mrmesh.points[v].y, mrmesh.points[v].z);
+	}
+
+	for (auto f : mrmesh.topology.getValidFaces())
+	{
+		int tri_index = 0;
+		vtkSmartPointer<vtkTriangle> triangle = vtkSmartPointer<vtkTriangle>::New();
+		ThreeVertIds three_verts;
+		mrmesh.topology.getTriVerts(f, three_verts);
+		for (auto v : three_verts)
+		{
+			triangle->GetPointIds()->SetId(tri_index++, v.get());
+		}
+		triangle_polys->InsertNextCell(triangle);
+	}
+	polydata->SetPoints(points);
+	polydata->SetPolys(triangle_polys);
+
+	return polydata;
+}
+
+Mesh PolyDataToMRMesh(const vtkSmartPointer<vtkPolyData> polydata)
+{
+	VertCoords vert_coords(static_cast<size_t>(polydata->GetNumberOfPoints()));
+#pragma omp parallel for
+	for (int i = 0; i < polydata->GetNumberOfPoints(); ++i)
+	{
+		const double* point = polydata->GetPoints()->GetPoint(i);
+		vert_coords[VertId(i)] = Vector3f(
+			point[0],
+			point[1],
+			point[2]
+		);
+	}
+
+	Triangulation triangulation(static_cast<size_t>(polydata->GetNumberOfCells()));
+//#pragma omp parallel for
+	for (int i = 0; i < polydata->GetNumberOfCells(); ++i)
+	{
+		const vtkSmartPointer<vtkCell> cell = polydata->GetCell(i);
+		triangulation[FaceId(i)] = { 
+			VertId(static_cast<size_t>(cell->GetPointId(0))),
+			VertId(static_cast<size_t>(cell->GetPointId(1))),
+			VertId(static_cast<size_t>(cell->GetPointId(2)))
+		};
+	}
+
+	return Mesh::fromTriangles(vert_coords, triangulation);
+}
