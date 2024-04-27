@@ -230,8 +230,8 @@ vtkSmartPointer<vtkPolyData> MRMeshToPolyData(const Mesh& mrmesh)
 
 Mesh PolyDataToMRMesh(const vtkSmartPointer<vtkPolyData> polydata)
 {
+	// PolyData is not thread-safe, so we can't use OpenMP here.
 	VertCoords vert_coords(static_cast<size_t>(polydata->GetNumberOfPoints()));
-#pragma omp parallel for
 	for (int i = 0; i < polydata->GetNumberOfPoints(); ++i)
 	{
 		const double* point = polydata->GetPoints()->GetPoint(i);
@@ -243,7 +243,6 @@ Mesh PolyDataToMRMesh(const vtkSmartPointer<vtkPolyData> polydata)
 	}
 
 	Triangulation triangulation(static_cast<size_t>(polydata->GetNumberOfCells()));
-//#pragma omp parallel for
 	for (int i = 0; i < polydata->GetNumberOfCells(); ++i)
 	{
 		const vtkSmartPointer<vtkCell> cell = polydata->GetCell(i);

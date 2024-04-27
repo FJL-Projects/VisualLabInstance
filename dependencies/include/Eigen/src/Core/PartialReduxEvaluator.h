@@ -54,12 +54,19 @@ struct packetwise_redux_traits
 /* Value to be returned when size==0 , by default let's return 0 */
 template<typename PacketType,typename Func>
 EIGEN_DEVICE_FUNC
-PacketType packetwise_redux_empty_value(const Func& ) { return pset1<PacketType>(0); }
+PacketType packetwise_redux_empty_value(const Func& ) {
+  const typename unpacket_traits<PacketType>::type zero(0);
+  return pset1<PacketType>(zero);
+}
+
 
 /* For products the default is 1 */
 template<typename PacketType,typename Scalar>
 EIGEN_DEVICE_FUNC
-PacketType packetwise_redux_empty_value(const scalar_product_op<Scalar,Scalar>& ) { return pset1<PacketType>(1); }
+PacketType packetwise_redux_empty_value(const scalar_product_op<Scalar,Scalar>& ) {
+  return pset1<PacketType>(Scalar(1));
+}
+
 
 /* Perform the actual reduction */
 template<typename Func, typename Evaluator,
@@ -145,7 +152,7 @@ struct evaluator<PartialReduxExpr<ArgType, MemberOp, Direction> >
   enum {
     CoeffReadCost = TraversalSize==Dynamic ? HugeCost
                   : TraversalSize==0 ? 1
-                  : TraversalSize * evaluator<ArgType>::CoeffReadCost + int(CostOpType::value),
+                  : int(TraversalSize) * int(evaluator<ArgType>::CoeffReadCost) + int(CostOpType::value),
     
     _ArgFlags = evaluator<ArgType>::Flags,
 

@@ -24,8 +24,9 @@
 #include "TopoDSToStep_Root.hxx"
 #include "Message_ProgressRange.hxx"
 
+class StepData_Factors;
 class StepShape_ManifoldSolidBrep;
-class StdFail_NotDone;
+class StepVisual_TessellatedItem;
 class TopoDS_Shell;
 class Transfer_FinderProcess;
 class TopoDS_Solid;
@@ -44,13 +45,16 @@ public:
   
   Standard_EXPORT TopoDSToStep_MakeManifoldSolidBrep(const TopoDS_Shell& S,
                                                      const Handle(Transfer_FinderProcess)& FP,
+                                                     const StepData_Factors& theLocalFactors,
                                                      const Message_ProgressRange& theProgress = Message_ProgressRange());
   
   Standard_EXPORT TopoDSToStep_MakeManifoldSolidBrep(const TopoDS_Solid& S,
                                                      const Handle(Transfer_FinderProcess)& FP,
+                                                     const StepData_Factors& theLocalFactors,
                                                      const Message_ProgressRange& theProgress = Message_ProgressRange());
   
   Standard_EXPORT const Handle(StepShape_ManifoldSolidBrep)& Value() const;
+  Standard_EXPORT const Handle(StepVisual_TessellatedItem)& TessellatedValue() const;
 
 
 
@@ -66,6 +70,7 @@ private:
 
 
   Handle(StepShape_ManifoldSolidBrep) theManifoldSolidBrep;
+  Handle(StepVisual_TessellatedItem) theTessellatedItem;
 
 
 };

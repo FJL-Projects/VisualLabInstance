@@ -20,13 +20,10 @@
 #include "Standard.hxx"
 #include "Standard_Type.hxx"
 
-#include "Standard_Address.hxx"
 #include "math_Vector.hxx"
 #include "Blend_Point.hxx"
 #include "gp_Pnt.hxx"
 #include "Approx_SweepFunction.hxx"
-#include "Standard_Real.hxx"
-#include "Standard_Boolean.hxx"
 #include "TColgp_Array1OfPnt.hxx"
 #include "TColgp_Array1OfPnt2d.hxx"
 #include "TColStd_Array1OfReal.hxx"

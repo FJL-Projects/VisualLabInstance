@@ -18,12 +18,11 @@
 #define _IFSelect_IntParam_HeaderFile
 
 #include "Standard.hxx"
-#include "Standard_Type.hxx"
 
 #include "Standard_Integer.hxx"
 #include "TCollection_AsciiString.hxx"
+#include "NCollection_DefineAlloc.hxx"
 #include "Standard_Transient.hxx"
-#include "Standard_CString.hxx"
 
 class IFSelect_IntParam;
 DEFINE_STANDARD_HANDLE(IFSelect_IntParam, Standard_Transient)

@@ -15,7 +15,6 @@
 #ifndef _RWGltf_CafReader_HeaderFile
 #define _RWGltf_CafReader_HeaderFile
 
-#include "Message_ProgressRange.hxx"
 #include "NCollection_Vector.hxx"
 #include "RWMesh_CafReader.hxx"
 #include "TopoDS_Face.hxx"
@@ -84,7 +83,8 @@ public:
 protected:
 
   //! Read the mesh from specified file.
-  Standard_EXPORT virtual Standard_Boolean performMesh (const TCollection_AsciiString& theFile,
+  Standard_EXPORT virtual Standard_Boolean performMesh (std::istream& theStream,
+                                                        const TCollection_AsciiString& theFile,
                                                         const Message_ProgressRange& theProgress,
                                                         const Standard_Boolean theToProbe) Standard_OVERRIDE;
 

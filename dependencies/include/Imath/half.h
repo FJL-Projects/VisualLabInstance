@@ -177,8 +177,10 @@
 /// floats in question.
 ///
 
-#ifdef _WIN32
-#        include <intrin.h>
+#ifdef __CUDA_ARCH__
+// do not include intrinsics headers on Cuda
+#elif defined(_WIN32)
+#    include <intrin.h>
 #elif defined(__x86_64__)
 #    include <x86intrin.h>
 #elif defined(__F16C__)
@@ -325,8 +327,14 @@ imath_half_to_float (imath_half_bits_t h)
         // other compilers may provide count-leading-zeros primitives,
         // but we need the community to inform us of the variants
         uint32_t lc;
-#    if defined(_MSC_VER) && (_M_IX86 || _M_X64)
-        lc = __lzcnt (hexpmant);
+#    if defined(_MSC_VER)
+        // The direct intrinsic for this is __lznct, but that is not supported
+        // on older x86_64 hardware or ARM. Instead uses the bsr instruction
+        // and one additional subtraction. This assumes hexpmant != 0, for 0
+        // bsr and lznct would behave differently.
+        unsigned long bsr;
+        _BitScanReverse (&bsr, hexpmant);
+        lc = (31 - bsr);
 #    elif defined(__GNUC__) || defined(__clang__)
         lc = (uint32_t) __builtin_clz (hexpmant);
 #    else
@@ -445,7 +453,7 @@ IMATH_INTERNAL_NAMESPACE_HEADER_ENTER
 
 ///
 ///
-/// class half -- 16-bit floating point number
+/// class half represents a 16-bit floating point number
 ///
 /// Type half can represent positive and negative numbers whose
 /// magnitude is between roughly 6.1e-5 and 6.5e+4 with a relative
@@ -618,10 +626,10 @@ class IMATH_EXPORT_TYPE half
     /// @name Access to the internal representation
 
     /// Return the bit pattern
-    IMATH_EXPORT constexpr uint16_t bits() const IMATH_NOEXCEPT;
+    constexpr uint16_t bits () const IMATH_NOEXCEPT;
 
     /// Set the bit pattern
-    IMATH_EXPORT IMATH_CONSTEXPR14 void setBits (uint16_t bits) IMATH_NOEXCEPT;
+    IMATH_CONSTEXPR14 void setBits (uint16_t bits) IMATH_NOEXCEPT;
 
     /// @}
 
@@ -977,7 +985,7 @@ IMATH_EXPORT void printBits (std::ostream& os, float f);
 IMATH_EXPORT void printBits (char c[19], IMATH_INTERNAL_NAMESPACE::half h);
 IMATH_EXPORT void printBits (char c[35], float f);
 
-#    ifndef __CUDACC__
+#    if !defined(__CUDACC__) && !defined(__CUDA_FP16_HPP__)
 using half = IMATH_INTERNAL_NAMESPACE::half;
 #    else
 #        include <cuda_fp16.h>

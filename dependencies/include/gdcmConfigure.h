@@ -115,7 +115,11 @@
 // are expected to be specified as UTF-16, but if no API exist for UTF-16
 // at std::ifstream level, then const char* of std::ifstream might accept
 // UTF-8
-#define GDCM_HAVE_WCHAR_IFSTREAM
+/* #undef GDCM_HAVE_WCHAR_IFSTREAM */
+
+// https://stackoverflow.com/questions/15615136/is-codecvt-not-a-std-header
+// https://stackoverflow.com/questions/50867257/c-use-of-wstring-convert-on-linux
+#define GDCM_HAVE_CODECVT
 
 /* #undef GDCM_FORCE_BIGENDIAN_EMULATION */
 
@@ -138,8 +142,8 @@
 /* Version number.  */
 #define GDCM_MAJOR_VERSION 3
 #define GDCM_MINOR_VERSION 0
-#define GDCM_BUILD_VERSION 12
-#define GDCM_VERSION "3.0.12"
+#define GDCM_BUILD_VERSION 22
+#define GDCM_VERSION "3.0.22"
 #define GDCM_API_VERSION "3.0"
 
 /*
