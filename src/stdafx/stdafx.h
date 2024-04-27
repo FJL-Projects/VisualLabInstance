@@ -91,6 +91,16 @@
 #include <CGAL/Polygon_mesh_processing/self_intersections.h>
 #include <CGAL/Polygon_mesh_processing/remesh.h>
 
+#include <MRMesh/MRMeshLoad.h>
+#include <MRMesh/MRMeshSave.h>
+#include <MRMesh/MRId.h>
+#include <MRMesh/MRMesh.h>
+#include <MRMesh/MRBitSetParallelFor.h>
+#include <MRMesh/MRMeshTopology.h>
+#include <MRMesh/MRExpected.h>
+#include <MRMesh/MRMeshBuilder.h>
+#include <MRMesh/MRVector.h>
+
 #include <boost/optional.hpp>
 #include <Eigen/Geometry>
 #include <Windows.h>

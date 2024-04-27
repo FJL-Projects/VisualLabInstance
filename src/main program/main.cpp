@@ -3,6 +3,12 @@
 #include "meshTransform.h"
 #include "simpleRender.h"
 #include "IOManip.hpp"
+#include <MRMesh/MRMeshLoad.h>
+#include <MRMesh/MRId.h>
+#include <MRMesh/MRMesh.h>
+#include <MRMesh/MRBitSetParallelFor.h>
+#include <MRMesh/MRMeshTopology.h>
+#include <MRMesh/MRExpected.h>
 
 vtkRenderPipeline* pipeline;
 
@@ -57,7 +63,26 @@ void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData,
 
 int main()
 {
+	using namespace MR;
 	pipeline = new vtkRenderPipeline();
+
+	MR::Mesh mrmesh = *MR::MeshLoad::fromAnySupportedFormat("data/11.stl");
+	std::vector<vertex_descriptor> vertices_list(mrmesh.topology.vertSize());
+	
+	SurfaceMesh sm = MRMeshToSurfaceMesh(mrmesh);
+	Mesh converted = SurfaceMeshToMRMesh(sm);
+	
+	MeshSave::toAnySupportedFormat(converted, "data/converted.stl");
+
+	RenderPolydata(MRMeshToPolyData(mrmesh), pipeline->Renderer);
+
+	vtkNew<vtkSTLReader> reader;
+	reader->SetFileName("data/converted.stl");
+	reader->Update();
+	vtkSmartPointer<vtkPolyData> polydata = reader->GetOutput();
+
+	Mesh converted_from_pd = PolyDataToMRMesh(polydata);
+	MeshSave::toAnySupportedFormat(converted_from_pd, "data/converted_from_pd.ply");
 
 	// Set up the camera and interactor.
 	pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
