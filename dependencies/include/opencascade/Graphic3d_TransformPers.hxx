@@ -17,7 +17,6 @@
 #define _Graphic3d_TransformPers_HeaderFile
 
 #include "Aspect_TypeOfTriedronPosition.hxx"
-#include "Bnd_Box.hxx"
 #include "BVH_Box.hxx"
 #include "Graphic3d_Camera.hxx"
 #include "Graphic3d_TransformUtils.hxx"
@@ -228,9 +227,10 @@ public:
   //! @param theViewportWidth [in] the width of viewport.
   //! @param theViewportHeight [in] the height of viewport.
   virtual Standard_Real persistentScale (const Handle(Graphic3d_Camera)& theCamera,
-                                         const Standard_Integer /*theViewportWidth*/,
+                                         const Standard_Integer theViewportWidth,
                                          const Standard_Integer theViewportHeight) const
   {
+    (void )theViewportWidth;
     // use total size when tiling is active
     const Standard_Integer aVPSizeY = theCamera->Tile().IsValid() ? theCamera->Tile().TotalSize.y() : theViewportHeight;
 
@@ -239,6 +239,24 @@ public:
     const Standard_Real aFocus = aVecToObj.Dot (aVecToEye);
     const gp_XYZ aViewDim = theCamera->ViewDimensions (aFocus);
     return Abs(aViewDim.Y()) / Standard_Real(aVPSizeY);
+  }
+
+  //! Create orientation matrix based on camera and view dimensions.
+  //! Default implementation locks rotation by nullifying rotation component.
+  //! Camera and view dimensions are not used, by default.
+  //! @param theCamera [in] camera definition
+  //! @param theViewportWidth [in] the width of viewport
+  //! @param theViewportHeight [in] the height of viewport
+  virtual NCollection_Mat3<Standard_Real> persistentRotationMatrix (const Handle(Graphic3d_Camera)& theCamera,
+                                                                    const Standard_Integer theViewportWidth,
+                                                                    const Standard_Integer theViewportHeight) const
+  {
+    (void )theCamera;
+    (void )theViewportWidth;
+    (void )theViewportHeight;
+
+    NCollection_Mat3<Standard_Real> aRotMat;
+    return aRotMat;
   }
 
   //! Apply transformation to bounding box of presentation.
@@ -467,18 +485,19 @@ void Graphic3d_TransformPers::Apply (const Handle(Graphic3d_Camera)& theCamera,
 
     if ((myMode & Graphic3d_TMF_RotatePers) != 0)
     {
-      // lock rotation by nullifying rotation component
-      aWorldView.SetValue (0, 0, 1.0);
-      aWorldView.SetValue (1, 0, 0.0);
-      aWorldView.SetValue (2, 0, 0.0);
+      NCollection_Mat3<Standard_Real> aRotMat = persistentRotationMatrix (theCamera, theViewportWidth, theViewportHeight);
 
-      aWorldView.SetValue (0, 1, 0.0);
-      aWorldView.SetValue (1, 1, 1.0);
-      aWorldView.SetValue (2, 1, 0.0);
+      aWorldView.SetValue (0, 0, aRotMat.GetColumn (0).x());
+      aWorldView.SetValue (1, 0, aRotMat.GetColumn (0).y());
+      aWorldView.SetValue (2, 0, aRotMat.GetColumn (0).z());
 
-      aWorldView.SetValue (0, 2, 0.0);
-      aWorldView.SetValue (1, 2, 0.0);
-      aWorldView.SetValue (2, 2, 1.0);
+      aWorldView.SetValue (0, 1, aRotMat.GetColumn (1).x());
+      aWorldView.SetValue (1, 1, aRotMat.GetColumn (1).y());
+      aWorldView.SetValue (2, 1, aRotMat.GetColumn (1).z());
+
+      aWorldView.SetValue (0, 2, aRotMat.GetColumn (2).x());
+      aWorldView.SetValue (1, 2, aRotMat.GetColumn (2).y());
+      aWorldView.SetValue (2, 2, aRotMat.GetColumn (2).z());
     }
 
     if ((myMode & Graphic3d_TMF_ZoomPers) != 0)

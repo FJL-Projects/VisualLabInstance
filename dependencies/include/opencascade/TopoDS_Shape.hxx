@@ -17,12 +17,10 @@
 #ifndef _TopoDS_Shape_HeaderFile
 #define _TopoDS_Shape_HeaderFile
 
-#include "Standard_DefineAlloc.hxx"
 #include "Standard_Handle.hxx"
-#include "TopAbs.hxx"
-#include "TopAbs_Orientation.hxx"
 #include "TopLoc_Location.hxx"
 #include "TopoDS_TShape.hxx"
+#include "Standard_HashUtils.hxx"
 
 // resolve name collisions with X11 headers
 #ifdef Convex
@@ -48,8 +46,6 @@ public:
   //! Creates a NULL Shape referring to nothing.
   TopoDS_Shape() : myOrient (TopAbs_EXTERNAL) {}
 
-#ifndef OCCT_NO_RVALUE_REFERENCE
-
   //! Generalized move constructor, accepting also sub-classes
   //! (TopoDS_Shape hierarchy declares only fake sub-classes with no extra fields).
   template<class T2>
@@ -70,8 +66,6 @@ public:
     myOrient   = std::forward<T2> (theOther).myOrient;
     return *this;
   }
-
-#endif
 
   //! Returns true if this shape is null. In other words, it
   //! references no underlying shape with the potential to
@@ -286,12 +280,6 @@ public:
   Standard_Boolean IsNotEqual  (const TopoDS_Shape& theOther) const { return !IsEqual (theOther); }
   Standard_Boolean operator != (const TopoDS_Shape& theOther) const { return IsNotEqual (theOther); }
 
-  //! Returns a hashed value denoting <me>. This value is in the range [1, theUpperBound]. It is computed from the
-  //! TShape and the Location. The Orientation is not used.
-  //! @param theUpperBound the upper bound of the range a computing hash code must be within
-  //! @return a computed hash code, in the range [1, theUpperBound]
-  Standard_EXPORT Standard_Integer HashCode (Standard_Integer theUpperBound) const;
-
   //! Replace   <me> by  a  new   Shape with the    same
   //! Orientation and Location and a new TShape with the
   //! same geometry and no sub-shapes.
@@ -320,13 +308,18 @@ private:
 
 };
 
-//! Computes a hash code for the given shape, in the range [1, theUpperBound]
-//! @param theShape the shape which hash code is to be computed
-//! @param theUpperBound the upper bound of the range a computing hash code must be within
-//! @return a computed hash code, in the range [1, theUpperBound]
-inline Standard_Integer HashCode (const TopoDS_Shape& theShape, const Standard_Integer theUpperBound)
+namespace std
 {
-  return theShape.HashCode (theUpperBound);
+  template <>
+  struct hash<TopoDS_Shape>
+  {
+    size_t operator()(const TopoDS_Shape& theShape) const noexcept
+    {
+      const size_t aHL = std::hash<TopLoc_Location>{}(theShape.Location());
+      return aHL == 0 ? opencascade::hash(theShape.TShape().get())
+                      : opencascade::MurmurHash::hash_combine(theShape.TShape().get(), sizeof(void*), aHL);
+    }
+  };
 }
 
 #endif // _TopoDS_Shape_HeaderFile

@@ -39,6 +39,7 @@ time2_demo contained this comment:
 
 #include <boost/mpl/logical.hpp>
 #include <boost/ratio/ratio.hpp>
+#include <boost/ratio/detail/is_ratio.hpp>
 #include <boost/type_traits/common_type.hpp>
 #include <boost/type_traits/is_arithmetic.hpp>
 #include <boost/type_traits/is_convertible.hpp>
@@ -47,7 +48,7 @@ time2_demo contained this comment:
 #include <boost/chrono/detail/is_evenly_divisible_by.hpp>
 
 #include <boost/cstdint.hpp>
-#include <boost/utility/enable_if.hpp>
+#include <boost/core/enable_if.hpp>
 #include <boost/detail/workaround.hpp>
 #include <boost/integer_traits.hpp>
 
@@ -455,7 +456,7 @@ namespace chrono {
                             >
                         >
                     >
-                >::type* = 0
+                >::type* = BOOST_NULLPTR
             ) : rep_(r) { }
 #if  defined   BOOST_NO_CXX11_DEFAULTED_FUNCTIONS
         duration& operator=(const duration& rhs)
@@ -481,7 +482,7 @@ namespace chrono {
                             mpl::not_ < treat_as_floating_point<Rep2> >
                         >
                     >
-                >::type* = 0
+                >::type* = BOOST_NULLPTR
         )
             : rep_(chrono::detail::duration_cast<duration<Rep2, Period2>, duration>()(d).count()) {}
 

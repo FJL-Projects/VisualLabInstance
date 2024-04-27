@@ -19,11 +19,11 @@
 #include "Standard.hxx"
 #include "Standard_DefineAlloc.hxx"
 #include "Standard_Handle.hxx"
+#include "Standard_HashUtils.hxx"
 #include "Standard_ShortReal.hxx"
 
 #include "Quantity_NameOfColor.hxx"
 #include "Quantity_TypeOfColor.hxx"
-#include "TCollection_AsciiString.hxx"
 #include "NCollection_Vec4.hxx"
 
 //! This class allows the definition of an RGB color as triplet of 3 normalized floating point values (red, green, blue).
@@ -379,5 +379,20 @@ private:
   NCollection_Vec3<float> myRgb;
 
 };
+
+namespace std
+{
+  template <>
+  struct hash<Quantity_Color>
+  {
+    std::size_t operator()(const Quantity_Color& theColor) const noexcept
+    {
+      unsigned char aByteArr[3] = { static_cast<unsigned char>(255 * theColor.Red()),
+                                    static_cast<unsigned char>(255 * theColor.Green()),
+                                    static_cast<unsigned char>(255 * theColor.Blue()) };
+      return opencascade::hashBytes(aByteArr, sizeof(aByteArr));
+    }
+  };
+}
 
 #endif // _Quantity_Color_HeaderFile

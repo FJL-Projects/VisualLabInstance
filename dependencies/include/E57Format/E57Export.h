@@ -38,5 +38,6 @@
 #    define E57FORMAT_NO_DEPRECATED
 #  endif
 #endif
+
 // NOTE: This is a generated file. Any changes will be overwritten.
 #endif /* E57_DLL_H */
