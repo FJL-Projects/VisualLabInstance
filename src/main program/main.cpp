@@ -56,37 +56,23 @@ int main()
 		return 1;
 	}
 
-	buildCylinderBetweenTwoHoles(mesh);
+	FaceBitSet new_faces;
+	StitchHolesParams params;
+	params.outNewFaces = &new_faces;
+
+	buildCylinderBetweenTwoHoles(mesh, params);
 
 	MeshSave::toAnySupportedFormat(mesh, "data/not_remeshed_stitched_holes.stl");
 
-	FaceBitSet cylinder_faces(mesh.topology.faceSize());
+	//FaceBitSet cylinder_faces(mesh.topology.faceSize());
 
 	size_t old_mesh_face_size = old_mesh.topology.faceSize();
 	std::cout << "Old mesh face size: " << old_mesh_face_size << std::endl;
 	std::cout << "New mesh face size: " << mesh.topology.faceSize() << std::endl;
 
-	// Outer params is old_mesh_face_size and ref cylinder_faces;
-	// Each element in getValidFaces() is passed to the lambda function's FaceId f
-	BitSetParallelFor(mesh.topology.getValidFaces(), [old_mesh_face_size, &cylinder_faces](FaceId f)
-		{
-			if (f.get() > old_mesh_face_size)
-			{
-				cylinder_faces.set(f);
-			}
-		});
-
-	//for (auto f : mesh.topology.getValidFaces())
-	//{
-	//	if (f.get() > old_mesh_face_size)
-	//	{
-	//		cylinder_faces.set(f);
-	//	}
-	//}
-
 	RemeshSettings remesh_settings;
 	remesh_settings.targetEdgeLen = 0.5f;
-	remesh_settings.region = &cylinder_faces;
+	remesh_settings.region = &new_faces;
 	remesh(mesh, remesh_settings);
 
 	MeshSave::toAnySupportedFormat(mesh, "data/stitched_holes.stl");
