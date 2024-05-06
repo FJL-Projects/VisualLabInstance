@@ -48,6 +48,7 @@
 #include "ClosedSplineDesignInteractorStyle.h"
 #include "MeshSplineExpander.h"
 #include "Timer.hpp"
+
 //#define ENABLE_TIMER_H
 
 using Kernel = CGAL::Simple_cartesian<double>;
@@ -81,7 +82,7 @@ using Segment_intersection = boost::optional<Tree::Intersection_and_primitive_id
 class CervicalMarginLineWrapper
 {
 private:
-	SurfaceMesh* m_arch_sm; ///< Pointer to the dental arch surface mesh.
+	std::shared_ptr<SurfaceMesh> m_arch_sm; ///< Pointer to the dental arch surface mesh.
 	SurfaceMesh													m_abutment_sm; ///< Surface mesh of the abutment.
 	vtkSmartPointer<vtkPolyData>								m_abutment_pd; ///< PolyData of the abutment.
 	vtkSmartPointer<vtkPolyData>								m_arch_pd; ///< PolyData of the dental arch.
@@ -102,13 +103,13 @@ private:
 
 	double														m_min_curvature_threshold = std::numeric_limits<double>::max(); ///< Minimum curvature threshold for mesh extraction.
 	double														m_mean_curvature_threshold = std::numeric_limits<double>::max(); ///< Mean curvature threshold for mesh extraction.
-	std::map<unsigned int, face_descriptor>						m_fmap; ///< Face map for internal use.
+	std::map<unsigned int, face_descriptor>						m_fmap;  ///< Face map for internal use.
 	std::map<unsigned int, vertex_descriptor>					m_vmap; ///< Vertex map for internal use.
 	std::map<unsigned int, edge_descriptor>						m_emap; ///< Edge map for internal use.
 	std::map<unsigned int, halfedge_descriptor>					m_hemap; ///< Half-edge map for internal use.
 
 	ClosedSplineDesignInteractorStyle* m_cervical_margin_line_interactor_style; ///< Interactor style for margin line design.
-	ClosedMeshSpline* m_abutment_edge_spline; ///< Spline along the abutment edge.
+	std::shared_ptr<ClosedMeshSpline> m_abutment_edge_spline; ///< Spline along the abutment edge.
 	vertex_descriptor											m_bfs_start_vd; ///< Starting vertex descriptor for BFS operations.
 	double														m_ctrl_pt_density_coefficient = 0.3; ///< Control point density coefficient for spline generation [0.1, 1.0].
 	Eigen::MatrixXd												m_V; ///< Eigen matrix for vertices.
@@ -166,19 +167,25 @@ private:
 	) const;
 
 	int PolyDataToSurfaceMesh(vtkPolyData* polyData, SurfaceMesh& surfaceMesh);
-	std::shared_ptr<SurfaceMesh> AreaExpander(
-		SurfaceMesh& mesh,
+	std::shared_ptr<SurfaceMesh> ExpandAbutmentAndSetCutoffRing(
+		std::shared_ptr<SurfaceMesh> mesh,
 		const vtkSmartPointer<vtkPolyData> pd,
 		int n,
 		std::unordered_map<face_descriptor, face_descriptor>& face_map,
 		std::unordered_map<vertex_descriptor, vertex_descriptor>& vertex_map,
-		unsigned expansion_level
-	);
+		unsigned expansion_level,
+		unsigned cutoff_start_level,
+		unsigned cutoff_end_level
+	);  ///< AreaExpander()
+
+
+
+	vtkSmartPointer<vtkPolyData> CGALSurfaceMesh2VTKPolyData(SurfaceMesh& pmesh);
 
 public:
 	CervicalMarginLineWrapper();
 	void SetProjectionDirection(const Vector_3 projection_direction);
-	void SetArchSurfaceMesh(SurfaceMesh* arch_sm);
+	void SetArchSurfaceMesh(std::shared_ptr<SurfaceMesh> arch_sm);
 	void SetAbutmentPolyData(vtkSmartPointer<vtkPolyData> abutment_pd);
 	void SetArchPolyData(vtkSmartPointer<vtkPolyData> arch_pd);
 	void SetMinCurvatureThreshold(const double threshold);

@@ -64,21 +64,23 @@ void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData,
 int main()
 {
 	std::map<std::string, int> filename_teeth_id_map;
-	filename_teeth_id_map["5410.vtp"] = 5;
-	filename_teeth_id_map["4746.vtp"] = 6;
-	filename_teeth_id_map["4422.vtp"] = 6;
-	filename_teeth_id_map["1900.vtp"] = 2;
-	filename_teeth_id_map["1826.vtp"] = 3;
-	filename_teeth_id_map["11737.vtp"] = 2;
-	filename_teeth_id_map["2310.vtp"] = 3;
-	filename_teeth_id_map["3383.vtp"] = 7;
-	filename_teeth_id_map["1773.vtp"] = 3;
-	filename_teeth_id_map["1781.vtp"] = 6;
+	//filename_teeth_id_map["5410.vtp"] = 5;
+	//filename_teeth_id_map["4746.vtp"] = 6;
+	//filename_teeth_id_map["4422.vtp"] = 6;
+	//filename_teeth_id_map["1900.vtp"] = 2;
+	//filename_teeth_id_map["1826.vtp"] = 3;
+	//filename_teeth_id_map["11737.vtp"] = 2;
+	//filename_teeth_id_map["2310.vtp"] = 3;
+	//filename_teeth_id_map["3383.vtp"] = 7;
+	//filename_teeth_id_map["1773.vtp"] = 3;
+	//filename_teeth_id_map["1781.vtp"] = 6;
 
-	filename_teeth_id_map["13067.vtp"] = 6;
-	filename_teeth_id_map["19486.vtp"] = 4;
-	filename_teeth_id_map["34554.vtp"] = 5;
-	filename_teeth_id_map["38381.vtp"] = 1;
+	//filename_teeth_id_map["13067.vtp"] = 6;
+	//filename_teeth_id_map["19486.vtp"] = 4;
+	//filename_teeth_id_map["34554.vtp"] = 5;
+	//filename_teeth_id_map["38381.vtp"] = 1;
+	filename_teeth_id_map["38278.vtp"] = 7;
+	//filename_teeth_id_map["39221.vtp"] = 6;
 
 
 	for (auto& pair : filename_teeth_id_map)
@@ -140,7 +142,7 @@ int main()
 		CervicalMarginLineWrapper improved_margin_line_wrapper;
 		improved_margin_line_wrapper.SetRenderer(pipeline->Renderer);
 		improved_margin_line_wrapper.SetRenderWindow(pipeline->RenderWindow);
-		improved_margin_line_wrapper.SetArchSurfaceMesh(&arch_sm);
+		improved_margin_line_wrapper.SetArchSurfaceMesh(std::make_shared<SurfaceMesh>(arch_sm));
 		improved_margin_line_wrapper.SetArchPolyData(arch_pd);
 		improved_margin_line_wrapper.SetMinCurvatureThreshold(0.2);
 		improved_margin_line_wrapper.SetMeanCurvatureThreshold(0.2);

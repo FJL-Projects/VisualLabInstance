@@ -1,6 +1,6 @@
 #include"stdafx.h"
 
-vtkSmartPointer<vtkPolyData> CGAL_Surface_Mesh2VTK_PolyData(SurfaceMesh& pmesh)
+vtkSmartPointer<vtkPolyData> CGALSurfaceMesh2VTKPolyData(SurfaceMesh& pmesh)
 {
 	vtkSmartPointer<vtkPoints>  Points = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkCellArray> TrianglePolys = vtkSmartPointer<vtkCellArray>::New();

@@ -17,7 +17,6 @@ CervicalMarginLineWrapper::CervicalMarginLineWrapper() :
     m_projection_direction(Vector_3(0, 0, 0))
 {}
 
-
 /**
  * @brief Sets the projection direction and normalizes the vector.
  *
@@ -619,8 +618,8 @@ void CervicalMarginLineWrapper::Init()
     }
     CGAL::Surface_mesh_parameterization::parameterize(*m_arch_sm, bhd, uv_map);
 
-    m_abutment_edge_spline = new ClosedMeshSpline;
-    m_abutment_edge_spline->initial(m_arch_sm, m_fmap, m_vmap, m_emap, m_hemap, uv_map);
+    m_abutment_edge_spline = std::make_shared<ClosedMeshSpline>();
+    m_abutment_edge_spline->initial(m_arch_sm.get(), m_fmap, m_vmap, m_emap, m_hemap, uv_map);
 
     m_is_initialed = true;
 }
@@ -655,7 +654,7 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
 
     using namespace Eigen;
 
-    m_expanded_abutment_sm = *AreaExpander(*m_arch_sm, m_arch_pd, m_selected_id, m_expanded_to_arch_fd_map, m_expanded_to_arch_vd_map, 100);
+    m_expanded_abutment_sm = *ExpandAbutmentAndSetCutoffRing(m_arch_sm, m_arch_pd, m_selected_id, m_expanded_to_arch_fd_map, m_expanded_to_arch_vd_map, 100, 10, 20);
 
     CGAL::IO::write_PLY("expanded_abutment.ply", m_expanded_abutment_sm);
     // Convert the arch surface mesh to Eigen matrices
@@ -750,9 +749,17 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
     H10 = 0.5 * (PV1_10 + PV2_10);
     H15 = 0.5 * (PV1_15 + PV2_15);
 
+    auto cutoff_ring_vertex = m_expanded_abutment_sm.property_map<vertex_descriptor, bool>("v:cutoff_ring_vertex").first;
+    ofstream cutoff_ring_ofs("cutoff_ring.xyz");
     // Smooth mean curvature
     for (vertex_descriptor& vd : m_expanded_abutment_sm.vertices())
     {
+        // Output the cutoff ring of m_expanded_abutment_sm
+        if (cutoff_ring_vertex[vd])
+		{
+            cutoff_ring_ofs << m_expanded_abutment_sm.point(vd) << "\n";
+		}
+
         double h5_sum = 0.0;
         double h10_sum = 0.0;
         double h15_sum = 0.0;
@@ -776,6 +783,8 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
         H10[vd.idx()] = h10_sum / h10_count;
         H15[vd.idx()] = h15_sum / h15_count;
     }
+    cutoff_ring_ofs.close();
+
     for (vertex_descriptor& vd : m_expanded_abutment_sm.vertices())
     {
         try
@@ -794,20 +803,23 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
     std::vector<vertex_descriptor> extracted_vertices;
     std::set<vertex_descriptor> difference_vertices;
 
-    // Extract vertices via either mean or min curvature
-    bool is_successful = BFSMeanCurvatureExtraction(m_expanded_abutment_sm, m_bfs_start_vd, extracted_vertices, difference_vertices, m_mean_curvature_threshold);
-    std::cout << "Extracted vertices: " << extracted_vertices.size() << std::endl;
-    std::cout << "Teeth polydata vertices: " << m_abutment_pd->GetNumberOfPoints() << std::endl;
-    if (!is_successful)
-    {
-        std::cout << "Min curvature extraction method is used!" << std::endl;
-        BFSMinCurvatureExtraction(m_expanded_abutment_sm, m_bfs_start_vd, extracted_vertices, difference_vertices, m_min_curvature_threshold);
-    }
-    else
-    {
-        std::cout << "Mean curvature extraction method is used!" << std::endl;
-    }
+    //// Extract vertices via either mean or min curvature
+    //bool is_successful = BFSMeanCurvatureExtraction(m_expanded_abutment_sm, m_bfs_start_vd, extracted_vertices, difference_vertices, m_mean_curvature_threshold);
+    //std::cout << "Extracted vertices: " << extracted_vertices.size() << std::endl;
+    //std::cout << "Teeth polydata vertices: " << m_abutment_pd->GetNumberOfPoints() << std::endl;
+    //if (!is_successful)
+    //{
+    //    std::cout << "Min curvature extraction method is used!" << std::endl;
+    //    BFSMinCurvatureExtraction(m_expanded_abutment_sm, m_bfs_start_vd, extracted_vertices, difference_vertices, m_min_curvature_threshold);
+    //}
+    //else
+    //{
+    //    std::cout << "Mean curvature extraction method is used!" << std::endl;
+    //}
 
+    // Abandon the test run of mean curvature extraction, use min curvature extraction instead.
+    // The former algorithm extracts too much of the abutment.
+    BFSMinCurvatureExtraction(m_expanded_abutment_sm, m_bfs_start_vd, extracted_vertices, difference_vertices, m_min_curvature_threshold);
 
     std::ofstream extracted_vertices_ofs("extracted_vertices.xyz");
     for (const auto& vd : extracted_vertices)
@@ -1311,102 +1323,9 @@ void CervicalMarginLineWrapper::GenerateImprovedMarginLine()
 
         std::cout << "expanded_spline_mp size: " << expanded_spline_mp.size() << std::endl;
     }
-    //{
-    //    //std::cout << "Abutment Edge Spline size: " << m_abutment_edge_spline->uvSpline.size() << std::endl;
-    //    Polygon_2 polygon(m_abutment_edge_spline->uvSpline.begin(), m_abutment_edge_spline->uvSpline.end());
-
-    //    bool is_clockwise = polygon.is_clockwise_oriented();
-    //    //uv_map = m_cervical_margin_line_interactor_style->uv_map;
-
-    //    //SurfaceMesh::Property_map<vertex_descriptor, double> min_curvature = m_arch_sm->add_property_map<vertex_descriptor, double>("v:min_curvature", 0.0).first;
-    //    MeshSplineExpander mesh_spline_expander(
-    //        *m_abutment_edge_spline,
-    //        *m_arch_sm,
-    //        m_max_detection_distance,
-    //        is_clockwise,
-    //        m_fmap,
-    //        m_vmap,
-    //        m_emap,
-    //        m_hemap,
-    //        use_neighboring
-    //    );
-    //    mesh_spline_expander.SetExpansionSourceCenter(centroid);
-    //    mesh_spline_expander.SetRenderer(m_renderer);
-    //    mesh_spline_expander.SetRenderWin(m_render_win);
-    //    bool success = mesh_spline_expander.ExpandToLowestCurvature();
-
-    //    //bool success = mesh_spline_expander.ExpandToLowestCurvature();
-    //    //std::vector<ClosedMeshSpline> expanded_splines = mesh_spline_expander.GetExpandedSplines();
-    //    //for (auto expanded_spline : expanded_splines)
-    //    //{
-    //    //    Renderer->AddActor(expanded_spline.SplineActor);
-    //    //}
-    //    //std::vector<MeshPoint> expanded_spline_mp = mesh_spline_expander.GetExpandedSplinesMP()[0];
-    //    //for (MeshPoint& mp : expanded_spline_mp)
-    //    //{
-    //    //    m_cervical_margin_line_interactor_style->spline->add(mp.nTriId, mp.xyz);
-    //    //    vtkSmartPointer<vtkPolyDataNormals> mp_normal = vtkSmartPointer<vtkPolyDataNormals>::New();
-    //    //    mp_normal->SetInputConnection(m_cervical_margin_line_interactor_style->spline->CtrlPointSphere.back()->GetOutputPort());
-    //    //    mp_normal->SetComputePointNormals(1);
-    //    //    mp_normal->SetComputeCellNormals(1);
-    //    //    mp_normal->SetAutoOrientNormals(1);
-    //    //    mp_normal->SetSplitting(0);
-    //    //    mp_normal->FlipNormalsOff();
-    //    //    mp_normal->Update();
-    //    //    vtkSmartPointer<vtkPolyDataMapper> mp_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-    //    //    mp_mapper->SetInputConnection(mp_normal->GetOutputPort());
-    //    //    mp_mapper->Update();
-    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->SetMapper(mp_mapper);
-    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetColor(0, 0, 1);
-    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetAmbient(0.5);
-    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetSpecularPower(100);
-    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetSpecular(0.5);
-    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetDiffuse(0.5);
-    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->GetProperty()->SetOpacity(1.0);
-    //    //    m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back()->PickableOn();
-    //    //    m_renderer->AddActor(m_cervical_margin_line_interactor_style->spline->CtrlPointActor.back());
-    //    //}
-    //    //m_cervical_margin_line_interactor_style->spline->bClosed = true;
-    //    //m_cervical_margin_line_interactor_style->spline->UpdateSpline(m_cervical_margin_line_interactor_style->spline->vtEquidistantSpline);
-
-    //    //vtkSmartPointer<vtkTubeFilter> margin_line_tube_filter = vtkSmartPointer<vtkTubeFilter>::New();
-    //    //margin_line_tube_filter->SetInputData(m_cervical_margin_line_interactor_style->spline->SplinePolydata);
-    //    //margin_line_tube_filter->SetRadius(0.025);
-    //    //margin_line_tube_filter->SetNumberOfSides(16);
-    //    //margin_line_tube_filter->Update();
-    //    //vtkSmartPointer<vtkPolyDataNormals> margin_line_tube_normal = vtkSmartPointer<vtkPolyDataNormals>::New();
-    //    //margin_line_tube_normal->SetInputConnection(margin_line_tube_filter->GetOutputPort());
-    //    //margin_line_tube_normal->SetComputePointNormals(1);
-    //    //margin_line_tube_normal->SetComputeCellNormals(1);
-    //    //margin_line_tube_normal->SetAutoOrientNormals(1);
-    //    //margin_line_tube_normal->SetSplitting(0);
-    //    //margin_line_tube_normal->FlipNormalsOff();
-    //    //margin_line_tube_normal->Update();
-    //    //vtkSmartPointer<vtkPolyDataMapper> abutment_line_tube_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-    //    //abutment_line_tube_mapper->SetInputConnection(margin_line_tube_normal->GetOutputPort());
-    //    //abutment_line_tube_mapper->Update();
-
-    //    //vtkSmartPointer<vtkPolyData> margin_line_tube = abutment_line_tube_mapper->GetInput();
-    //    //vtkSmartPointer<vtkPLYWriter> margin_line_tube_writer = vtkSmartPointer<vtkPLYWriter>::New();
-    //    //margin_line_tube_writer->SetFileName("margin_line.ply");
-    //    //margin_line_tube_writer->SetInputData(margin_line_tube);
-    //    //margin_line_tube_writer->Write();
-
-    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->SetMapper(abutment_line_tube_mapper);
-    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetColor(1, 1, 0);
-    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetAmbient(0.5);
-    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetSpecularPower(100);
-    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetSpecular(0.5);
-    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetDiffuse(0.5);
-    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->GetProperty()->SetOpacity(1.0);
-    //    //m_cervical_margin_line_interactor_style->spline->SplineActor->PickableOff();
-
-    //    //m_renderer->AddActor(m_cervical_margin_line_interactor_style->spline->SplineActor);
-    //    //m_cervical_margin_line_interactor_style->OnLeftButtonUp();
-    //}
 }
 
-void CervicalMarginLineWrapper::SetArchSurfaceMesh(SurfaceMesh* arch_sm)
+void CervicalMarginLineWrapper::SetArchSurfaceMesh(std::shared_ptr<SurfaceMesh> arch_sm)
 {
     m_arch_sm = arch_sm;
 }
@@ -1517,6 +1436,7 @@ bool CervicalMarginLineWrapper::BFSMeanCurvatureExtraction(
 
     // Get the property map containing mean curvature values
     auto curvature_map = mesh.property_map<vertex_descriptor, double>("v:mean_curvature").first;
+    auto cutoff_ring_vertex = mesh.property_map<vertex_descriptor, bool>("v:cutoff_ring_vertex").first;
 
     // Define the curvature comparator
     auto CurvatureComparator = [&curvature_map, &threshold](vertex_descriptor vd)
@@ -1534,20 +1454,25 @@ bool CervicalMarginLineWrapper::BFSMeanCurvatureExtraction(
         stack.push(start_vd);
         visited.insert(start_vd);
 
-        while (!stack.empty()) {
+        while (!stack.empty()) 
+        {
             vertex_descriptor vd = stack.top();
             stack.pop();
 
-            if (CurvatureComparator(vd)) {
-                // Found a vertex that satisfies the curvature threshold
+            if (CurvatureComparator(vd) && !cutoff_ring_vertex[vd])
+            {
+                // Found a vertex that satisfies the curvature threshold;
+                // or stop the DFS at a cutoff ring vertex
                 start_vd = vd;
                 break;
             }
 
             // Traverse adjacent vertices
             auto circ = mesh.vertices_around_target(mesh.halfedge(vd));
-            for (auto vic = circ.begin(); vic != circ.end(); ++vic) {
-                if (!visited.count(*vic)) {
+            for (auto vic = circ.begin(); vic != circ.end(); ++vic)
+            {
+                if (!visited.count(*vic)) 
+                {
                     stack.push(*vic);
                     visited.insert(*vic);
                 }
@@ -1576,7 +1501,7 @@ bool CervicalMarginLineWrapper::BFSMeanCurvatureExtraction(
         }
 
         // Check curvature and if not already added to extracted_vertices, add it
-        if (CurvatureComparator(current_vd))
+        if (CurvatureComparator(current_vd) && !cutoff_ring_vertex[current_vd])
         {
             extracted_vertices.push_back(current_vd);
 
@@ -1636,6 +1561,7 @@ void CervicalMarginLineWrapper::BFSMinCurvatureExtraction(
 
     // Get the property map containing mean curvature values
     auto curvature_map = mesh.property_map<vertex_descriptor, double>("v:min_curvature").first;
+    auto cutoff_ring_vertex = mesh.property_map<vertex_descriptor, bool>("v:cutoff_ring_vertex").first;
 
     // Define the curvature comparator
     auto CurvatureComparator = [&curvature_map, &threshold](vertex_descriptor vd)
@@ -1653,20 +1579,25 @@ void CervicalMarginLineWrapper::BFSMinCurvatureExtraction(
         stack.push(start_vd);
         visited.insert(start_vd);
 
-        while (!stack.empty()) {
+        while (!stack.empty()) 
+        {
             vertex_descriptor vd = stack.top();
             stack.pop();
 
-            if (CurvatureComparator(vd)) {
-                // Found a vertex that satisfies the curvature threshold
+            if (CurvatureComparator(vd) && !cutoff_ring_vertex[vd])
+            {
+                // Found a vertex that satisfies the curvature threshold;
+                // or stop the DFS at a cutoff ring vertex
                 start_vd = vd;
                 break;
             }
 
             // Traverse adjacent vertices
             auto circ = mesh.vertices_around_target(mesh.halfedge(vd));
-            for (auto vic = circ.begin(); vic != circ.end(); ++vic) {
-                if (!visited.count(*vic)) {
+            for (auto vic = circ.begin(); vic != circ.end(); ++vic) 
+            {
+                if (!visited.count(*vic)) 
+                {
                     stack.push(*vic);
                     visited.insert(*vic);
                 }
@@ -1689,7 +1620,7 @@ void CervicalMarginLineWrapper::BFSMinCurvatureExtraction(
         queue.pop();
 
         // Check curvature and if not already added to extracted_vertices, add it
-        if (CurvatureComparator(current_vd))
+        if (CurvatureComparator(current_vd) && !cutoff_ring_vertex[current_vd])
         {
             extracted_vertices.push_back(current_vd);
 
@@ -1760,16 +1691,19 @@ int CervicalMarginLineWrapper::PolyDataToSurfaceMesh(vtkPolyData* polyData, Surf
  *
  * @return Returns a shared pointer to a new SurfaceMesh object that contains only the expanded selection of faces.
  */
-std::shared_ptr<SurfaceMesh> CervicalMarginLineWrapper::AreaExpander(
-    SurfaceMesh& mesh,
+std::shared_ptr<SurfaceMesh> CervicalMarginLineWrapper::ExpandAbutmentAndSetCutoffRing(
+    std::shared_ptr<SurfaceMesh> mesh,
     const vtkSmartPointer<vtkPolyData> pd,
     int n,
     std::unordered_map<face_descriptor, face_descriptor>& face_map = std::unordered_map<face_descriptor, face_descriptor>(),
     std::unordered_map<vertex_descriptor, vertex_descriptor>& vertex_map = std::unordered_map<vertex_descriptor, vertex_descriptor>(),
-    unsigned expansion_level = 50
+    unsigned expansion_level = 50,
+    unsigned cutoff_start_level = 10,
+    unsigned cutoff_end_level = 20
 )
 {
-    auto selection = mesh.add_property_map<face_descriptor, bool>("f:select", false).first;
+    auto selection = mesh->add_property_map<face_descriptor, bool>("f:select", false).first;
+    auto cutoff_ring_face = mesh->add_property_map<face_descriptor, bool>("f:cutoff_ring_face", false).first;
     vtkSmartPointer<vtkDataArray> labels = pd->GetCellData()->GetArray("Label");
     for (vtkIdType i = 0; i < labels->GetSize(); i++)
     {
@@ -1781,39 +1715,44 @@ std::shared_ptr<SurfaceMesh> CervicalMarginLineWrapper::AreaExpander(
     std::vector<face_descriptor> expand_area;
     for (unsigned i = 0; i < expansion_level; i++)
     {
+        bool cutoff = (cutoff_start_level <= i && i <= cutoff_end_level) ? true : false;
+        //eubool cutoff = false;  // This is a debug switch to disable cutoff ring
+
         expand_area.clear();
-        for (auto he : mesh.halfedges())
+        for (auto he : mesh->halfedges())
         {
-            if (mesh.is_border(he) || mesh.is_border(mesh.opposite(he)))
+            if (mesh->is_border(he) || mesh->is_border(mesh->opposite(he)))
             {
                 continue;
             }
-            if (selection[mesh.face(he)] == true && selection[mesh.face(mesh.opposite(he))] == false)
+            if (selection[mesh->face(he)] == true && selection[mesh->face(mesh->opposite(he))] == false)
             {
-                expand_area.push_back(mesh.face(mesh.opposite(he)));
+                expand_area.push_back(mesh->face(mesh->opposite(he)));
             }
         }
         for (auto f : expand_area)
         {
             selection[f] = true;
+			cutoff_ring_face[f] = cutoff;
         }
     }
     std::shared_ptr<SurfaceMesh> sm_new = std::make_shared<SurfaceMesh>();
-    std::vector<int> visit(mesh.number_of_vertices(), -1);
+    auto cutoff_ring_vertex = sm_new->add_property_map<vertex_descriptor, bool>("v:cutoff_ring_vertex", false).first;
+    std::vector<int> visit(mesh->number_of_vertices(), -1);
 
-    for (auto f : mesh.faces())
+    for (auto f : mesh->faces())
     {
         if (selection[f] == true)
         {
-            auto v0 = mesh.source(mesh.halfedge(f));
-            auto v1 = mesh.target(mesh.halfedge(f));
-            auto v2 = mesh.target(mesh.next(mesh.halfedge(f)));
+            auto v0 = mesh->source(mesh->halfedge(f));
+            auto v1 = mesh->target(mesh->halfedge(f));
+            auto v2 = mesh->target(mesh->next(mesh->halfedge(f)));
             vertex_descriptor v0_new;
             vertex_descriptor v1_new;
             vertex_descriptor v2_new;
             if (visit[v0.idx()] == -1)
             {
-                v0_new = sm_new->add_vertex(mesh.point(v0));
+                v0_new = sm_new->add_vertex(mesh->point(v0));
                 visit[v0.idx()] = v0_new.idx();
             }
             else
@@ -1822,7 +1761,7 @@ std::shared_ptr<SurfaceMesh> CervicalMarginLineWrapper::AreaExpander(
             }
             if (visit[v1.idx()] == -1)
             {
-                v1_new = sm_new->add_vertex(mesh.point(v1));
+                v1_new = sm_new->add_vertex(mesh->point(v1));
                 visit[v1.idx()] = v1_new.idx();
             }
             else
@@ -1831,7 +1770,7 @@ std::shared_ptr<SurfaceMesh> CervicalMarginLineWrapper::AreaExpander(
             }
             if (visit[v2.idx()] == -1)
             {
-                v2_new = sm_new->add_vertex(mesh.point(v2));
+                v2_new = sm_new->add_vertex(mesh->point(v2));
                 visit[v2.idx()] = v2_new.idx();
             }
             else
@@ -1839,6 +1778,10 @@ std::shared_ptr<SurfaceMesh> CervicalMarginLineWrapper::AreaExpander(
                 v2_new = vertex_descriptor(visit[v2.idx()]);
             }
             auto fd_new = sm_new->add_face(v0_new, v1_new, v2_new);
+            cutoff_ring_vertex[v0_new] = cutoff_ring_face[f];
+            cutoff_ring_vertex[v1_new] = cutoff_ring_face[f];
+            cutoff_ring_vertex[v2_new] = cutoff_ring_face[f];
+
             face_map[fd_new] = f;
             vertex_map[v0_new] = v0;
             vertex_map[v1_new] = v1;
@@ -1847,4 +1790,33 @@ std::shared_ptr<SurfaceMesh> CervicalMarginLineWrapper::AreaExpander(
     }
 
     return sm_new;
+}
+
+vtkSmartPointer<vtkPolyData> CervicalMarginLineWrapper::CGALSurfaceMesh2VTKPolyData(SurfaceMesh& pmesh)
+{
+    vtkSmartPointer<vtkPoints>  Points = vtkSmartPointer<vtkPoints>::New();
+    vtkSmartPointer<vtkCellArray> TrianglePolys = vtkSmartPointer<vtkCellArray>::New();
+    vtkSmartPointer<vtkPolyData> Polydata = vtkSmartPointer<vtkPolyData>::New();
+    std::map<vertex_descriptor, int> VertexDescriptorIndexMap;
+    int VertexIndex = 0;
+    int TriIndex = 0;
+
+    for (vertex_descriptor v : CGAL::vertices(pmesh))
+    {
+        const boost::property_map_value<SurfaceMesh, CGAL::vertex_point_t>::type& p = get(CGAL::get(CGAL::vertex_point, pmesh), v);
+        Points->InsertNextPoint(CGAL::to_double(p.x()), CGAL::to_double(p.y()), CGAL::to_double(p.z()));
+        VertexDescriptorIndexMap[v] = VertexIndex++;
+    }
+
+    for (face_descriptor f : CGAL::faces(pmesh))
+    {
+        TriIndex = 0;
+        vtkSmartPointer<vtkTriangle> triangle = vtkSmartPointer<vtkTriangle>::New();
+        for (halfedge_descriptor h : CGAL::halfedges_around_face(CGAL::halfedge(f, pmesh), pmesh))
+            triangle->GetPointIds()->SetId(TriIndex++, VertexDescriptorIndexMap[CGAL::target(h, pmesh)]);
+        TrianglePolys->InsertNextCell(triangle);
+    }
+    Polydata->SetPoints(Points);
+    Polydata->SetPolys(TrianglePolys);
+    return Polydata;
 }

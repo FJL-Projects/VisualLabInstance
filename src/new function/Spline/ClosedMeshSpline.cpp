@@ -405,7 +405,7 @@ void ClosedMeshSpline::cutMesh()
 		cut.add_face(vlist[tri[0]], vlist[tri[1]], vlist[tri[2]]);
 	}
 	CGAL::IO::write_polygon_mesh("cut.stl", cut);
-	//auto cutpolydata = CGAL_Surface_Mesh2VTK_PolyData(cut);
+	//auto cutpolydata = CGALSurfaceMesh2VTKPolyData(cut);
 	//Renderer->AddActor(MakeActor(cutpolydata, 1, 0, 0));
 	//RenderWindow->Render();
 }
