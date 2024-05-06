@@ -9,6 +9,7 @@
 #include <MRMesh/MRBitSetParallelFor.h>
 #include <MRMesh/MRMeshTopology.h>
 #include <MRMesh/MRExpected.h>
+#include <MRMesh/MRRingIterator.h>
 
 vtkRenderPipeline* pipeline;
 
@@ -66,23 +67,80 @@ int main()
 	using namespace MR;
 	pipeline = new vtkRenderPipeline();
 
-	MR::Mesh mrmesh = *MR::MeshLoad::fromAnySupportedFormat("data/11.stl");
-	std::vector<vertex_descriptor> vertices_list(mrmesh.topology.vertSize());
-	
-	SurfaceMesh sm = MRMeshToSurfaceMesh(mrmesh);
-	Mesh converted = SurfaceMeshToMRMesh(sm);
-	
-	MeshSave::toAnySupportedFormat(converted, "data/converted.stl");
+	constexpr double MEAN_CURVATURE_THRESHOLD = -1.0;
 
-	RenderPolydata(MRMeshToPolyData(mrmesh), pipeline->Renderer);
+	Mesh mrmesh = *MR::MeshLoad::fromAnySupportedFormat("data/38461 UpperJawScan.stl");
+	VertBitSet verts_under_threshold(mrmesh.topology.vertSize());
+	VertBitSet verts_visited(mrmesh.topology.vertSize());
+	VertBitSet verts_extracted(mrmesh.topology.vertSize());
 
-	vtkNew<vtkSTLReader> reader;
-	reader->SetFileName("data/converted.stl");
-	reader->Update();
-	vtkSmartPointer<vtkPolyData> polydata = reader->GetOutput();
+	std::ofstream curvature_ofs("data/curvature.xyz");
 
-	Mesh converted_from_pd = PolyDataToMRMesh(polydata);
-	MeshSave::toAnySupportedFormat(converted_from_pd, "data/converted_from_pd.ply");
+	for (auto& v : mrmesh.topology.getValidVerts())
+	{
+		if (mrmesh.discreteMeanCurvature(v) < MEAN_CURVATURE_THRESHOLD)
+		{
+			curvature_ofs << mrmesh.points[v].x << " " << mrmesh.points[v].y << " " << mrmesh.points[v].z << "\n";
+			verts_under_threshold.set(v);
+		}
+	}
+	curvature_ofs.close();
+
+	for (auto& v : mrmesh.topology.getValidVerts())
+	{
+		if (verts_under_threshold.test(v))
+		{
+			if (verts_visited.test(v))
+			{
+				continue;
+			}
+			else
+			{
+				std::vector<VertId> visited_verts;
+				visited_verts.push_back(v);
+				verts_visited.set(v);
+				std::queue<VertId> vert_queue;
+				vert_queue.push(v);
+				while (!vert_queue.empty())
+				{
+					VertId current_vert = vert_queue.front();
+					vert_queue.pop();
+					for (auto& next_edge : orgRing(mrmesh.topology, current_vert))
+					{
+						VertId& next_vert = mrmesh.topology.dest(next_edge);
+						if (verts_visited.test(next_vert))
+						{
+							continue;
+						}
+						else if (verts_under_threshold.test(next_vert))
+						{
+							verts_visited.set(next_vert);
+							vert_queue.push(next_vert);
+							visited_verts.push_back(next_vert);
+						}
+					}
+				}
+				if (visited_verts.size() > 20)
+				{
+					std::cout << "Visited Verts: " << visited_verts.size() << std::endl;
+					for (auto& vert : visited_verts)
+					{
+						verts_extracted.set(vert);
+					}
+				}
+			}
+		}
+	}
+
+	std::ofstream filtered_verts_ofs("data/filtered_verts.xyz");
+	for (auto& v : mrmesh.topology.getValidVerts())
+	{
+		if (verts_extracted.test(v))
+		{
+			filtered_verts_ofs << mrmesh.points[v].x << " " << mrmesh.points[v].y << " " << mrmesh.points[v].z << "\n";
+		}
+	}
+	filtered_verts_ofs.close();
 
 	// Set up the camera and interactor.
 	pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
