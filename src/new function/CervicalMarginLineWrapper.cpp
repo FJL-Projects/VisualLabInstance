@@ -1,5 +1,7 @@
 #include "CervicalMarginLineWrapper.h"
 
+using namespace MR;
+
 /**
  * @brief Default constructor for CervicalMarginLineWrapper class.
  *
@@ -693,97 +695,122 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
     auto mean_curvature = m_expanded_abutment_sm.add_property_map<vertex_descriptor, double>("v:mean_curvature", 0.0).first;
     auto min_curvature = m_expanded_abutment_sm.add_property_map<vertex_descriptor, double>("v:min_curvature", 0.0).first;
     auto arch_min_curvature = m_arch_sm->add_property_map<vertex_descriptor, double>("v:min_curvature", 0.0).first;
-    MatrixXd HN;
-    SparseMatrix<double> L, M, Minv;
-    igl::cotmatrix(m_V, m_F, L);
-    igl::massmatrix(m_V, m_F, igl::MASSMATRIX_TYPE_VORONOI, M);
-    igl::invert_diag(M, Minv);
+//    MatrixXd HN;
+//    SparseMatrix<double> L, M, Minv;
+//    igl::cotmatrix(m_V, m_F, L);
+//    igl::massmatrix(m_V, m_F, igl::MASSMATRIX_TYPE_VORONOI, M);
+//    igl::invert_diag(M, Minv);
+//
+//    // Laplace-Beltrami of position
+//    HN = -Minv * (L * m_V);
+//    // Extract magnitude as mean curvature
+//    VectorXd H = HN.rowwise().norm();
+//
+//    VectorXd H5 = H;
+//    VectorXd H10 = H;
+//    VectorXd H15 = H;
+//    VectorXd H20 = H;
+//
+//    // Compute curvature directions via quadric fitting
+//    MatrixXd PD1, PD2;
+//    MatrixXd PD1_5, PD2_5;
+//    MatrixXd PD1_10, PD2_10;
+//    MatrixXd PD1_15, PD2_15;
+//    MatrixXd PD1_20, PD2_20;
+//    VectorXd PV1, PV2;
+//    VectorXd PV1_5, PV2_5;
+//    VectorXd PV1_10, PV2_10;
+//    VectorXd PV1_15, PV2_15;
+//    VectorXd PV1_20, PV2_20;
+//    {
+//#ifdef ENABLE_TIMER_H
+//        Timer timer("Calculate principal_curvature");
+//        {
+//            Timer timer("Calculate principal_curvature 5");
+//#endif
+//            igl::principal_curvature(m_V, m_F, PD1_5, PD2_5, PV1_5, PV2_5, 5U, true);
+//#ifdef ENABLE_TIMER_H
+//        }
+//        {
+//            Timer timer("Calculate principal_curvature 10");
+//#endif
+//            igl::principal_curvature(m_V, m_F, PD1_10, PD2_10, PV1_10, PV2_10, 10U, true);
+//#ifdef ENABLE_TIMER_H
+//        }
+//        {
+//            Timer timer("Calculate principal_curvature 15");
+//#endif
+//            igl::principal_curvature(m_V, m_F, PD1_15, PD2_15, PV1_15, PV2_15, 15U, true);
+//#ifdef ENABLE_TIMER_H
+//        }
+//#endif
+//    }
+//
+//    // mean curvature
+//    H5 = 0.5 * (PV1_5 + PV2_5);
+//    H10 = 0.5 * (PV1_10 + PV2_10);
+//    H15 = 0.5 * (PV1_15 + PV2_15);
+//
+//    auto cutoff_ring_vertex = m_expanded_abutment_sm.property_map<vertex_descriptor, bool>("v:cutoff_ring_vertex").first;
+//    ofstream cutoff_ring_ofs("cutoff_ring.xyz");
+//    // Smooth mean curvature
+//    for (vertex_descriptor& vd : m_expanded_abutment_sm.vertices())
+//    {
+//        // Output the cutoff ring of m_expanded_abutment_sm
+//        if (cutoff_ring_vertex[vd])
+//		{
+//            cutoff_ring_ofs << m_expanded_abutment_sm.point(vd) << "\n";
+//		}
+//
+//        double h5_sum = 0.0;
+//        double h10_sum = 0.0;
+//        double h15_sum = 0.0;
+//        int h5_count = 0;
+//        int h10_count = 0;
+//        int h15_count = 0;
+//
+//        // Traverse adjacent vertices
+//        auto circ = m_expanded_abutment_sm.vertices_around_target(m_expanded_abutment_sm.halfedge(vd));
+//        for (auto vic = circ.begin(); vic != circ.end(); ++vic)
+//        {
+//            h5_sum += H5[vic->idx()];
+//            h10_sum += H10[vic->idx()];
+//            h15_sum += H15[vic->idx()];
+//
+//            h5_count++;
+//            h10_count++;
+//            h15_count++;
+//        }
+//        H5[vd.idx()] = h5_sum / h5_count;
+//        H10[vd.idx()] = h10_sum / h10_count;
+//        H15[vd.idx()] = h15_sum / h15_count;
+//    }
+//    cutoff_ring_ofs.close();
 
-    // Laplace-Beltrami of position
-    HN = -Minv * (L * m_V);
-    // Extract magnitude as mean curvature
-    VectorXd H = HN.rowwise().norm();
+    //for (vertex_descriptor& vd : m_expanded_abutment_sm.vertices())
+    //{
+    //    try
+    //    {
+    //        // Save the curvature of m_expanded_abutment_sm to m_arch_sm
+    //        vertex_descriptor origin_vd = m_expanded_to_arch_vd_map.at(vd);
+    //        arch_min_curvature[origin_vd] = min_curvature[vd] = std::min(std::min(H5[vd.idx()], H10[vd.idx()]), H15[vd.idx()]);
+    //        mean_curvature[vd] = H15[vd.idx()];
+    //    }
+    //    catch (const std::out_of_range& e)
+    //    {
+    //        //std::cerr << "Error: Vertex descriptor: " << vd.idx()  << " not found in the mapping!" << std::endl;
+    //    }
+    //}
 
-    VectorXd H5 = H;
-    VectorXd H10 = H;
-    VectorXd H15 = H;
-    VectorXd H20 = H;
+    Mesh mr_expanded_abutment_sm = SurfaceMeshToMRMesh(m_expanded_abutment_sm);
+    std::map<VertId, double> curvature_map;
 
-    // Compute curvature directions via quadric fitting
-    MatrixXd PD1, PD2;
-    MatrixXd PD1_5, PD2_5;
-    MatrixXd PD1_10, PD2_10;
-    MatrixXd PD1_15, PD2_15;
-    MatrixXd PD1_20, PD2_20;
-    VectorXd PV1, PV2;
-    VectorXd PV1_5, PV2_5;
-    VectorXd PV1_10, PV2_10;
-    VectorXd PV1_15, PV2_15;
-    VectorXd PV1_20, PV2_20;
-    {
-#ifdef ENABLE_TIMER_H
-        Timer timer("Calculate principal_curvature");
+    BitSetParallelFor(mr_expanded_abutment_sm.topology.getValidVerts(), [&](VertId v)
         {
-            Timer timer("Calculate principal_curvature 5");
-#endif
-            igl::principal_curvature(m_V, m_F, PD1_5, PD2_5, PV1_5, PV2_5, 5U, true);
-#ifdef ENABLE_TIMER_H
-        }
-        {
-            Timer timer("Calculate principal_curvature 10");
-#endif
-            igl::principal_curvature(m_V, m_F, PD1_10, PD2_10, PV1_10, PV2_10, 10U, true);
-#ifdef ENABLE_TIMER_H
-        }
-        {
-            Timer timer("Calculate principal_curvature 15");
-#endif
-            igl::principal_curvature(m_V, m_F, PD1_15, PD2_15, PV1_15, PV2_15, 15U, true);
-#ifdef ENABLE_TIMER_H
-        }
-#endif
-    }
+            curvature_map[v] = mr_expanded_abutment_sm.discreteMeanCurvature(v);
+        });
 
-    // mean curvature
-    H5 = 0.5 * (PV1_5 + PV2_5);
-    H10 = 0.5 * (PV1_10 + PV2_10);
-    H15 = 0.5 * (PV1_15 + PV2_15);
 
-    auto cutoff_ring_vertex = m_expanded_abutment_sm.property_map<vertex_descriptor, bool>("v:cutoff_ring_vertex").first;
-    ofstream cutoff_ring_ofs("cutoff_ring.xyz");
-    // Smooth mean curvature
-    for (vertex_descriptor& vd : m_expanded_abutment_sm.vertices())
-    {
-        // Output the cutoff ring of m_expanded_abutment_sm
-        if (cutoff_ring_vertex[vd])
-		{
-            cutoff_ring_ofs << m_expanded_abutment_sm.point(vd) << "\n";
-		}
-
-        double h5_sum = 0.0;
-        double h10_sum = 0.0;
-        double h15_sum = 0.0;
-        int h5_count = 0;
-        int h10_count = 0;
-        int h15_count = 0;
-
-        // Traverse adjacent vertices
-        auto circ = m_expanded_abutment_sm.vertices_around_target(m_expanded_abutment_sm.halfedge(vd));
-        for (auto vic = circ.begin(); vic != circ.end(); ++vic)
-        {
-            h5_sum += H5[vic->idx()];
-            h10_sum += H10[vic->idx()];
-            h15_sum += H15[vic->idx()];
-
-            h5_count++;
-            h10_count++;
-            h15_count++;
-        }
-        H5[vd.idx()] = h5_sum / h5_count;
-        H10[vd.idx()] = h10_sum / h10_count;
-        H15[vd.idx()] = h15_sum / h15_count;
-    }
-    cutoff_ring_ofs.close();
 
     for (vertex_descriptor& vd : m_expanded_abutment_sm.vertices())
     {
@@ -791,7 +818,7 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
         {
             // Save the curvature of m_expanded_abutment_sm to m_arch_sm
             vertex_descriptor origin_vd = m_expanded_to_arch_vd_map.at(vd);
-            arch_min_curvature[origin_vd] = min_curvature[vd] = std::min(std::min(H5[vd.idx()], H10[vd.idx()]), H15[vd.idx()]);
+            //arch_min_curvature[origin_vd] = min_curvature[vd] = std::min(std::min(H5[vd.idx()], H10[vd.idx()]), H15[vd.idx()]);
             mean_curvature[vd] = H15[vd.idx()];
         }
         catch (const std::out_of_range& e)
@@ -799,6 +826,7 @@ void CervicalMarginLineWrapper::ExtractAbutmentSurfaceMesh()
             //std::cerr << "Error: Vertex descriptor: " << vd.idx()  << " not found in the mapping!" << std::endl;
         }
     }
+
 
     std::vector<vertex_descriptor> extracted_vertices;
     std::set<vertex_descriptor> difference_vertices;
@@ -1791,6 +1819,60 @@ std::shared_ptr<SurfaceMesh> CervicalMarginLineWrapper::ExpandAbutmentAndSetCuto
 
     return sm_new;
 }
+
+SurfaceMesh CervicalMarginLineWrapper::MRMeshToSurfaceMesh(const Mesh& mrmesh)
+{
+    SurfaceMesh sm;
+    std::vector<vertex_descriptor> vertices_list(mrmesh.topology.vertSize());
+
+    for (auto v : mrmesh.topology.getValidVerts())
+    {
+        vertices_list[v.get()] = sm.add_vertex(Point_3(mrmesh.points[v].x, mrmesh.points[v].y, mrmesh.points[v].z));
+    }
+
+    for (auto f : mrmesh.topology.getValidFaces())
+    {
+        // Add each face
+        VertId v0, v1, v2;
+        mrmesh.topology.getTriVerts(f, v0, v1, v2);
+        sm.add_face(vertices_list[v0.get()],
+            vertices_list[v1.get()],
+            vertices_list[v2.get()]);
+    }
+    return sm;
+}
+
+Mesh CervicalMarginLineWrapper::SurfaceMeshToMRMesh(const SurfaceMesh& sm)
+{
+    VertCoords vert_coords(static_cast<size_t>(sm.number_of_vertices()));
+#pragma omp parallel for
+    for (int i = 0; i < sm.number_of_vertices(); ++i)
+    {
+        const Point_3& p = sm.point(vertex_descriptor(static_cast<uint32_t>(i)));
+        vert_coords[VertId(i)] = Vector3f(p.x(), p.y(), p.z());
+    }
+
+    Triangulation triangulation(sm.number_of_faces());
+#pragma omp parallel for
+    for (int i = 0; i < sm.number_of_faces(); ++i)
+    {
+        auto f = face_descriptor(static_cast<uint32_t>(i));
+        auto h = halfedge_descriptor(sm.halfedge(f));
+        auto v0 = sm.target(h);
+        auto v1 = sm.target(sm.next(h));
+        auto v2 = sm.target(sm.next(sm.next(h)));
+        //triangulation[FaceId(i)] = ThreeVertIds(VertId(static_cast<size_t>(v0.idx())), VertId(static_cast<size_t>(v1.idx())), VertId(static_cast<size_t>(v2.idx())));
+        // Same as the upper line, but more readable.
+        triangulation[FaceId(i)] = {
+            VertId(static_cast<size_t>(v0.idx())),
+            VertId(static_cast<size_t>(v1.idx())),
+            VertId(static_cast<size_t>(v2.idx()))
+        };
+    }
+
+    return Mesh::fromTriangles(vert_coords, triangulation);
+}
+
 
 vtkSmartPointer<vtkPolyData> CervicalMarginLineWrapper::CGALSurfaceMesh2VTKPolyData(SurfaceMesh& pmesh)
 {

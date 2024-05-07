@@ -33,6 +33,14 @@
 #include <igl/principal_curvature.h>
 #include <igl/read_triangle_mesh.h>
 
+#include <MRMesh/MRMesh.h>
+#include <MRMesh/MRMeshTopology.h>
+#include <MRMesh/MRId.h>
+#include <MRMesh/MRMeshLoad.h>
+#include <MRMesh/MRRingIterator.h>
+#include <MRMesh/MRBitSet.h>
+#include <MRMesh/MRBitSetParallelFor.h>
+
 #include <algorithm>
 #include <unordered_map>
 #include <map>
@@ -50,6 +58,7 @@
 #include "Timer.hpp"
 
 //#define ENABLE_TIMER_H
+using namespace MR;
 
 using Kernel = CGAL::Simple_cartesian<double>;
 using Point_2 = Kernel::Point_2;
@@ -177,8 +186,8 @@ private:
 		unsigned cutoff_start_level,
 		unsigned cutoff_end_level
 	);  ///< AreaExpander()
-
-
+	SurfaceMesh MRMeshToSurfaceMesh(const Mesh& mrmesh);
+	Mesh SurfaceMeshToMRMesh(const SurfaceMesh& sm);
 
 	vtkSmartPointer<vtkPolyData> CGALSurfaceMesh2VTKPolyData(SurfaceMesh& pmesh);
 

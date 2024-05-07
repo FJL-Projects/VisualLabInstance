@@ -162,6 +162,27 @@
     <ClCompile Include="src\main program\main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="src\new function\CervicalMarginLineWrapper.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\new function\ClosedSplineDesignInteractorStyle.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\new function\MeshSplineExpander.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\new function\Spline\ClosedMeshSpline.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\new function\Spline\Spline.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\new function\TeethDataInitialization.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\new function\Triangulator2D.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\stdafx\stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
@@ -172,6 +193,13 @@
     <ClInclude Include="src\algorithm\Rotation.h" />
     <ClInclude Include="src\algorithm\Timer.hpp" />
     <ClInclude Include="src\algorithm\vectorAlgorithm.h" />
+    <ClInclude Include="src\new function\CervicalMarginLineWrapper.h" />
+    <ClInclude Include="src\new function\ClosedSplineDesignInteractorStyle.h" />
+    <ClInclude Include="src\new function\MeshSplineExpander.h" />
+    <ClInclude Include="src\new function\Spline\ClosedMeshSpline.h" />
+    <ClInclude Include="src\new function\Spline\Spline.h" />
+    <ClInclude Include="src\new function\TeethDataInitialization.h" />
+    <ClInclude Include="src\new function\Triangulator2D.h" />
     <ClInclude Include="src\rendering pipeline\simpleRender.h" />
     <ClInclude Include="src\rendering pipeline\vtkRenderPipeline.h" />
     <ClInclude Include="src\stdafx\stdafx.h" />

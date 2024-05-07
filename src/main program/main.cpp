@@ -1,4 +1,4 @@
-﻿﻿#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "vtkRenderPipeline.h"
 #include "meshTransform.h"
 #include "simpleRender.h"
