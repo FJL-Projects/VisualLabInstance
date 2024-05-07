@@ -94,3 +94,164 @@ SurfaceMesh VTK_PolyData2CGAL_Surface_Mesh(const vtkSmartPointer<vtkPolyData>& P
 
 	return M;
 }
+
+/**
+ * @brief Converts a CGAL SurfaceMesh to Eigen matrix representations.
+ *
+ * This function takes a CGAL SurfaceMesh object and converts it into two Eigen matrices, one
+ * for the vertices (V) and one for the faces (F). The vertex matrix (V) contains the x, y, and z
+ * coordinates of each vertex, and the face matrix (F) contains indices into V that define each face.
+ *
+ * @param sm The input CGAL SurfaceMesh to convert.
+ * @param[out] V An Eigen::MatrixXd that will contain the vertex coordinates after conversion.
+ *               It will have as many rows as there are vertices in the mesh, and each row will
+ *               have 3 columns corresponding to the x, y, and z coordinates of the vertex.
+ * @param[out] F An Eigen::MatrixXi that will contain the indices of the vertices defining each face
+ *               of the mesh after conversion. It will have as many rows as there are faces in the
+ *               mesh, and each row will have 3 columns corresponding to the indices of the vertices
+ *               that form the triangular face.
+ */
+void CGALSurfaceMeshToEigen(const SurfaceMesh& sm, Eigen::MatrixXd& V, Eigen::MatrixXi& F)
+{
+	// Get the number of vertices and faces
+	size_t num_vertices = sm.number_of_vertices();
+	size_t num_faces = sm.number_of_faces();
+
+	// Initialize Eigen matrices
+	V.resize(num_vertices, 3);
+	F.resize(num_faces, 3);
+
+	// Map for storing vertex indices (CGAL vertex descriptor -> continuous index)
+	std::unordered_map<vertex_descriptor, Eigen::Index> vertex_indices;
+	// Extract vertices
+	Eigen::Index v_index = 0;
+	for (auto vd : sm.vertices())
+	{
+		const auto& point = sm.point(vd);
+		V.row(v_index) << point.x(), point.y(), point.z();
+		vertex_indices[vd] = v_index++; // Save the index mapping
+	}
+
+	// Extract faces
+	int f_index = 0;
+	for (auto f : sm.faces())
+	{
+		int inner_index = 0;
+		for (auto v : CGAL::vertices_around_face(sm.halfedge(f), sm))
+		{
+			F(f_index, inner_index++) = vertex_indices[v];
+		}
+		++f_index;
+	}
+}
+
+using namespace MR;
+SurfaceMesh MRMeshToSurfaceMesh(const Mesh& mrmesh)
+{
+	SurfaceMesh sm;
+	std::vector<vertex_descriptor> vertices_list(mrmesh.topology.vertSize());
+
+	for (auto v : mrmesh.topology.getValidVerts())
+	{
+		vertices_list[v.get()] = sm.add_vertex(Point_3(mrmesh.points[v].x, mrmesh.points[v].y, mrmesh.points[v].z));
+	}
+
+	for (auto f : mrmesh.topology.getValidFaces())
+	{
+		// Add each face
+		VertId v0, v1, v2;
+		mrmesh.topology.getTriVerts(f, v0, v1, v2);
+		sm.add_face(vertices_list[v0.get()],
+			vertices_list[v1.get()],
+			vertices_list[v2.get()]);
+	}
+	return sm;
+}
+
+Mesh SurfaceMeshToMRMesh(const SurfaceMesh& sm)
+{
+	VertCoords vert_coords(static_cast<size_t>(sm.number_of_vertices()));
+#pragma omp parallel for
+	for (int i = 0; i < sm.number_of_vertices(); ++i)
+	{
+		const Point_3& p = sm.point(vertex_descriptor(static_cast<uint32_t>(i)));
+		vert_coords[VertId(i)] = Vector3f(p.x(), p.y(), p.z());
+	}
+	
+	Triangulation triangulation(sm.number_of_faces());
+#pragma omp parallel for
+	for (int i = 0; i < sm.number_of_faces(); ++i)
+	{
+		auto f = face_descriptor(static_cast<uint32_t>(i));
+		auto h = halfedge_descriptor(sm.halfedge(f));
+		auto v0 = sm.target(h);
+		auto v1 = sm.target(sm.next(h));
+		auto v2 = sm.target(sm.next(sm.next(h)));
+		//triangulation[FaceId(i)] = ThreeVertIds(VertId(static_cast<size_t>(v0.idx())), VertId(static_cast<size_t>(v1.idx())), VertId(static_cast<size_t>(v2.idx())));
+		// Same as the upper line, but more readable.
+		triangulation[FaceId(i)] = { 
+			VertId(static_cast<size_t>(v0.idx())),
+			VertId(static_cast<size_t>(v1.idx())),
+			VertId(static_cast<size_t>(v2.idx()))
+		};
+	}
+
+	return Mesh::fromTriangles(vert_coords, triangulation);
+}
+
+vtkSmartPointer<vtkPolyData> MRMeshToPolyData(const Mesh& mrmesh)
+{
+	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();
+	vtkSmartPointer<vtkCellArray> triangle_polys = vtkSmartPointer<vtkCellArray>::New();
+	vtkSmartPointer<vtkPolyData> polydata = vtkSmartPointer<vtkPolyData>::New();
+
+	for (auto v : mrmesh.topology.getValidVerts())
+	{
+		points->InsertNextPoint(mrmesh.points[v].x, mrmesh.points[v].y, mrmesh.points[v].z);
+	}
+
+	for (auto f : mrmesh.topology.getValidFaces())
+	{
+		int tri_index = 0;
+		vtkSmartPointer<vtkTriangle> triangle = vtkSmartPointer<vtkTriangle>::New();
+		ThreeVertIds three_verts;
+		mrmesh.topology.getTriVerts(f, three_verts);
+		for (auto v : three_verts)
+		{
+			triangle->GetPointIds()->SetId(tri_index++, v.get());
+		}
+		triangle_polys->InsertNextCell(triangle);
+	}
+	polydata->SetPoints(points);
+	polydata->SetPolys(triangle_polys);
+
+	return polydata;
+}
+
+Mesh PolyDataToMRMesh(const vtkSmartPointer<vtkPolyData> polydata)
+{
+	// PolyData is not thread-safe, so we can't use OpenMP here.
+	VertCoords vert_coords(static_cast<size_t>(polydata->GetNumberOfPoints()));
+	for (int i = 0; i < polydata->GetNumberOfPoints(); ++i)
+	{
+		const double* point = polydata->GetPoints()->GetPoint(i);
+		vert_coords[VertId(i)] = Vector3f(
+			point[0],
+			point[1],
+			point[2]
+		);
+	}
+
+	Triangulation triangulation(static_cast<size_t>(polydata->GetNumberOfCells()));
+	for (int i = 0; i < polydata->GetNumberOfCells(); ++i)
+	{
+		const vtkSmartPointer<vtkCell> cell = polydata->GetCell(i);
+		triangulation[FaceId(i)] = { 
+			VertId(static_cast<size_t>(cell->GetPointId(0))),
+			VertId(static_cast<size_t>(cell->GetPointId(1))),
+			VertId(static_cast<size_t>(cell->GetPointId(2)))
+		};
+	}
+
+	return Mesh::fromTriangles(vert_coords, triangulation);
+}

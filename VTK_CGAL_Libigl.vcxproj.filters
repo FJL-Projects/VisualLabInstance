@@ -27,27 +27,6 @@
     <ClCompile Include="src\stdafx\stdafx.cpp">
       <Filter>src\stdafx</Filter>
     </ClCompile>
-    <ClCompile Include="src\new function\CervicalMarginLineWrapper.cpp">
-      <Filter>src\new function</Filter>
-    </ClCompile>
-    <ClCompile Include="src\new function\ClosedSplineDesignInteractorStyle.cpp">
-      <Filter>src\new function</Filter>
-    </ClCompile>
-    <ClCompile Include="src\new function\TeethDataInitialization.cpp">
-      <Filter>src\new function</Filter>
-    </ClCompile>
-    <ClCompile Include="src\new function\Spline\ClosedMeshSpline.cpp">
-      <Filter>src\new function</Filter>
-    </ClCompile>
-    <ClCompile Include="src\new function\Spline\Spline.cpp">
-      <Filter>src\new function</Filter>
-    </ClCompile>
-    <ClCompile Include="src\new function\MeshSplineExpander.cpp">
-      <Filter>src\new function</Filter>
-    </ClCompile>
-    <ClCompile Include="src\new function\Triangulator2D.cpp">
-      <Filter>src\new function</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\stdafx\stdafx.h">

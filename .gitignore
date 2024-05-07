@@ -21,7 +21,7 @@
 *.pyo
 
 # Ignore all the build output
-*.obj
+Release/*.obj
 *.pdb
 *.exe
 *.ipdb
