@@ -13,7 +13,7 @@ SurfaceMesh rotated_toothmesh1;
 SurfaceMesh rotated_crownmesh;
 SurfaceMesh rotated_bitemesh;
 
-std::string output_folder_path = "F:\\.tmp\\output\\";  // Be advised: ATTACH an ending '\\'. The path to save the output files.
+std::string output_folder_path = "D:\\Code\\VisualLabExperiment\\data\\";  // Be advised: ATTACH an ending '\\'. The path to save the output files.
 int current_folder_num = 0; 
 int resolution = 4096;  // The resolution of the depth image.
 
@@ -38,7 +38,7 @@ int resolution = 4096;  // The resolution of the depth image.
 std::string generate_leading_zero_number_str(int number)
 {
 	std::ostringstream stream;
-	stream << std::setw(4) << std::setfill('0') << number;
+	stream << std::setw(1) << std::setfill('0') << number;
 	return stream.str();
 }
 
@@ -353,18 +353,11 @@ void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData,
 	}
 
 	rotated_toothmesh0 = rotate_mesh_copy(toothmesh0, transform_matrix_eigen);
-	rotated_toothmesh1 = rotate_mesh_copy(toothmesh1, transform_matrix_eigen);
-	rotated_crownmesh = rotate_mesh_copy(crownmesh, transform_matrix_eigen);
-	rotated_bitemesh = rotate_mesh_copy(bitemesh, transform_matrix_eigen);
 
 	std::string output_folder_path_prefix = output_folder_path + generate_leading_zero_number_str(current_folder_num);
 	create_directories_recursively(output_folder_path_prefix);
 
 	CGAL::IO::write_PLY(output_folder_path_prefix + "\\toothmesh.ply", rotated_toothmesh0);
-	CGAL::IO::write_PLY(output_folder_path_prefix + "\\toothmesh1.ply", rotated_toothmesh1);
-	CGAL::IO::write_PLY(output_folder_path_prefix + "\\crownmesh.ply", rotated_crownmesh);
-	CGAL::IO::write_PLY(output_folder_path_prefix + "\\bitemesh.ply", rotated_bitemesh);
-
 
 	double x_min = std::numeric_limits<double>::max();
 	double x_max = std::numeric_limits<double>::min();
@@ -403,9 +396,6 @@ void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData,
 	double step = max / (resolution - 1);
 
 	generate_depth_image(output_folder_path_prefix + "\\toothmesh.png", rotated_toothmesh0, x_min, y_min, rotated_toothmesh0_z_max, step);
-	generate_depth_image(output_folder_path_prefix + "\\toothmesh1.png", rotated_toothmesh1, x_min, y_min, rotated_toothmesh1_z_max, step);
-	generate_depth_image(output_folder_path_prefix + "\\crownmesh.png", rotated_crownmesh, x_min, y_min, rotated_crownmesh_z_max, step);
-	generate_depth_image(output_folder_path_prefix + "\\bitemesh.png", rotated_bitemesh, x_min, y_min, rotated_bitemesh_z_max, step);
 }
 
 int main()
@@ -433,7 +423,7 @@ int main()
 	std::string selected_folder_path = select_folder();
 
 	std::cout << "selected_folder_path: " << selected_folder_path << std::endl;
-	int num_folders = 35;
+	int num_folders = 1;
 
 	// Iterate over each folder in the selected directory.
 	for (int i = 1; i <= num_folders; i++)
@@ -443,26 +433,16 @@ int main()
 
 		// CGAL's read_STL may fail to read some shattered files.
 		std::string toothmesh_path = folder_path + "\\m1.ply";
-		std::string toothmesh1_path = folder_path + "\\m2.ply";
-		std::string crown_path = folder_path + "\\c.ply";
-		std::string bite_path = folder_path + "\\b.ply";
 
 		// Create a new render pipeline and load the mesh files.
 		pipeline = new vtkRenderPipeline();
 		// Clear the mesh data at each run.
 		toothmesh0.clear();
-		toothmesh1.clear();
-		crownmesh.clear();
-		bitemesh.clear();
 
 		CGAL::IO::read_polygon_mesh(toothmesh_path, toothmesh0);
-		CGAL::IO::read_polygon_mesh(toothmesh1_path, toothmesh1);
-		CGAL::IO::read_polygon_mesh(crown_path, crownmesh);
-		CGAL::IO::read_polygon_mesh(bite_path, bitemesh);
 		
 		// Render the tooth mesh's arch and the abutment for the user to align.
 		RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(toothmesh0), pipeline->Renderer, 1, 1, 1, 1);
-		RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(toothmesh1), pipeline->Renderer, 1, 1, 1, 1);
 
 		// Render the axes.
 		vtkSmartPointer<vtkAxesActor> axes = vtkSmartPointer<vtkAxesActor>::New();
