@@ -3,15 +3,12 @@
 #include"meshTransform.h"
 #include"simpleRender.h"
 
+#include <opencv2/opencv.hpp>
+#include <limits>
 vtkRenderPipeline* pipeline;
 SurfaceMesh toothmesh0;
-SurfaceMesh toothmesh1;
-SurfaceMesh crownmesh;
-SurfaceMesh bitemesh;
 SurfaceMesh rotated_toothmesh0;
-SurfaceMesh rotated_toothmesh1;
-SurfaceMesh rotated_crownmesh;
-SurfaceMesh rotated_bitemesh;
+
 
 std::string output_folder_path = "D:\\Code\\VisualLabExperiment\\data\\";  // Be advised: ATTACH an ending '\\'. The path to save the output files.
 int current_folder_num = 0; 
@@ -211,6 +208,62 @@ BOOL create_directories_recursively(const std::string& path)
 	return TRUE;
 }
 
+
+void generate_depth_image(
+	const std::string& path,
+	const SurfaceMesh& sm,
+	const double& x_min,
+	const double& y_min,
+	const double& z_max,
+	double max,
+	const int resolution
+) {
+	// Construct an AABB tree from the faces of the input surface mesh
+	Tree tree(faces(sm).first, faces(sm).second, sm);
+	Vector_3 negative_z_axis(0, 0, -1);
+
+	// Create an OpenCV Mat to store the depth image
+	cv::Mat depth_image(resolution, resolution, CV_8UC3, cv::Scalar(0, 0, 0));
+	double depth_max = std::numeric_limits<double>::min();
+	std::vector<std::vector<double>> depth(resolution, std::vector<double>(resolution, 0));
+	double step = max / (resolution - 1);
+
+	double x_pos = x_min;
+	for (int x = 0; x < resolution; x++, x_pos += step) {
+		double y_pos = y_min;
+		for (int y = 0; y < resolution; y++, y_pos += step) {
+			// Cast a ray from the camera position (x_pos, y_pos, z_max) towards the negative z-direction
+			Ray_3 ray_query(Point_3(x_pos, y_pos, z_max), negative_z_axis);
+			auto intersection = tree.first_intersection(ray_query);
+
+			if (intersection) {
+				const Point_3* p = boost::get<Point_3>(&(intersection->first));
+				if (p) {
+					depth[x][y] = z_max - p->z();
+					depth_max = std::max(depth_max, depth[x][y]);
+				}
+			}
+		}
+	}
+
+	uchar intensity;
+	// Map the depth values to grayscale pixel intensities
+	for (int x = 0; x < resolution; x++) {
+		for (int y = 0; y < resolution; y++) {
+			intensity = static_cast<uchar>((depth[x][y] / depth_max) * 255);
+			if (!(depth[x][y] == 0))
+			{
+				intensity = 255 - intensity;
+			}
+			depth_image.at<cv::Vec3b>(resolution - y - 1, x) = cv::Vec3b(intensity, intensity, intensity);
+		}
+	}
+
+	// Save the depth image as a PNG file using OpenCV
+	cv::imwrite(path, depth_image);
+	std::cout << "Depth image saved to " << path << std::endl;
+}
+
 /**
  * @brief Generate a depth image from a surface mesh.
  *
@@ -388,59 +441,60 @@ void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData,
 		};
 
 	double max = get_dimension(rotated_toothmesh0, rotated_toothmesh0_z_max);
-	max = std::max(max, get_dimension(rotated_toothmesh1, rotated_toothmesh1_z_max));
-	max = std::max(max, get_dimension(rotated_crownmesh, rotated_crownmesh_z_max));
-	max = std::max(max, get_dimension(rotated_bitemesh, rotated_bitemesh_z_max));
 
 	// Make sure the step is great enough to avoid missing points.
 	double step = max / (resolution - 1);
 
-	generate_depth_image(output_folder_path_prefix + "\\toothmesh.png", rotated_toothmesh0, x_min, y_min, rotated_toothmesh0_z_max, step);
+	generate_depth_image(output_folder_path_prefix + "\\toothmesh.png", rotated_toothmesh0, x_min, y_min, rotated_toothmesh0_z_max, max, resolution);
 }
 
 int main()
 {
+	namespace fs = std::filesystem;
+	using namespace cv;
+
 	// Select the input folder containing the mesh files.
 	/* The selected file hierarchy should be as follows:
 	* 	 * - selected_folder_path
-	* 	 *   - 0001
-	* 	 *     - m1.ply
-	* 	 *     - m2.ply
-	* 	 *     - c.ply
-	* 	 *     - b.ply
-	* 	 *   - 0002
-	* 	 *     - m1.ply
-	* 	 *     - m2.ply
-	* 	 *     - c.ply
-	* 	 *     - b.ply
+	* 	 *   - 1
+	* 	 *     - xxx.stl
+	* 	 *   - 2
+	* 	 *     - yyy.stl
 	* 	 *   ...
-	* 	 *   - 0035
-	* 	 *     - m1.ply
-	* 	 *     - m2.ply
-	* 	 *     - c.ply
-	* 	 *     - b.ply
+	* 	 *   - 35
+	* 	 *     - m1.stl
 	*/
 	std::string selected_folder_path = select_folder();
 
 	std::cout << "selected_folder_path: " << selected_folder_path << std::endl;
 	int num_folders = 1;
+	fs::path toothmesh_path;
 
 	// Iterate over each folder in the selected directory.
 	for (int i = 1; i <= num_folders; i++)
 	{
 		current_folder_num = i;
 		std::string folder_path = selected_folder_path + "\\" + generate_leading_zero_number_str(i);
-
-		// CGAL's read_STL may fail to read some shattered files.
-		std::string toothmesh_path = folder_path + "\\m1.ply";
+		std::cout << folder_path << std::endl;
+		fs::path directory_path(folder_path);
+		
+		for (const auto& entry : fs::directory_iterator(directory_path))
+		{
+			const auto& path = entry.path();
+			if (path.extension() == ".stl")
+			{
+				toothmesh_path /= path;
+				std::cout << toothmesh_path << std::endl;
+			}
+		}
 
 		// Create a new render pipeline and load the mesh files.
 		pipeline = new vtkRenderPipeline();
 		// Clear the mesh data at each run.
 		toothmesh0.clear();
 
-		CGAL::IO::read_polygon_mesh(toothmesh_path, toothmesh0);
-		
+		CGAL::IO::read_STL(toothmesh_path.string(), toothmesh0);
+		std::cout << toothmesh0.number_of_vertices() << std::endl;
 		// Render the tooth mesh's arch and the abutment for the user to align.
 		RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(toothmesh0), pipeline->Renderer, 1, 1, 1, 1);
 
