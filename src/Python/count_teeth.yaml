@@ -1,0 +1,10 @@
+path: D:/Code/VisualLabExperiment/src/Python/datasets/count_teeth
+train: images/train # train images
+val: images/val # val images
+#test: ./dataset/score/images/test # test images (optional)
+
+# Classes
+nc: 1 # number of classes
+names: ['tooth']  # class names
+
+model: yolov8n.yaml 

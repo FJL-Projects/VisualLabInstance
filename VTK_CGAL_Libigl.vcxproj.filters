@@ -30,6 +30,9 @@
     <ClCompile Include="src\algorithm\IniIO.cpp">
       <Filter>src\algorithm</Filter>
     </ClCompile>
+    <ClCompile Include="src\new function\TeethDataInitialization.cpp">
+      <Filter>src\new function</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\stdafx\stdafx.h">
@@ -55,6 +58,9 @@
     </ClInclude>
     <ClInclude Include="src\algorithm\IniIO.h">
       <Filter>src\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="src\new function\TeethDataInitialization.h">
+      <Filter>src\new function</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

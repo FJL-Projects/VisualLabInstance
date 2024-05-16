@@ -99,6 +99,7 @@
 #include <codecvt>
 #include <iomanip>
 #include <filesystem>
+#include <tuple>
 
 #include "vectorAlgorithm.h"
 #include "Timer.hpp"

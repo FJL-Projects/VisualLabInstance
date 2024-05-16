@@ -36,7 +36,7 @@ int SurfaceMeshToPolyData(SurfaceMesh& mesh, vtkSmartPointer<vtkPolyData>& polyD
 	vtkSmartPointer<vtkPoints>  VTKPoints = vtkSmartPointer<vtkPoints>::New();
 	VTKPoints->SetNumberOfPoints(mesh.vertices().size());
 
-#pragma omp parallel for
+//#pragma omp parallel for
 	for (int i = 0; i < mesh.vertices().size(); i++)
 	{
 		const Kernel::Point_3& point = mesh.point(vertex_descriptor(i));
@@ -75,7 +75,7 @@ int SurfaceMeshToPolyData(SurfaceMesh& mesh, vtkSmartPointer<vtkPolyData>& polyD
 	 @param P The VTK PolyData object to convert.
 	 @return The converted CGAL surface mesh.
  */
-SurfaceMesh VTK_PolyData2CGAL_Surface_Mesh(const vtkSmartPointer<vtkPolyData>& P)
+SurfaceMesh PolyDataToSurfaceMesh(const vtkSmartPointer<vtkPolyData>& P)
 {
 	// Check input validity
 	if (!P || P->GetNumberOfPoints() == 0 || P->GetNumberOfCells() == 0) return SurfaceMesh();
