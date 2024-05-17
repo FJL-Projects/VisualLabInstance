@@ -5,7 +5,7 @@
 
 #include <opencv2/opencv.hpp>
 #include <limits>
-
+#include <cstdio>
 #include "TeethDataInitialization.h"
 
 vtkRenderPipeline* pipeline;
@@ -15,8 +15,9 @@ SurfaceMesh rotated_toothmesh0;
 namespace fs = std::filesystem;
 
 bool disable_left_key = false;
+std::string accessing_data_path;
 
-std::string output_folder_path = "D:\\Code\\VisualLabExperiment\\data\\output\\";  // Be advised: ATTACH an ending '\\'. The path to save the output files.
+std::string output_folder_path = "D:\\Code\\VisualLabExperiment\\data\\all_batch\\";  // Be advised: ATTACH an ending '\\'. The path to save the output files.
 fs::path output_image_with_boxes_path = fs::path(output_folder_path) / "images" / "with_boxes";
 fs::path output_image_path = fs::path(output_folder_path) / "images" / "test";
 fs::path output_depth_image_path = fs::path(output_folder_path) / "images" / "depth";
@@ -81,7 +82,8 @@ SurfaceMesh RotateMeshCopy(const SurfaceMesh& sm, const Eigen::Matrix3d& rotatio
 
 void RightPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
-	//std::cout<<"Right Press" << endl;
+	std::cout << "deleting the file: " << accessing_data_path << std::endl;
+	std::remove(accessing_data_path.c_str());
 }
 void RightRelease(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
@@ -567,111 +569,112 @@ int main()
 
 			toothmesh_path /= path;
 			std::cout << toothmesh_path << std::endl;
-
+			accessing_data_path = toothmesh_path.string();
 			vtkSmartPointer<vtkXMLPolyDataReader> vtp_reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
 			vtp_reader->SetFileName(toothmesh_path.string().c_str());
 			vtp_reader->Update();
 			arch_pd = vtp_reader->GetOutput();
 
-			// Clear the mesh data at each run.
-			arch_sm.clear();
-			arch_sm = PolyDataToSurfaceMesh(arch_pd);
+			RenderPolydata(arch_pd, pipeline->Renderer, 1, 1, 1, 1);
+			//// Clear the mesh data at each run.
+			//arch_sm.clear();
+			//arch_sm = PolyDataToSurfaceMesh(arch_pd);
 
-			TeethDataInitialization teeth_data_initialization(arch_pd, arch_sm);
-			teeth_data_initialization.SetRenderer(pipeline->Renderer);
-			teeth_data_initialization.SetRenderWindow(pipeline->RenderWindow);
-			teeth_data_initialization.Execute();
+			//TeethDataInitialization teeth_data_initialization(arch_pd, arch_sm);
+			//teeth_data_initialization.SetRenderer(pipeline->Renderer);
+			//teeth_data_initialization.SetRenderWindow(pipeline->RenderWindow);
+			//teeth_data_initialization.Execute();
 
-			auto& teeth_poly_data = teeth_data_initialization.m_labeledPolyData;
+			//auto& teeth_poly_data = teeth_data_initialization.m_labeledPolyData;
 
-			std::vector<std::vector<double> > teeth_dimension_vec;
-			for (size_t tooth_num = 1; tooth_num < 8; ++tooth_num)
-			{
-				auto tooth_pd = teeth_poly_data[tooth_num];
-				auto tooth_vertices_number = tooth_pd->GetNumberOfPoints();
-				//if (tooth_vertices_number < 300)
-				//{
-				//	continue;
-				//}
+			//std::vector<std::vector<double> > teeth_dimension_vec;
+			//for (size_t tooth_num = 1; tooth_num < 8; ++tooth_num)
+			//{
+			//	auto tooth_pd = teeth_poly_data[tooth_num];
+			//	auto tooth_vertices_number = tooth_pd->GetNumberOfPoints();
+			//	//if (tooth_vertices_number < 300)
+			//	//{
+			//	//	continue;
+			//	//}
 
 
-				auto [x_min, x_max, y_min, y_max] = [](vtkSmartPointer<vtkPolyData> pd)
-					{
-						auto* bounding_box = pd->GetBounds();
-						return std::tuple<double, double, double, double>(bounding_box[0], bounding_box[1], bounding_box[2], bounding_box[3]);
-					}(tooth_pd);
+			//	auto [x_min, x_max, y_min, y_max] = [](vtkSmartPointer<vtkPolyData> pd)
+			//		{
+			//			auto* bounding_box = pd->GetBounds();
+			//			return std::tuple<double, double, double, double>(bounding_box[0], bounding_box[1], bounding_box[2], bounding_box[3]);
+			//		}(tooth_pd);
 
-					/*std::cout << "Tooth " << tooth_num << " has vertices: " << tooth_vertices_number << std::endl;
-					std::cout << "Bounding box: x_min: " << x_min << " x_max: " << x_max << " y_min: " << y_min << " y_max: " << y_max << std::endl;*/
-					teeth_dimension_vec.push_back({ x_min, x_max, y_min, y_max });
-					RenderPolydata(tooth_pd, pipeline->Renderer, 1, 0, 0, 1);
-			}
+			//		/*std::cout << "Tooth " << tooth_num << " has vertices: " << tooth_vertices_number << std::endl;
+			//		std::cout << "Bounding box: x_min: " << x_min << " x_max: " << x_max << " y_min: " << y_min << " y_max: " << y_max << std::endl;*/
+			//		teeth_dimension_vec.push_back({ x_min, x_max, y_min, y_max });
+			//		RenderPolydata(tooth_pd, pipeline->Renderer, 1, 0, 0, 1);
+			//}
 
-			double x_min = std::numeric_limits<double>::max();
-			double x_max = std::numeric_limits<double>::min();
-			double y_min = std::numeric_limits<double>::max();
-			double y_max = std::numeric_limits<double>::min();
-			double z_max = std::numeric_limits<double>::min();
+			//double x_min = std::numeric_limits<double>::max();
+			//double x_max = std::numeric_limits<double>::min();
+			//double y_min = std::numeric_limits<double>::max();
+			//double y_max = std::numeric_limits<double>::min();
+			//double z_max = std::numeric_limits<double>::min();
 
-			auto get_dimension = [&x_min, &x_max, &y_min, &y_max](SurfaceMesh& sm, double& z_max)
-				{
-					for (auto v : sm.vertices())
-					{
-						Point_3 p = sm.point(v);
-						x_min = std::min(x_min, p.x());
-						x_max = std::max(x_max, p.x());
-						y_min = std::min(y_min, p.y());
-						y_max = std::max(y_max, p.y());
-						z_max = std::max(z_max, p.z());
-					}
-					double max;
-					if ((x_max - x_min) > (y_max - y_min))
-						max = x_max - x_min;
-					else
-						max = y_max - y_min;
-					return max;
-				};
+			//auto get_dimension = [&x_min, &x_max, &y_min, &y_max](SurfaceMesh& sm, double& z_max)
+			//	{
+			//		for (auto v : sm.vertices())
+			//		{
+			//			Point_3 p = sm.point(v);
+			//			x_min = std::min(x_min, p.x());
+			//			x_max = std::max(x_max, p.x());
+			//			y_min = std::min(y_min, p.y());
+			//			y_max = std::max(y_max, p.y());
+			//			z_max = std::max(z_max, p.z());
+			//		}
+			//		double max;
+			//		if ((x_max - x_min) > (y_max - y_min))
+			//			max = x_max - x_min;
+			//		else
+			//			max = y_max - y_min;
+			//		return max;
+			//	};
 
-			double max = get_dimension(arch_sm, z_max);
+			//double max = get_dimension(arch_sm, z_max);
 
-			auto contour_image_with_boxes_path = output_image_with_boxes_path / std::string(file_name_stem + "with_boxes.png");
-			auto contour_image_path = output_image_path / std::string(file_name_stem + ".png");
-			auto label_txt_path = output_label_path / std::string(file_name_stem + ".txt");
-			auto depth_image_path = output_depth_image_path / std::string(file_name_stem + ".png");
+			//auto contour_image_with_boxes_path = output_image_with_boxes_path / std::string(file_name_stem + "with_boxes.png");
+			//auto contour_image_path = output_image_path / std::string(file_name_stem + ".png");
+			//auto label_txt_path = output_label_path / std::string(file_name_stem + ".txt");
+			//auto depth_image_path = output_depth_image_path / std::string(file_name_stem + ".png");
 
-			auto depth_image = GenerateDepthImage(arch_sm, x_min, y_min, z_max, max, RESOLUTION);
-			cv::imwrite(depth_image_path.string(), depth_image);
-			Mat contour_image = ConvertContourImage(depth_image);
+			//auto depth_image = GenerateDepthImage(arch_sm, x_min, y_min, z_max, max, RESOLUTION);
+			//cv::imwrite(depth_image_path.string(), depth_image);
+			//Mat contour_image = ConvertContourImage(depth_image);
 
-			auto contour_image_with_boxes = contour_image.clone();
-			std::ofstream label_txt(label_txt_path.string());
-			double step = max / (RESOLUTION - 1);
-			for (auto& box : teeth_dimension_vec)
-			{
-				if (box.size() == 4)
-				{
-					auto x_min_bound_pixel = (box[0] - x_min) / step;
-					auto x_max_bound_pixel = (box[1] - x_min) / step;
-					auto y_min_bound_pixel = RESOLUTION - (box[2] - y_min) / step;
-					auto y_max_bound_pixel = RESOLUTION - (box[3] - y_min) / step;
+			//auto contour_image_with_boxes = contour_image.clone();
+			//std::ofstream label_txt(label_txt_path.string());
+			//double step = max / (RESOLUTION - 1);
+			//for (auto& box : teeth_dimension_vec)
+			//{
+			//	if (box.size() == 4)
+			//	{
+			//		auto x_min_bound_pixel = (box[0] - x_min) / step;
+			//		auto x_max_bound_pixel = (box[1] - x_min) / step;
+			//		auto y_min_bound_pixel = RESOLUTION - (box[2] - y_min) / step;
+			//		auto y_max_bound_pixel = RESOLUTION - (box[3] - y_min) / step;
 
-					auto x_center = (x_min_bound_pixel + x_max_bound_pixel) / 2;
-					auto y_center = (y_min_bound_pixel + y_max_bound_pixel) / 2;
+			//		auto x_center = (x_min_bound_pixel + x_max_bound_pixel) / 2;
+			//		auto y_center = (y_min_bound_pixel + y_max_bound_pixel) / 2;
 
-					std::cout << "x_min: " << x_min_bound_pixel << " x_max: " << x_max_bound_pixel << " y_min: " << y_min_bound_pixel << " y_max: " << y_max_bound_pixel << " x_center: " << x_center << " y_center: " << y_center << std::endl;
+			//		std::cout << "x_min: " << x_min_bound_pixel << " x_max: " << x_max_bound_pixel << " y_min: " << y_min_bound_pixel << " y_max: " << y_max_bound_pixel << " x_center: " << x_center << " y_center: " << y_center << std::endl;
 
-					label_txt << "0 " << x_center / RESOLUTION << " " << y_center / RESOLUTION << " " << abs(x_max_bound_pixel - x_min_bound_pixel) / RESOLUTION << " " << abs(y_max_bound_pixel - y_min_bound_pixel) / RESOLUTION << std::endl;
+			//		label_txt << "0 " << x_center / RESOLUTION << " " << y_center / RESOLUTION << " " << abs(x_max_bound_pixel - x_min_bound_pixel) / RESOLUTION << " " << abs(y_max_bound_pixel - y_min_bound_pixel) / RESOLUTION << std::endl;
 
-					// 创建一个矩形（方框）
-					cv::rectangle(
-						contour_image_with_boxes,
-						cv::Point(x_min_bound_pixel, y_min_bound_pixel),
-						cv::Point(x_max_bound_pixel, y_max_bound_pixel),
-						cv::Scalar(255, 0, 0), 2
-					);
-				}
-			}
-			label_txt.close();
+			//		// 创建一个矩形（方框）
+			//		cv::rectangle(
+			//			contour_image_with_boxes,
+			//			cv::Point(x_min_bound_pixel, y_min_bound_pixel),
+			//			cv::Point(x_max_bound_pixel, y_max_bound_pixel),
+			//			cv::Scalar(255, 0, 0), 2
+			//		);
+			//	}
+			//}
+			//label_txt.close();
 			//// Render the axes.
 			vtkSmartPointer<vtkAxesActor> axes = vtkSmartPointer<vtkAxesActor>::New();
 			axes->SetTotalLength(10.0, 10.0, 10.0);
@@ -696,9 +699,8 @@ int main()
 			pipeline->addObserver(vtkCommand::RightButtonReleaseEvent, RightRelease);
 
 			pipeline->RenderWindowInteractor->Start();
+
 			delete pipeline;
-			cv::imwrite(contour_image_with_boxes_path.string(), contour_image_with_boxes);
-			cv::imwrite(contour_image_path.string(), contour_image);
 		}
 		else if (path.extension() == ".stl")
 		{
