@@ -91,6 +91,16 @@
 #include <CGAL/Polygon_mesh_processing/self_intersections.h>
 #include <CGAL/Polygon_mesh_processing/remesh.h>
 
+#include <MRMesh/MRMeshLoad.h>
+#include <MRMesh/MRMeshSave.h>
+#include <MRMesh/MRId.h>
+#include <MRMesh/MRMesh.h>
+#include <MRMesh/MRBitSetParallelFor.h>
+#include <MRMesh/MRMeshTopology.h>
+#include <MRMesh/MRExpected.h>
+#include <MRMesh/MRMeshBuilder.h>
+#include <MRMesh/MRVector.h>
+
 #include <boost/optional.hpp>
 #include <Eigen/Geometry>
 #include <Windows.h>
@@ -104,7 +114,6 @@
 #include "vectorAlgorithm.h"
 #include "Timer.hpp"
 #include "Rotation.h"
-#include "IniIO.h"
 
 VTK_MODULE_INIT(vtkRenderingOpenGL2)
 VTK_MODULE_INIT(vtkInteractionStyle)
@@ -168,6 +177,6 @@ typedef boost::property_map<SurfaceMesh, CGAL::vertex_point_t>::type				VPMap;
 typedef SurfaceMesh::template Property_map<vertex_descriptor, Vector_3>				VNMap;
 typedef SurfaceMesh::template Property_map<face_descriptor, Vector_3>				FNMap;
 typedef SurfaceMesh::template Property_map<vertex_descriptor, double>				VLMap;
-//typedef CGAL::Surface_mesh_deformation<SurfaceMesh, CGAL::Default, CGAL::Default, CGAL::SRE_ARAP>	Surface_mesh_deformation;
+typedef CGAL::Surface_mesh_deformation<SurfaceMesh, CGAL::Default, CGAL::Default, CGAL::SRE_ARAP>	Surface_mesh_deformation;
 
 namespace PMP = CGAL::Polygon_mesh_processing;

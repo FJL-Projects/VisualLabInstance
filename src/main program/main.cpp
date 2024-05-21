@@ -1,12 +1,18 @@
-﻿#include"stdafx.h"
-#include"vtkRenderPipeline.h"
-#include"meshTransform.h"
-#include"simpleRender.h"
+﻿#include "stdafx.h"
+#include "vtkRenderPipeline.h"
+#include "meshTransform.h"
+#include "simpleRender.h"
+#include "IOManip.hpp"
+#include <MRMesh/MRMeshLoad.h>
+#include <MRMesh/MRId.h>
+#include <MRMesh/MRMesh.h>
+#include <MRMesh/MRBitSetParallelFor.h>
+#include <MRMesh/MRMeshTopology.h>
+#include <MRMesh/MRExpected.h>
+#include <MRMesh/MRMeshBuilder.h>
 
-#include <opencv2/opencv.hpp>
 #include <limits>
 #include <cstdio>
-#include "TeethDataInitialization.h"
 
 vtkRenderPipeline* pipeline;
 SurfaceMesh arch_sm;
@@ -17,16 +23,21 @@ namespace fs = std::filesystem;
 bool disable_left_key = false;
 std::string accessing_data_path;
 
-std::string output_folder_path = "D:\\Code\\VisualLabExperiment\\data\\all_batch\\";  // Be advised: ATTACH an ending '\\'. The path to save the output files.
-fs::path output_image_with_boxes_path = fs::path(output_folder_path) / "images" / "with_boxes";
-fs::path output_image_path = fs::path(output_folder_path) / "images" / "test";
-fs::path output_depth_image_path = fs::path(output_folder_path) / "images" / "depth";
+std::string input_folder = "F:\\0x0000\\Model\\classified\\Nature Workshop 2\\exocad\\Crown&Coping";
 
-fs::path output_label_path = fs::path(output_folder_path) / "labels" / "test";
-int current_folder_num = 0; 
+std::string output_folder = "F:\\0x0000\\pointr_dataset\\output2\\";  // Be advised: ATTACH an ending '\\'. The path to save the output files.
+fs::path output_folder_path = fs::path(output_folder);
+fs::path current_input_folder;
+fs::path current_output_folder;
+std::string fdi_str;
+int file_count = 0;
+fs::path last_processed_path;
+
 constexpr int RESOLUTION = 2048;  // The resolution of the depth image.
 std::string file_name_stem;
 
+BOOL CreateDirectoriesRecursively(const std::string& path);
+BOOL CreateDirectoriesRecursively(const fs::path& fs_path);
 /**
  * @brief Generate a 4-digit number string with leading zeros.
  *
@@ -45,11 +56,33 @@ std::string file_name_stem;
  *   std::string num_str = GenerateLeadingZeroNumberStr(num);
  *   // num_str will be "0042"
  */
-std::string GenerateLeadingZeroNumberStr(int number)
+auto GenerateLeadingZeroNumberStr(int number, size_t len = 4) -> std::string
 {
 	std::ostringstream stream;
-	stream << std::setw(1) << std::setfill('0') << number;
+	stream << std::setw(len) << std::setfill('0') << number;
 	return stream.str();
+}
+
+auto ExtractNumberFromFileName(const std::string& filename) -> int
+{
+	std::stringstream ss(filename);
+	std::string temp;
+	int number = -1;
+
+	while (ss >> temp)
+	{
+		for (char c : temp) 
+		{
+			if (std::isdigit(c))
+			{
+				ss.seekg(-static_cast<int>(temp.size()), std::ios::cur); 
+				ss >> number;
+				return number;
+			}
+		}
+	}
+
+	throw std::runtime_error("No number found in the filename");
 }
 
 /**
@@ -82,8 +115,8 @@ SurfaceMesh RotateMeshCopy(const SurfaceMesh& sm, const Eigen::Matrix3d& rotatio
 
 void RightPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
-	std::cout << "deleting the file: " << accessing_data_path << std::endl;
-	std::remove(accessing_data_path.c_str());
+	//std::cout << "deleting the file: " << accessing_data_path << std::endl;
+	//std::remove(accessing_data_path.c_str());
 }
 void RightRelease(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
@@ -92,83 +125,58 @@ void RightRelease(vtkObject* caller, long unsigned int eventId, void* clientData
 
 void LeftPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
-	//std::cout<<"Left Press" << endl;
+	if (current_input_folder == last_processed_path)
+	{
+		std::cout << "Already processed. Skipped overwriting." << std::endl;
+		return;
+	}
+
+	int output_num = 0;
+	++file_count;
+	current_output_folder = fs::path(output_folder) / fdi_str / GenerateLeadingZeroNumberStr(file_count, 4);  // "output_folder/11/0001/"
+	std::cout << "Copied to " << current_output_folder << std::endl;
+
+	CreateDirectoriesRecursively(current_output_folder);
+	for (const auto& entry : fs::directory_iterator(current_input_folder))
+	{
+		const auto& path = entry.path();
+		file_name_stem = path.stem().string();
+		if (file_name_stem == "Antagonist")
+		{
+			fs::copy(entry, current_output_folder / std::string("bite.stl"), fs::copy_options::overwrite_existing);
+			++output_num;
+		}
+		else if (file_name_stem.find("Jaw_scan") != std::string::npos)
+		{
+			fs::copy(entry, current_output_folder / std::string("jaw.stl"), fs::copy_options::overwrite_existing);
+			++output_num;
+		}
+		else if (file_name_stem.find("Preparation") != std::string::npos)
+		{
+			fs::copy(entry, current_output_folder / std::string("abutment.stl"), fs::copy_options::overwrite_existing);
+			++output_num;
+		}
+		else if (file_name_stem.find("Tooth_scan") != std::string::npos)
+		{
+			fs::copy(entry, current_output_folder / std::string("full_abutment.stl"), fs::copy_options::overwrite_existing);
+			++output_num;
+		}
+		else if (file_name_stem.find("Restoration") != std::string::npos)
+		{
+			fs::copy(entry, current_output_folder / std::string("crown.stl"), fs::copy_options::overwrite_existing);
+			++output_num;
+		}
+	}
+	if (output_num != 5)
+	{
+		std::cout << "Files not copied successfully" << std::endl;
+	}
+	last_processed_path = current_input_folder;
 }
 
 void MouseMove(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
-	
-}
 
-int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
-{
-	if (uMsg == BFFM_INITIALIZED)
-	{
-		// lpData is the lParam value passed to SHBrowseForFolder
-		SendMessage(hwnd, BFFM_SETSELECTION, TRUE, lpData);
-	}
-	return 0;
-}
-
-/**
- * @brief Open a folder selection dialog and return the selected folder path.
- *
- * This function displays a folder selection dialog using the Windows Shell API.
- * It allows the user to browse and select a folder. The function returns the
- * path of the selected folder as a string. If no folder is selected, an empty
- * string is returned.
- *
- * The function also reads and writes the last selected folder path to an INI file
- * named "last_path.ini". If the file exists, the last selected path is used as the
- * initial directory for the folder selection dialog. After the user selects a folder,
- * the selected path is written back to the INI file.
- *
- * @return The path of the selected folder, or an empty string if no folder is selected.
- *
- * @note This function uses the Windows Shell API (ShBrowseForFolder) to display the
- *       folder selection dialog. It requires the Windows-specific headers and libraries.
- *
- * @note The function uses the C++11 `<codecvt>` library for string conversion between
- *       UTF-8 and wide strings.
- *
- * @note The `BrowseCallbackProc` function is a callback function used by the folder
- *       selection dialog to set the initial directory. It is not shown in this code snippet.
- */
-std::string SelectFolder()
-{
-	std::string last_path;
-	read_ini_file("last_path.ini", last_path);
-
-	BROWSEINFO bi = { 0 };
-	bi.lpszTitle = L"Browse for folder...";
-	bi.ulFlags = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE;
-	bi.lpfn = BrowseCallbackProc;
-
-	std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-	std::wstring wide_last_path = converter.from_bytes(last_path);
-
-	bi.lParam = reinterpret_cast<LPARAM>(wide_last_path.c_str());
-
-	LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
-
-	if (pidl != 0)
-	{
-		wchar_t path[MAX_PATH];
-		if (SHGetPathFromIDList(pidl, path))
-		{
-			IMalloc* imalloc = 0;
-			if (SUCCEEDED(SHGetMalloc(&imalloc)))
-			{
-				imalloc->Free(pidl);
-				imalloc->Release();
-			}
-			std::string selected_folder = converter.to_bytes(path);
-			write_ini_file("last_path.ini", selected_folder);
-			return selected_folder;
-		}
-	}
-
-	return std::string();
 }
 
 /**
@@ -256,84 +264,6 @@ BOOL CreateDirectoriesRecursively(const fs::path& fs_path)
 	return TRUE;
 }
 
-
-cv::Mat GenerateDepthImage(
-	const SurfaceMesh& sm,
-	const double& x_min,
-	const double& y_min,
-	const double& z_max,
-	double max,
-	const int resolution
-) 
-{
-	using namespace cv;
-
-	// Construct an AABB tree from the faces of the input surface mesh
-	Tree tree(faces(sm).first, faces(sm).second, sm);
-	Vector_3 negative_z_axis(0, 0, -1);
-
-	// Create an OpenCV Mat to store the depth image
-	Mat depth_image(resolution, resolution, CV_8UC3, Scalar(0, 0, 0));
-	double depth_max = std::numeric_limits<double>::min();
-	std::vector<std::vector<double>> depth(resolution, std::vector<double>(resolution, 0));
-	double step = max / (resolution - 1);
-
-	double x_pos = x_min;
-	for (int x = 0; x < resolution; x++, x_pos += step) 
-	{
-		double y_pos = y_min;
-		for (int y = 0; y < resolution; y++, y_pos += step) 
-		{
-			// Cast a ray from the camera position (x_pos, y_pos, z_max) towards the negative z-direction
-			Ray_3 ray_query(Point_3(x_pos, y_pos, z_max), negative_z_axis);
-			auto intersection = tree.first_intersection(ray_query);
-
-			if (intersection) 
-			{
-				const Point_3* p = boost::get<Point_3>(&(intersection->first));
-				if (p) 
-				{
-					depth[x][y] = z_max - p->z();
-					depth_max = std::max(depth_max, depth[x][y]);
-				}
-			}
-		}
-	}
-
-	uchar intensity;
-	// Map the depth values to grayscale pixel intensities
-	for (int x = 0; x < resolution; x++) 
-	{
-		for (int y = 0; y < resolution; y++) 
-		{
-			intensity = static_cast<uchar>((depth[x][y] / depth_max) * 255);
-			if (!(depth[x][y] == 0))
-			{
-				intensity = 255 - intensity;
-			}
-			depth_image.at<Vec3b>(resolution - y - 1, x) = Vec3b(intensity, intensity, intensity);
-		}
-	}
-
-	cv::cvtColor(depth_image, depth_image, COLOR_RGB2GRAY);
-	return depth_image;
-}
-
-cv::Mat ConvertContourImage(const cv::Mat& depth_image)
-{
-	cv::Mat contour_image = depth_image;
-	if (depth_image.type() != CV_8UC1) {
-		cv::Mat temp;
-		std::cout << "Converting to CV_8UC1\n";
-		depth_image.convertTo(temp, CV_8UC1);  // 调整为合适的scale因子
-		contour_image = temp;
-	}
-
-	adaptiveThreshold(contour_image, contour_image, 255, cv::ADAPTIVE_THRESH_MEAN_C,
-		cv::THRESH_BINARY_INV, 31, 1.5);
-
-	return contour_image;
-}
 
 /**
  * @brief Generate a depth image from a surface mesh.
@@ -460,77 +390,56 @@ void GenerateDepthImage(
 	std::cout << "Depth image saved to " << path << std::endl;
 }
 
-void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
-{
-	if (!disable_left_key)
-	{
-		vtkSmartPointer<vtkCamera> camera = pipeline->Renderer->GetActiveCamera();
-		auto transform_matrix = camera->GetModelViewTransformMatrix();
 
-		// Do not use transform_matrix directly, it involves translation. 
-		// Use Eigen::Matrix3d transform_matrix_eigen instead.
-		Eigen::Matrix3d transform_matrix_eigen;
-		for (int i = 0; i < 3; i++)
+auto ExtractPolyDataByLabelSurfaceMesh(vtkSmartPointer<vtkPolyData> polydata) -> std::array<SurfaceMesh, 8>
+{
+	std::array<SurfaceMesh, 8> surface_meshes;
+
+	vtkSmartPointer<vtkCellData> celldata = polydata->GetCellData();
+	vtkSmartPointer<vtkDataArray> labels = celldata->GetArray("Label");
+
+	std::array<std::map<vtkIdType, vertex_descriptor>, 8> point_maps;
+
+	for (vtkIdType i = 0; i < polydata->GetNumberOfCells(); i++)
+	{
+		int label = static_cast<int>(labels->GetTuple1(i)) % 8;
+		vtkCell* cell = polydata->GetCell(i);
+
+		if (label >= 0 && label <= 7)
 		{
-			for (int j = 0; j < 3; j++)
+			std::vector<vertex_descriptor> vertex_indices;
+
+			for (int j = 0; j < cell->GetNumberOfPoints(); j++)
 			{
-				transform_matrix_eigen(i, j) = transform_matrix->GetElement(i, j);
+				vtkIdType point_id = cell->GetPointId(j);
+				if (point_maps[label].find(point_id) == point_maps[label].end())
+				{
+					double p[3];
+					polydata->GetPoint(point_id, p);
+					Point_3 point(p[0], p[1], p[2]);
+					vertex_descriptor vertex = surface_meshes[label].add_vertex(point);
+					point_maps[label][point_id] = vertex;
+				}
+				vertex_indices.push_back(point_maps[label][point_id]);
+			}
+
+			if (vertex_indices.size() == 3)
+			{
+				surface_meshes[label].add_face(vertex_indices[0], vertex_indices[1], vertex_indices[2]);
 			}
 		}
-
-		rotated_toothmesh0 = RotateMeshCopy(arch_sm, transform_matrix_eigen);
-
-		std::string output_folder_path_prefix = output_folder_path;
-		fs::path output_folder_fspath(output_folder_path_prefix);
-		CreateDirectoriesRecursively(output_folder_fspath);
-
-		CGAL::IO::write_PLY(fs::path(output_folder_fspath / (file_name_stem + "_rotated.ply")).string(), rotated_toothmesh0);
-
-		double x_min = std::numeric_limits<double>::max();
-		double x_max = std::numeric_limits<double>::min();
-		double y_min = std::numeric_limits<double>::max();
-		double y_max = std::numeric_limits<double>::min();
-		double rotated_toothmesh0_z_max = std::numeric_limits<double>::min();
-
-		auto get_dimension = [&x_min, &x_max, &y_min, &y_max](SurfaceMesh& sm, double& z_max)
-			{
-				for (auto v : sm.vertices())
-				{
-					Point_3 p = sm.point(v);
-					x_min = std::min(x_min, p.x());
-					x_max = std::max(x_max, p.x());
-					y_min = std::min(y_min, p.y());
-					y_max = std::max(y_max, p.y());
-					z_max = std::max(z_max, p.z());
-				}
-				double max;
-				if ((x_max - x_min) > (y_max - y_min))
-					max = x_max - x_min;
-				else
-					max = y_max - y_min;
-				return max;
-			};
-
-		double max = get_dimension(rotated_toothmesh0, rotated_toothmesh0_z_max);
-
-		// Make sure the step is great enough to avoid missing points.
-		double step = max / (RESOLUTION - 1);
-
-		fs::path output_depth_path = fs::path(output_folder_fspath / (file_name_stem + ".png"));
-		fs::path output_contour_path = fs::path(output_folder_fspath / (file_name_stem + "_contour.png"));
-
-		cv::Mat depth_image = GenerateDepthImage(rotated_toothmesh0, x_min, y_min, rotated_toothmesh0_z_max, max, RESOLUTION);
-		cv::imwrite(output_depth_path.string(), depth_image);
-		std::cout << "Depth image saved to " << output_depth_path << std::endl;
-
-		cv::Mat contour_image = ConvertContourImage(depth_image);
-		cv::imwrite(output_contour_path.string(), contour_image);
 	}
+
+	return surface_meshes;
+}
+
+void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
+{
 }
 
 int main()
 {
-	using namespace cv;
+	using namespace MR;
 
 	// Select the input folder containing the mesh files.
 	/* The selected file hierarchy should be as follows:
@@ -543,210 +452,50 @@ int main()
 	* 	 *   - 35
 	* 	 *     - m1.stl
 	*/
-	std::string selected_folder_path = SelectFolder();
 
-	std::cout << "selected_folder_path: " << selected_folder_path << std::endl;
-	int num_folders = 1;
-	fs::path toothmesh_path;
+	input_folder = select_folder();
+	output_folder = select_folder();
 
-	fs::path directory_path(selected_folder_path);
-
-	CreateDirectoriesRecursively(output_image_with_boxes_path);
-	CreateDirectoriesRecursively(output_image_path);
-	CreateDirectoriesRecursively(output_label_path);
-	CreateDirectoriesRecursively(output_depth_image_path);
-	vtkSmartPointer<vtkPolyData> arch_pd;
-	for (const auto& entry : fs::directory_iterator(directory_path))
+	file_count = 0;
+	fdi_str = fs::path(input_folder).filename().string();
+	current_input_folder = fs::path(input_folder);
+	for (const auto& batches : fs::directory_iterator(current_input_folder))
 	{
+		//if (file_count > 30)
+		//{
+		//	break;
+		//}
+
 		// Create a new render pipeline and load the mesh files.
 		pipeline = new vtkRenderPipeline();
 
-		const auto& path = entry.path();
-		file_name_stem = path.stem().string();
-		if (path.extension() == ".vtp")
+		std::cout << batches << std::endl;
+		current_input_folder = batches.path();
+		for (const auto& each_batch : fs::directory_iterator(batches))
 		{
-			disable_left_key = true;
+			const auto& path = each_batch.path();
+			file_name_stem = path.stem().string();
+			if (file_name_stem.find("Restoration") != std::string::npos)
+			{
+				auto stl_reader = vtkSmartPointer<vtkSTLReader>::New();
+				stl_reader->SetFileName(path.string().c_str());
+				stl_reader->Update();
 
-			toothmesh_path /= path;
-			std::cout << toothmesh_path << std::endl;
-			accessing_data_path = toothmesh_path.string();
-			vtkSmartPointer<vtkXMLPolyDataReader> vtp_reader = vtkSmartPointer<vtkXMLPolyDataReader>::New();
-			vtp_reader->SetFileName(toothmesh_path.string().c_str());
-			vtp_reader->Update();
-			arch_pd = vtp_reader->GetOutput();
-
-			RenderPolydata(arch_pd, pipeline->Renderer, 1, 1, 1, 1);
-			//// Clear the mesh data at each run.
-			//arch_sm.clear();
-			//arch_sm = PolyDataToSurfaceMesh(arch_pd);
-
-			//TeethDataInitialization teeth_data_initialization(arch_pd, arch_sm);
-			//teeth_data_initialization.SetRenderer(pipeline->Renderer);
-			//teeth_data_initialization.SetRenderWindow(pipeline->RenderWindow);
-			//teeth_data_initialization.Execute();
-
-			//auto& teeth_poly_data = teeth_data_initialization.m_labeledPolyData;
-
-			//std::vector<std::vector<double> > teeth_dimension_vec;
-			//for (size_t tooth_num = 1; tooth_num < 8; ++tooth_num)
-			//{
-			//	auto tooth_pd = teeth_poly_data[tooth_num];
-			//	auto tooth_vertices_number = tooth_pd->GetNumberOfPoints();
-			//	//if (tooth_vertices_number < 300)
-			//	//{
-			//	//	continue;
-			//	//}
-
-
-			//	auto [x_min, x_max, y_min, y_max] = [](vtkSmartPointer<vtkPolyData> pd)
-			//		{
-			//			auto* bounding_box = pd->GetBounds();
-			//			return std::tuple<double, double, double, double>(bounding_box[0], bounding_box[1], bounding_box[2], bounding_box[3]);
-			//		}(tooth_pd);
-
-			//		/*std::cout << "Tooth " << tooth_num << " has vertices: " << tooth_vertices_number << std::endl;
-			//		std::cout << "Bounding box: x_min: " << x_min << " x_max: " << x_max << " y_min: " << y_min << " y_max: " << y_max << std::endl;*/
-			//		teeth_dimension_vec.push_back({ x_min, x_max, y_min, y_max });
-			//		RenderPolydata(tooth_pd, pipeline->Renderer, 1, 0, 0, 1);
-			//}
-
-			//double x_min = std::numeric_limits<double>::max();
-			//double x_max = std::numeric_limits<double>::min();
-			//double y_min = std::numeric_limits<double>::max();
-			//double y_max = std::numeric_limits<double>::min();
-			//double z_max = std::numeric_limits<double>::min();
-
-			//auto get_dimension = [&x_min, &x_max, &y_min, &y_max](SurfaceMesh& sm, double& z_max)
-			//	{
-			//		for (auto v : sm.vertices())
-			//		{
-			//			Point_3 p = sm.point(v);
-			//			x_min = std::min(x_min, p.x());
-			//			x_max = std::max(x_max, p.x());
-			//			y_min = std::min(y_min, p.y());
-			//			y_max = std::max(y_max, p.y());
-			//			z_max = std::max(z_max, p.z());
-			//		}
-			//		double max;
-			//		if ((x_max - x_min) > (y_max - y_min))
-			//			max = x_max - x_min;
-			//		else
-			//			max = y_max - y_min;
-			//		return max;
-			//	};
-
-			//double max = get_dimension(arch_sm, z_max);
-
-			//auto contour_image_with_boxes_path = output_image_with_boxes_path / std::string(file_name_stem + "with_boxes.png");
-			//auto contour_image_path = output_image_path / std::string(file_name_stem + ".png");
-			//auto label_txt_path = output_label_path / std::string(file_name_stem + ".txt");
-			//auto depth_image_path = output_depth_image_path / std::string(file_name_stem + ".png");
-
-			//auto depth_image = GenerateDepthImage(arch_sm, x_min, y_min, z_max, max, RESOLUTION);
-			//cv::imwrite(depth_image_path.string(), depth_image);
-			//Mat contour_image = ConvertContourImage(depth_image);
-
-			//auto contour_image_with_boxes = contour_image.clone();
-			//std::ofstream label_txt(label_txt_path.string());
-			//double step = max / (RESOLUTION - 1);
-			//for (auto& box : teeth_dimension_vec)
-			//{
-			//	if (box.size() == 4)
-			//	{
-			//		auto x_min_bound_pixel = (box[0] - x_min) / step;
-			//		auto x_max_bound_pixel = (box[1] - x_min) / step;
-			//		auto y_min_bound_pixel = RESOLUTION - (box[2] - y_min) / step;
-			//		auto y_max_bound_pixel = RESOLUTION - (box[3] - y_min) / step;
-
-			//		auto x_center = (x_min_bound_pixel + x_max_bound_pixel) / 2;
-			//		auto y_center = (y_min_bound_pixel + y_max_bound_pixel) / 2;
-
-			//		std::cout << "x_min: " << x_min_bound_pixel << " x_max: " << x_max_bound_pixel << " y_min: " << y_min_bound_pixel << " y_max: " << y_max_bound_pixel << " x_center: " << x_center << " y_center: " << y_center << std::endl;
-
-			//		label_txt << "0 " << x_center / RESOLUTION << " " << y_center / RESOLUTION << " " << abs(x_max_bound_pixel - x_min_bound_pixel) / RESOLUTION << " " << abs(y_max_bound_pixel - y_min_bound_pixel) / RESOLUTION << std::endl;
-
-			//		// 创建一个矩形（方框）
-			//		cv::rectangle(
-			//			contour_image_with_boxes,
-			//			cv::Point(x_min_bound_pixel, y_min_bound_pixel),
-			//			cv::Point(x_max_bound_pixel, y_max_bound_pixel),
-			//			cv::Scalar(255, 0, 0), 2
-			//		);
-			//	}
-			//}
-			//label_txt.close();
-			//// Render the axes.
-			vtkSmartPointer<vtkAxesActor> axes = vtkSmartPointer<vtkAxesActor>::New();
-			axes->SetTotalLength(10.0, 10.0, 10.0);
-
-			vtkSmartPointer<vtkTextProperty> text_prop = vtkSmartPointer<vtkTextProperty>::New();
-			text_prop->SetFontSize(1);
-
-			axes->GetXAxisCaptionActor2D()->SetCaptionTextProperty(text_prop);
-			axes->GetYAxisCaptionActor2D()->SetCaptionTextProperty(text_prop);
-			axes->GetZAxisCaptionActor2D()->SetCaptionTextProperty(text_prop);
-
-			pipeline->Renderer->AddActor(axes);
-
-			// Set up the camera and interactor.
-			pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
-			pipeline->Renderer->ResetCamera();
-			// Set up the callback functions for mouse events.
-			pipeline->addObserver(vtkCommand::LeftButtonPressEvent, LeftPress);
-			pipeline->addObserver(vtkCommand::MouseMoveEvent, MouseMove);
-			pipeline->addObserver(vtkCommand::LeftButtonReleaseEvent, LeftRelease);
-			pipeline->addObserver(vtkCommand::RightButtonPressEvent, RightPress);
-			pipeline->addObserver(vtkCommand::RightButtonReleaseEvent, RightRelease);
-
-			pipeline->RenderWindowInteractor->Start();
-
-			delete pipeline;
+				auto polydata = stl_reader->GetOutput();
+				RenderPolydata(polydata, pipeline->Renderer);
+			}
 		}
-		else if (path.extension() == ".stl")
-		{
-			toothmesh_path /= path;
-			std::cout << toothmesh_path << std::endl;
-			file_name_stem = toothmesh_path.stem().string();
+		// Set up the camera and interactor.
+		pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
+		pipeline->Renderer->ResetCamera();
+		// Set up the callback functions for mouse events.
+		pipeline->addObserver(vtkCommand::LeftButtonPressEvent, LeftPress);
+		pipeline->addObserver(vtkCommand::MouseMoveEvent, MouseMove);
+		pipeline->addObserver(vtkCommand::LeftButtonReleaseEvent, LeftRelease);
+		pipeline->addObserver(vtkCommand::RightButtonPressEvent, RightPress);
+		pipeline->addObserver(vtkCommand::RightButtonReleaseEvent, RightRelease);
 
-			arch_sm.clear();
-			CGAL::IO::read_STL(toothmesh_path.string(), arch_sm);
-			arch_pd = CGAL_Surface_Mesh2VTK_PolyData(arch_sm);
-
-			std::cout << "Arch has vertices: " << arch_sm.number_of_vertices() << std::endl;
-			// Render the tooth mesh's arch and the abutment for the user to align.
-			RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(arch_sm), pipeline->Renderer, 1, 1, 1, 1);
-
-			//// Render the axes.
-			vtkSmartPointer<vtkAxesActor> axes = vtkSmartPointer<vtkAxesActor>::New();
-			axes->SetTotalLength(10.0, 10.0, 10.0);
-
-			vtkSmartPointer<vtkTextProperty> text_prop = vtkSmartPointer<vtkTextProperty>::New();
-			text_prop->SetFontSize(1);
-
-			axes->GetXAxisCaptionActor2D()->SetCaptionTextProperty(text_prop);
-			axes->GetYAxisCaptionActor2D()->SetCaptionTextProperty(text_prop);
-			axes->GetZAxisCaptionActor2D()->SetCaptionTextProperty(text_prop);
-
-			pipeline->Renderer->AddActor(axes);
-
-			// Set up the camera and interactor.
-			pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
-			pipeline->Renderer->ResetCamera();
-			// Set up the callback functions for mouse events.
-			pipeline->addObserver(vtkCommand::LeftButtonPressEvent, LeftPress);
-			pipeline->addObserver(vtkCommand::MouseMoveEvent, MouseMove);
-			pipeline->addObserver(vtkCommand::LeftButtonReleaseEvent, LeftRelease);
-			pipeline->addObserver(vtkCommand::RightButtonPressEvent, RightPress);
-			pipeline->addObserver(vtkCommand::RightButtonReleaseEvent, RightRelease);
-
-			pipeline->RenderWindowInteractor->Start();
-
-			//// Clean up the pipeline after each run.
-			delete pipeline;
-		}
-		else
-		{
-			continue;
-		}
+		pipeline->RenderWindowInteractor->Start();
 	}
+	delete pipeline;
 }
