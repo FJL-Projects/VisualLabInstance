@@ -63,3 +63,5 @@ _NCrunch_*
 
 # Ignore Temp files
 *.ini
+
+VTK_CGAL_Libigl/
