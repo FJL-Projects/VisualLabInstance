@@ -90,6 +90,7 @@
 #include <CGAL/Polygon_mesh_processing/compute_normal.h>
 #include <CGAL/Polygon_mesh_processing/self_intersections.h>
 #include <CGAL/Polygon_mesh_processing/remesh.h>
+#include <CGAL/Polygon_mesh_processing/triangulate_hole.h>
 
 #include <MRMesh/MRMeshLoad.h>
 #include <MRMesh/MRMeshSave.h>
