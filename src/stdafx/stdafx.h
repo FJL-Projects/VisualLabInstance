@@ -10,6 +10,8 @@
 #include <map>
 #include <vtkOBBTree.h>
 #include <vtkPlaneSource.h>
+#include <vtkLine.h>
+#include <vtkCellArray.h>
 #include <vtkLineSource.h>
 #include <vtkTubeFilter.h>
 #include <vtkXMLPolyDataReader.h>
@@ -47,9 +49,16 @@
 #include <vtkTriangle.h>
 #include <vtkMath.h>
 #include <vtkCellData.h>
+#include <vtkCoordinate.h>
 #include <vtkImageData.h>
 #include <vtkPNGWriter.h>
+#include <vtkFloatArray.h>
+#include <vtkLookupTable.h>
 #include <vtkAutoInit.h>
+#include <vtkAxesActor.h>
+#include <vtkTextProperty.h>
+#include <vtkCaptionActor2D.h>
+#include <vtkTransform.h>
 #include <CGAL/Polygon_mesh_processing/triangulate_hole.h>
 #include <CGAL/Polygon_mesh_processing/corefinement.h>
 #include <CGAL/IO/write_ply_points.h>
@@ -76,8 +85,34 @@
 #include <CGAL/AABB_traits.h>
 #include <CGAL/AABB_triangle_primitive.h>
 #include <CGAL/Polygon_2_algorithms.h>
+#include <CGAL/AABB_face_graph_triangle_primitive.h>
+#include <CGAL/Polygon_mesh_slicer.h>
+#include <CGAL/Polygon_mesh_processing/compute_normal.h>
+#include <CGAL/Polygon_mesh_processing/self_intersections.h>
+#include <CGAL/Polygon_mesh_processing/remesh.h>
+
+#include <MRMesh/MRMeshLoad.h>
+#include <MRMesh/MRMeshSave.h>
+#include <MRMesh/MRId.h>
+#include <MRMesh/MRMesh.h>
+#include <MRMesh/MRBitSetParallelFor.h>
+#include <MRMesh/MRMeshTopology.h>
+#include <MRMesh/MRExpected.h>
+#include <MRMesh/MRMeshBuilder.h>
+#include <MRMesh/MRVector.h>
+
+#include <boost/optional.hpp>
+#include <Eigen/Geometry>
+#include <Windows.h>
+#include <shlobj.h>
+#include <locale>
+#include <codecvt>
+#include <iomanip>
+
 #include "vectorAlgorithm.h"
 #include "Timer.hpp"
+#include "Rotation.h"
+
 VTK_MODULE_INIT(vtkRenderingOpenGL2)
 VTK_MODULE_INIT(vtkInteractionStyle)
 VTK_MODULE_INIT(vtkRenderingFreeType)
@@ -103,6 +138,7 @@ typedef K::Ray_2                                                Ray_2;
 typedef K::Circle_2                                             Circle_2;
 //Mesh
 typedef CGAL::Surface_mesh<K::Point_3>                          SurfaceMesh;
+typedef boost::graph_traits<SurfaceMesh>::vertex_iterator							vertex_iterator;
 typedef boost::graph_traits<SurfaceMesh>::vertex_descriptor     vertex_descriptor;
 typedef boost::graph_traits<SurfaceMesh>::halfedge_descriptor   halfedge_descriptor;
 typedef boost::graph_traits<SurfaceMesh>::face_descriptor       face_descriptor;
@@ -111,5 +147,34 @@ typedef boost::graph_traits<SurfaceMesh>::edge_descriptor       edge_descriptor;
 typedef CGAL::AABB_face_graph_triangle_primitive<SurfaceMesh> Primitive;
 typedef CGAL::AABB_traits<K, Primitive> AABB_triangle_traits;
 typedef CGAL::AABB_tree<AABB_triangle_traits> Tree;
+
+namespace PMP = CGAL::Polygon_mesh_processing;
+
+typedef Kernel::Segment_2															Segment_2;
+typedef Kernel::Segment_3															Segment_3;
+typedef Kernel::Plane_3																Plane_3;
+typedef Kernel::Point_3																Point_3;
+typedef Kernel::Point_2																Point_2;
+typedef CGAL::AABB_face_graph_triangle_primitive<SurfaceMesh>						FacePrimitive;
+typedef CGAL::AABB_traits<Kernel, FacePrimitive>									FaceTraits;
+typedef CGAL::AABB_tree<FaceTraits>														FaceTree;
+typedef FaceTree::Primitive_id															Primitive_id;
+typedef boost::optional<FaceTree::Intersection_and_primitive_id<Kernel::Ray_3>::Type>	Ray_intersection;
+typedef Kernel::Ray_3																	Ray;
+typedef boost::optional<FaceTree::Intersection_and_primitive_id<Segment_3>::Type>		Segment_intersection;
+typedef std::vector<std::pair<SurfaceMesh::Face_index, SurfaceMesh::Face_index>>		Face_intersections;
+
+typedef std::vector<Kernel::Point_3>												Polyline_type;
+typedef std::vector<Polyline_type>													Polylines;
+
+typedef CGAL::AABB_halfedge_graph_segment_primitive<SurfaceMesh>					HalfedgePrimitive;
+typedef CGAL::AABB_traits<Kernel, HalfedgePrimitive>								HalfedgeTraits;
+typedef CGAL::AABB_tree<HalfedgeTraits>												HalfedgeTree;
+
+typedef boost::property_map<SurfaceMesh, CGAL::vertex_point_t>::type				VPMap;
+typedef SurfaceMesh::template Property_map<vertex_descriptor, Vector_3>				VNMap;
+typedef SurfaceMesh::template Property_map<face_descriptor, Vector_3>				FNMap;
+typedef SurfaceMesh::template Property_map<vertex_descriptor, double>				VLMap;
+typedef CGAL::Surface_mesh_deformation<SurfaceMesh, CGAL::Default, CGAL::Default, CGAL::SRE_ARAP>	Surface_mesh_deformation;
 
 namespace PMP = CGAL::Polygon_mesh_processing;

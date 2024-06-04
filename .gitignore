@@ -21,7 +21,7 @@
 *.pyo
 
 # Ignore all the build output
-*.obj
+Release/*.obj
 *.pdb
 *.exe
 *.ipdb
@@ -59,3 +59,7 @@ _NCrunch_*
 .vs/
 *.opendb
 *.db
+*.FileListAbsolute.txt
+
+# Ignore Temp files
+*.ini
