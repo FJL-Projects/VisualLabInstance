@@ -1,10 +1,54 @@
-#include"stdafx.h"
-#include"vtkRenderPipeline.h"
-#include"meshTransform.h"
-#include"simpleRender.h"
+ï»¿#include "stdafx.h"
+#include "vtkRenderPipeline.h"
+#include "meshTransform.h"
+#include "simpleRender.h"
+#include "IOManip.hpp"
+#include <MRMesh/MRMeshLoad.h>
+#include <MRMesh/MRId.h>
+#include <MRMesh/MRMesh.h>
+#include <MRMesh/MRBitSetParallelFor.h>
+#include <MRMesh/MRMeshTopology.h>
+#include <MRMesh/MRExpected.h>
+
+vtkRenderPipeline* pipeline;
+
+/**
+ * @brief Generate a 4-digit number string with leading zeros.
+ *
+ * This function takes an integer and converts it into a string representation
+ * with a fixed width of 4 characters. If the number has less than 4 digits,
+ * leading zeros are added to pad the string to the desired width.
+ *
+ * @param number The input integer to be converted.
+ * @return A string representation of the input number with leading zeros.
+ *
+ * @note The function uses std::ostringstream, std::setw(), and std::setfill()
+ *       to format the output string.
+ *
+ * @example
+ *   int num = 42;
+ *   std::string num_str = generate_leading_zero_number_str(num);
+ *   // num_str will be "0042"
+ */
+std::string generate_leading_zero_number_str(int number)
+{
+	std::ostringstream stream;
+	stream << std::setw(4) << std::setfill('0') << number;
+	return stream.str();
+}
+
+void RightPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
+{
+	//std::cout<<"Right Press" << endl;
+}
+void RightRelease(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
+{
+	//std::cout<<"Right Released" << endl;
+}
+
 void LeftPress(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
-	cout<<"Left Press" << endl;
+	//std::cout<<"Left Press" << endl;
 }
 
 void MouseMove(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
@@ -12,112 +56,46 @@ void MouseMove(vtkObject* caller, long unsigned int eventId, void* clientData, v
 	
 }
 
-void writePNG(SurfaceMesh& sm)
-{
-	Tree tree(faces(sm).first, faces(sm).second, sm);
-	double x_min = std::numeric_limits<double>::max();
-	double x_max = std::numeric_limits<double>::min();
-	double z_min = std::numeric_limits<double>::max();
-	double z_max = std::numeric_limits<double>::min();
-	double y_max = std::numeric_limits<double>::min();
-	for (auto v : sm.vertices())
-	{
-		Point_3 p = sm.point(v);
-		x_min = std::min(x_min, p.x());
-		x_max = std::max(x_max, p.x());
-		z_min = std::min(z_min, p.z());
-		z_max = std::max(z_max, p.z());
-		y_max = std::max(y_max, p.y());
-	}
-	double max;
-	if ((x_max - x_min) > (z_max - z_min))
-		max = x_max - x_min;
-	else
-		max = z_max - z_min;
-
-	vtkSmartPointer< vtkImageData> image = vtkSmartPointer< vtkImageData>::New();
-	image->SetDimensions(1000, 1000, 1);
-	image->AllocateScalars(VTK_UNSIGNED_CHAR, 3);
-	int dim[3];
-	image->GetDimensions(dim);
-	cout << dim[0] << " " << dim[1] << " " << dim[2] << endl;
-	std::vector<std::vector<double>> depth(dim[0], std::vector<double>(dim[1], 0));
-	for (int x = 0; x < dim[0]; x++)
-	{
-		for (int z = 0; z < dim[1]; z++)
-		{
-			double x_ = x_min + (x_max - x_min) * x / dim[0];
-			double z_ = z_min + (z_max - z_min) * z / dim[1];
-			Ray_3 ray_query(Point_3(x_, y_max, z_), Vector_3(0, -1, 0));
-			auto intersection = tree.first_intersection(ray_query);
-			const Point_3* p;
-			if (intersection && boost::get<Point_3>(&(intersection->first)))
-			{
-				p = boost::get<Point_3>(&(intersection->first));
-				depth[x][z] = y_max - p->y();
-			}
-			else
-			{
-				depth[x][z] = 0;
-			}
-		}
-	}
-	double depth_max = 0;
-	for (int x = 0; x < 1000; x++)
-	{
-		for (int z = 0; z < 1000; z++)
-		{
-			depth_max = std::max(depth_max, depth[x][z]);
-		}
-	}
-	for (int x = 0; x < 1000; x++)
-	{
-		for (int z = 0; z < 1000; z++)
-		{
-			if (depth[x][z] == 0)
-			{
-				unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x, z, 0));
-				pixel[0] = static_cast<int>(depth[x][z] / depth_max * 255); // ÐÞ¸ÄºìÉ«Í¨µÀµÄÖµ
-				pixel[1] = static_cast<int>(depth[x][z] / depth_max * 255);   // ÐÞ¸ÄÂÌÉ«Í¨µÀµÄÖµ
-				pixel[2] = static_cast<int>(depth[x][z] / depth_max * 255);   // ÐÞ¸ÄÀ¶É«Í¨µÀµÄÖµ
-			}
-			else
-			{
-				unsigned char* pixel = static_cast<unsigned char*>(image->GetScalarPointer(x, z, 0));
-				pixel[0] = 255 - static_cast<int>(depth[x][z] / depth_max * 255); // ÐÞ¸ÄºìÉ«Í¨µÀµÄÖµ
-				pixel[1] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);   // ÐÞ¸ÄÂÌÉ«Í¨µÀµÄÖµ
-				pixel[2] = 255 - static_cast<int>(depth[x][z] / depth_max * 255);   // ÐÞ¸ÄÀ¶É«Í¨µÀµÄÖµ
-			}
-		}
-	}
-	vtkSmartPointer<vtkPNGWriter> writer = vtkSmartPointer<vtkPNGWriter>::New();
-	writer->SetFileName("output.png");
-	writer->SetInputData(image);
-	writer->Write();
-}
-
-SurfaceMesh mesh;
 void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData)
 {
-	writePNG(mesh);
 }
-
-
-
-vtkRenderPipeline* pipeline;
+	
 
 int main()
 {
+	using namespace MR;
 	pipeline = new vtkRenderPipeline();
 
-	CGAL::IO::read_polygon_mesh("data/test.stl",mesh);
-	RenderPolydata(CGAL_Surface_Mesh2VTK_PolyData(mesh), pipeline->Renderer,1,1,1,1);
+	MR::Mesh mrmesh = *MR::MeshLoad::fromAnySupportedFormat("data/11.stl");
+	std::vector<vertex_descriptor> vertices_list(mrmesh.topology.vertSize());
 	
+	SurfaceMesh sm = MRMeshToSurfaceMesh(mrmesh);
+	Mesh converted = SurfaceMeshToMRMesh(sm);
+	
+	MeshSave::toAnySupportedFormat(converted, "data/converted.stl");
+
+	RenderPolydata(MRMeshToPolyData(mrmesh), pipeline->Renderer);
+
+	vtkNew<vtkSTLReader> reader;
+	reader->SetFileName("data/converted.stl");
+	reader->Update();
+	vtkSmartPointer<vtkPolyData> polydata = reader->GetOutput();
+
+	Mesh converted_from_pd = PolyDataToMRMesh(polydata);
+	MeshSave::toAnySupportedFormat(converted_from_pd, "data/converted_from_pd.ply");
+
+	// Set up the camera and interactor.
 	pipeline->Renderer->GetActiveCamera()->SetParallelProjection(1);
 	pipeline->Renderer->ResetCamera();
+	// Set up the callback functions for mouse events.
 	pipeline->addObserver(vtkCommand::LeftButtonPressEvent, LeftPress);
 	pipeline->addObserver(vtkCommand::MouseMoveEvent, MouseMove);
 	pipeline->addObserver(vtkCommand::LeftButtonReleaseEvent, LeftRelease);
+	pipeline->addObserver(vtkCommand::RightButtonPressEvent, RightPress);
+	pipeline->addObserver(vtkCommand::RightButtonReleaseEvent, RightRelease);
 
 	pipeline->RenderWindowInteractor->Start();
+
+	// Clean up the pipeline after each run.
+	delete pipeline;
 }

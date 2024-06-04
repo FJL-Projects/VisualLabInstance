@@ -16,6 +16,9 @@
     <Filter Include="src\rendering pipeline">
       <UniqueIdentifier>{c2263c21-4671-43fe-878c-5289c9011d42}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\new function">
+      <UniqueIdentifier>{5cd5921d-ee44-4649-bca8-f9d78f4e40b4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main program\main.cpp">
@@ -43,6 +46,12 @@
     </ClInclude>
     <ClInclude Include="src\rendering pipeline\simpleRender.h">
       <Filter>src\rendering pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="src\algorithm\Rotation.h">
+      <Filter>src\algorithm</Filter>
+    </ClInclude>
+    <ClInclude Include="src\algorithm\IOManip.hpp">
+      <Filter>src\algorithm</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
