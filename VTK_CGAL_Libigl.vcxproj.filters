@@ -27,6 +27,9 @@
     <ClCompile Include="src\stdafx\stdafx.cpp">
       <Filter>src\stdafx</Filter>
     </ClCompile>
+    <ClCompile Include="src\main program\MainWindow.cpp">
+      <Filter>src\main program</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\stdafx\stdafx.h">
@@ -38,14 +41,8 @@
     <ClInclude Include="src\algorithm\vectorAlgorithm.h">
       <Filter>src\algorithm</Filter>
     </ClInclude>
-    <ClInclude Include="src\rendering pipeline\vtkRenderPipeline.h">
-      <Filter>src\rendering pipeline</Filter>
-    </ClInclude>
     <ClInclude Include="src\algorithm\meshTransform.h">
       <Filter>src\algorithm</Filter>
-    </ClInclude>
-    <ClInclude Include="src\rendering pipeline\simpleRender.h">
-      <Filter>src\rendering pipeline</Filter>
     </ClInclude>
     <ClInclude Include="src\algorithm\Rotation.h">
       <Filter>src\algorithm</Filter>
@@ -53,5 +50,16 @@
     <ClInclude Include="src\algorithm\IOManip.hpp">
       <Filter>src\algorithm</Filter>
     </ClInclude>
+    <ClInclude Include="src\rendering pipeline\simpleRender.h">
+      <Filter>src\rendering pipeline</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rendering pipeline\vtkRenderPipeline.h">
+      <Filter>src\rendering pipeline</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="src\main program\MainWindow.h">
+      <Filter>src\main program</Filter>
+    </QtMoc>
   </ItemGroup>
 </Project>

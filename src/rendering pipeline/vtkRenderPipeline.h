@@ -1,4 +1,5 @@
 #include"stdafx.h"
+#include"stdafx.h"
 
 class DesignInteractorStyle : public vtkInteractorStyleTrackballCamera
 {
