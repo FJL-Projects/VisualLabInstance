@@ -1,58 +1,47 @@
-#pragma once
-#include <QApplication>
+#ifndef MAINWINDOW_H
+#define MAINWINDOW_H
+
 #include <QMainWindow>
-#include <QSurfaceFormat>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
 #include <QPushButton>
-#include <QFileDialog>
-#include <QVTKOpenGLWidget.h>
-#include <QDebug>
-#ifndef Q_MOC_RUN
-#if defined(emit)
-#undef emit
-#include <tbb/tbb.h>
-#define emit // restore the macro definition of "emit", as it was defined in gtmetamacros.h
-#else
-#include <tbb/tbb.h>
-#endif // defined(emit)
-#endif // Q_MOC_RUN
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <vtkSmartPointer.h>
+#include <vtkSTLReader.h>
 #include <vtkRenderer.h>
 #include <vtkRenderWindow.h>
-#include <vtkNew.h>
-#include <vtkCamera.h>
-#include <vtkSTLReader.h>
-#include <vtkPolyData.h>
+#include <vtkRenderWindowInteractor.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkActor.h>
-#include <vtkInteractorStyleTrackballCamera.h>
-#include <vtkSmartPointer.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkAxesActor.h>
-#include <vtkTextProperty.h>
-#include <vtkAxesActor.h>
-#include <vtkTextProperty.h>
-#include <vtkTextActor.h>
-#include <vtkTransform.h>
-#include <vtkTransformPolyDataFilter.h>
-#include <vtkCenterOfMass.h>
-#include <vtkMath.h>
+#include <vtkCamera.h>
+#include <QVTKWidget.h>
+#include <vtkCallbackCommand.h>
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    MainWindow();
+    explicit MainWindow(QWidget* parent = nullptr);
+    ~MainWindow();
 
 private slots:
-    void openFile();
+    void OnLoadButtonClicked();
 
 private:
-    QVTKOpenGLWidget* leftVtkWidget;
-    vtkRenderer* leftRenderer;
-    QVTKOpenGLWidget* rightVtkWidget;
-    vtkRenderer* rightRenderer;
+    QVBoxLayout* m_p_main_layout;
+    QPushButton* m_p_load_button;
+    QVTKWidget* m_p_vtk_widget_left;
+    QVTKWidget* m_p_vtk_widget_right;
+    vtkSmartPointer<vtkRenderer> m_p_renderer_left;
+    vtkSmartPointer<vtkRenderer> m_p_renderer_right;
+    vtkSmartPointer<vtkActor> m_p_actor;
+    vtkSmartPointer<vtkCallbackCommand> m_p_camera_callback;
 
-    void AddAxesToRenderer(vtkRenderer* renderer);
+    void LoadSTLFile(const QString& file_path);
+    void SynchronizeCameras();
+
+    static void CameraModifiedCallback(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
+    void SynchronizeCamerasWithParallax(double angle);
 };
+
+#endif // MAINWINDOW_H

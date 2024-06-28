@@ -67,3 +67,8 @@ _NCrunch_*
 # Ignore Temp folders of Qt
 Debug/qmake/temp/*
 Release/qmake/temp/*
+
+*.obj
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user

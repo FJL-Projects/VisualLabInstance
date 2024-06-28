@@ -56,11 +56,8 @@ int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
 
-    QSurfaceFormat::setDefaultFormat(QVTKOpenGLWidget::defaultFormat());
-
-    MainWindow mainWin;
-    mainWin.resize(1600, 600); // 设置窗口大小以容纳两个并排窗口
-    mainWin.show();
+    MainWindow main_window;
+    main_window.show();
 
     return app.exec();
 }
