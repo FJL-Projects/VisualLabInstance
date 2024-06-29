@@ -1,0 +1,207 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{b79bbec2-14f9-4434-922a-36bc8a0ddafc}</ProjectGuid>
+    <RootNamespace>VTKCGALLibigl</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <Keyword>QtVS_v304</Keyword>
+    <QtMsBuild Condition="'$(QtMsBuild)'=='' OR !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(QtMsBuild)\qt_defaults.props" Condition="Exists('$(QtMsBuild)\qt_defaults.props')" />
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+  <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+  <Target Name="QtMsBuildNotFound" BeforeTargets="CustomBuild;ClCompile" Condition="!Exists('$(QtMsBuild)\qt.targets') OR !Exists('$(QtMsBuild)\Qt.props')">
+    <Message Importance="High" Text="QtMsBuild: could not locate qt.targets, qt.props; project may not build correctly." />
+  </Target>
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="$(QtMsBuild)\Qt.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(ProjectDir)dependencies\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)dependencies\lib;$(LibraryPath)</LibraryPath>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(ProjectDir)dependencies\include;$(ProjectDir)dependencies\include\QtOpenGL;$(ProjectDir)dependencies\include\QtWidgets;$(ProjectDir)dependencies\include\QtGui;$(ProjectDir)dependencies\include\QtCore;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)dependencies\lib;$(LibraryPath)</LibraryPath>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <VcpkgInstalledDir>..\..\env\vcpkg</VcpkgInstalledDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;$(ProjectDir)src\algorithm\;$(ProjectDir)src\main program\;$(ProjectDir)src\stdafx\;$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <UseStandardPreprocessor>true</UseStandardPreprocessor>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <OpenMPSupport>true</OpenMPSupport>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <AdditionalDependencies>E57Format.lib;GlU32.Lib;Iex-3_2.lib;IlmThread-3_2.lib;Imath-3_1.lib;MRCommonPlugins.lib;MRCuda.lib;MRMesh.lib;MRPch.lib;MRTest.lib;MRViewer.lib;MeshViewer.lib;OpenCTM.lib;OpenEXR-3_2.lib;OpenEXRCore-3_2.lib;OpenEXRUtil-3_2.lib;OpenGL32.Lib;Qt53DAnimation.lib;Qt53DAnimationd.lib;Qt53DCore.lib;Qt53DCored.lib;Qt53DExtras.lib;Qt53DExtrasd.lib;Qt53DInput.lib;Qt53DInputd.lib;Qt53DLogic.lib;Qt53DLogicd.lib;Qt53DQuick.lib;Qt53DQuickAnimation.lib;Qt53DQuickAnimationd.lib;Qt53DQuickExtras.lib;Qt53DQuickExtrasd.lib;Qt53DQuickInput.lib;Qt53DQuickInputd.lib;Qt53DQuickRender.lib;Qt53DQuickRenderd.lib;Qt53DQuickScene2D.lib;Qt53DQuickScene2Dd.lib;Qt53DQuickd.lib;Qt53DRender.lib;Qt53DRenderd.lib;Qt5AccessibilitySupport.lib;Qt5AccessibilitySupportd.lib;Qt5AxBase.lib;Qt5AxBased.lib;Qt5AxContainer.lib;Qt5AxContainerd.lib;Qt5AxServer.lib;Qt5AxServerd.lib;Qt5Bluetooth.lib;Qt5Bluetoothd.lib;Qt5Bootstrap.lib;Qt5Concurrent.lib;Qt5Concurrentd.lib;Qt5Core.lib;Qt5Cored.lib;Qt5DBus.lib;Qt5DBusd.lib;Qt5Designer.lib;Qt5DesignerComponents.lib;Qt5DesignerComponentsd.lib;Qt5Designerd.lib;Qt5DeviceDiscoverySupport.lib;Qt5DeviceDiscoverySupportd.lib;Qt5EdidSupport.lib;Qt5EdidSupportd.lib;Qt5EglSupport.lib;Qt5EglSupportd.lib;Qt5EventDispatcherSupport.lib;Qt5EventDispatcherSupportd.lib;Qt5FbSupport.lib;Qt5FbSupportd.lib;Qt5FontDatabaseSupport.lib;Qt5FontDatabaseSupportd.lib;Qt5Gamepad.lib;Qt5Gamepadd.lib;Qt5Gui.lib;Qt5Guid.lib;Qt5Help.lib;Qt5Helpd.lib;Qt5Location.lib;Qt5Locationd.lib;Qt5Multimedia.lib;Qt5MultimediaQuick.lib;Qt5MultimediaQuickd.lib;Qt5MultimediaWidgets.lib;Qt5MultimediaWidgetsd.lib;Qt5Multimediad.lib;Qt5Network.lib;Qt5Networkd.lib;Qt5Nfc.lib;Qt5Nfcd.lib;Qt5OpenGL.lib;Qt5OpenGLExtensions.lib;Qt5OpenGLExtensionsd.lib;Qt5OpenGLd.lib;Qt5PacketProtocol.lib;Qt5PacketProtocold.lib;Qt5PlatformCompositorSupport.lib;Qt5PlatformCompositorSupportd.lib;Qt5Positioning.lib;Qt5PositioningQuick.lib;Qt5PositioningQuickd.lib;Qt5Positioningd.lib;Qt5PrintSupport.lib;Qt5PrintSupportd.lib;Qt5Qml.lib;Qt5QmlDebug.lib;Qt5QmlDebugd.lib;Qt5QmlDevTools.lib;Qt5QmlModels.lib;Qt5QmlModelsd.lib;Qt5QmlWorkerScript.lib;Qt5QmlWorkerScriptd.lib;Qt5Qmld.lib;Qt5Quick.lib;Qt5QuickControls2.lib;Qt5QuickControls2d.lib;Qt5QuickParticles.lib;Qt5QuickParticlesd.lib;Qt5QuickShapes.lib;Qt5QuickShapesd.lib;Qt5QuickTemplates2.lib;Qt5QuickTemplates2d.lib;Qt5QuickTest.lib;Qt5QuickTestd.lib;Qt5QuickWidgets.lib;Qt5QuickWidgetsd.lib;Qt5Quickd.lib;Qt5RemoteObjects.lib;Qt5RemoteObjectsd.lib;Qt5Scxml.lib;Qt5Scxmld.lib;Qt5Sensors.lib;Qt5Sensorsd.lib;Qt5SerialBus.lib;Qt5SerialBusd.lib;Qt5SerialPort.lib;Qt5SerialPortd.lib;Qt5Sql.lib;Qt5Sqld.lib;Qt5Svg.lib;Qt5Svgd.lib;Qt5Test.lib;Qt5Testd.lib;Qt5TextToSpeech.lib;Qt5TextToSpeechd.lib;Qt5ThemeSupport.lib;Qt5ThemeSupportd.lib;Qt5UiTools.lib;Qt5UiToolsd.lib;Qt5VulkanSupport.lib;Qt5VulkanSupportd.lib;Qt5WebChannel.lib;Qt5WebChanneld.lib;Qt5WebSockets.lib;Qt5WebSocketsd.lib;Qt5WebView.lib;Qt5WebViewd.lib;Qt5Widgets.lib;Qt5Widgetsd.lib;Qt5WinExtras.lib;Qt5WinExtrasd.lib;Qt5WindowsUIAutomationSupport.lib;Qt5WindowsUIAutomationSupportd.lib;Qt5Xml.lib;Qt5XmlPatterns.lib;Qt5XmlPatternsd.lib;Qt5Xmld.lib;TKBO.lib;TKBRep.lib;TKBin.lib;TKBinL.lib;TKBinTObj.lib;TKBinXCAF.lib;TKBool.lib;TKCAF.lib;TKCDF.lib;TKDE.lib;TKDECascade.lib;TKDEGLTF.lib;TKDEIGES.lib;TKDEOBJ.lib;TKDEPLY.lib;TKDESTEP.lib;TKDESTL.lib;TKDEVRML.lib;TKFeat.lib;TKFillet.lib;TKG2d.lib;TKG3d.lib;TKGeomAlgo.lib;TKGeomBase.lib;TKHLR.lib;TKLCAF.lib;TKMath.lib;TKMesh.lib;TKMeshVS.lib;TKOffset.lib;TKOpenGl.lib;TKPrim.lib;TKRWMesh.lib;TKService.lib;TKShHealing.lib;TKStd.lib;TKStdL.lib;TKTObj.lib;TKTopAlgo.lib;TKV3d.lib;TKVCAF.lib;TKXCAF.lib;TKXMesh.lib;TKXSBase.lib;TKXml.lib;TKXmlL.lib;TKXmlTObj.lib;TKXmlXCAF.lib;TKernel.lib;blosc.lib;boost_atomic-vc140-mt.lib;boost_chrono-vc140-mt.lib;boost_container-vc140-mt.lib;boost_date_time-vc140-mt.lib;boost_exception-vc140-mt.lib;boost_iostreams-vc140-mt.lib;boost_math_c99-vc140-mt.lib;boost_math_c99f-vc140-mt.lib;boost_math_c99l-vc140-mt.lib;boost_math_tr1-vc140-mt.lib;boost_math_tr1f-vc140-mt.lib;boost_math_tr1l-vc140-mt.lib;boost_program_options-vc140-mt.lib;boost_random-vc140-mt.lib;boost_regex-vc140-mt.lib;boost_serialization-vc140-mt.lib;boost_stacktrace_noop-vc140-mt.lib;boost_stacktrace_windbg-vc140-mt.lib;boost_stacktrace_windbg_cached-vc140-mt.lib;boost_system-vc140-mt.lib;boost_thread-vc140-mt.lib;boost_wserialization-vc140-mt.lib;brotlicommon.lib;brotlidec.lib;brotlienc.lib;bz2.lib;charset.lib;cpr.lib;deflate.lib;ffi.lib;fmt.lib;fontconfig.lib;freetype.lib;gdcmCommon.lib;gdcmDICT.lib;gdcmDSED.lib;gdcmIOD.lib;gdcmMEXD.lib;gdcmMSFF.lib;gdcmcharls.lib;gdcmjpeg12.lib;gdcmjpeg16.lib;gdcmjpeg8.lib;getopt.lib;glad.lib;glfw3dll.lib;gmock.lib;gtest.lib;hidapi.lib;hpdf.lib;hwloc.lib;iconv.lib;imgui.lib;intl.lib;jpeg.lib;jsoncpp.lib;laz-perf.lib;libEGL.lib;libEGLd.lib;libGLESv2.lib;libGLESv2d.lib;libcrypto.lib;libcurl.lib;libexpat.lib;libgmp-10.lib;libmpfr-4.lib;libpng16.lib;libssl.lib;lz4.lib;lzma.lib;meshconv.lib;mrmeshnumpy.lib;mrmeshpy.lib;mrviewerpy.lib;openjp2.lib;openvdb.lib;pkgconf.lib;pthreadVC3.lib;pthreadVCE3.lib;pthreadVSE3.lib;python3.lib;python311.lib;qtfreetype.lib;qtfreetyped.lib;qtlibpng.lib;qtlibpngd.lib;qtmain.lib;qtmaind.lib;snappy.lib;socketxx.lib;spdlog.lib;sqlite3.lib;tbb12.lib;tbbmalloc.lib;tbbmalloc_proxy.lib;tiff.lib;tinyxml2.lib;turbojpeg.lib;vtkChartsCore-8.2.lib;vtkCommonColor-8.2.lib;vtkCommonComputationalGeometry-8.2.lib;vtkCommonCore-8.2.lib;vtkCommonDataModel-8.2.lib;vtkCommonExecutionModel-8.2.lib;vtkCommonMath-8.2.lib;vtkCommonMisc-8.2.lib;vtkCommonSystem-8.2.lib;vtkCommonTransforms-8.2.lib;vtkDICOMParser-8.2.lib;vtkDomainsChemistry-8.2.lib;vtkDomainsChemistryOpenGL2-8.2.lib;vtkFiltersAMR-8.2.lib;vtkFiltersCore-8.2.lib;vtkFiltersExtraction-8.2.lib;vtkFiltersFlowPaths-8.2.lib;vtkFiltersGeneral-8.2.lib;vtkFiltersGeneric-8.2.lib;vtkFiltersGeometry-8.2.lib;vtkFiltersHybrid-8.2.lib;vtkFiltersHyperTree-8.2.lib;vtkFiltersImaging-8.2.lib;vtkFiltersModeling-8.2.lib;vtkFiltersParallel-8.2.lib;vtkFiltersParallelImaging-8.2.lib;vtkFiltersPoints-8.2.lib;vtkFiltersProgrammable-8.2.lib;vtkFiltersSMP-8.2.lib;vtkFiltersSelection-8.2.lib;vtkFiltersSources-8.2.lib;vtkFiltersStatistics-8.2.lib;vtkFiltersTexture-8.2.lib;vtkFiltersTopology-8.2.lib;vtkFiltersVerdict-8.2.lib;vtkGUISupportQt-8.2.lib;vtkGUISupportQtSQL-8.2.lib;vtkGeovisCore-8.2.lib;vtkIOAMR-8.2.lib;vtkIOAsynchronous-8.2.lib;vtkIOCityGML-8.2.lib;vtkIOCore-8.2.lib;vtkIOEnSight-8.2.lib;vtkIOExodus-8.2.lib;vtkIOExport-8.2.lib;vtkIOExportOpenGL2-8.2.lib;vtkIOExportPDF-8.2.lib;vtkIOGeometry-8.2.lib;vtkIOImage-8.2.lib;vtkIOImport-8.2.lib;vtkIOInfovis-8.2.lib;vtkIOLSDyna-8.2.lib;vtkIOLegacy-8.2.lib;vtkIOMINC-8.2.lib;vtkIOMovie-8.2.lib;vtkIONetCDF-8.2.lib;vtkIOPLY-8.2.lib;vtkIOParallel-8.2.lib;vtkIOParallelXML-8.2.lib;vtkIOSQL-8.2.lib;vtkIOSegY-8.2.lib;vtkIOTecplotTable-8.2.lib;vtkIOVeraOut-8.2.lib;vtkIOVideo-8.2.lib;vtkIOXML-8.2.lib;vtkIOXMLParser-8.2.lib;vtkImagingColor-8.2.lib;vtkImagingCore-8.2.lib;vtkImagingFourier-8.2.lib;vtkImagingGeneral-8.2.lib;vtkImagingHybrid-8.2.lib;vtkImagingMath-8.2.lib;vtkImagingMorphological-8.2.lib;vtkImagingSources-8.2.lib;vtkImagingStatistics-8.2.lib;vtkImagingStencil-8.2.lib;vtkInfovisCore-8.2.lib;vtkInfovisLayout-8.2.lib;vtkInteractionImage-8.2.lib;vtkInteractionStyle-8.2.lib;vtkInteractionWidgets-8.2.lib;vtkLocalExample-8.2.lib;vtkNetCDF-8.2.lib;vtkParallelCore-8.2.lib;vtkRenderingAnnotation-8.2.lib;vtkRenderingContext2D-8.2.lib;vtkRenderingContextOpenGL2-8.2.lib;vtkRenderingCore-8.2.lib;vtkRenderingFreeType-8.2.lib;vtkRenderingGL2PSOpenGL2-8.2.lib;vtkRenderingImage-8.2.lib;vtkRenderingLOD-8.2.lib;vtkRenderingLabel-8.2.lib;vtkRenderingOpenGL2-8.2.lib;vtkRenderingQt-8.2.lib;vtkRenderingVolume-8.2.lib;vtkRenderingVolumeOpenGL2-8.2.lib;vtkViewsContext2D-8.2.lib;vtkViewsCore-8.2.lib;vtkViewsInfovis-8.2.lib;vtkViewsQt-8.2.lib;vtkdoubleconversion-8.2.lib;vtkexodusII-8.2.lib;vtkexpat-8.2.lib;vtkfreetype-8.2.lib;vtkgl2ps-8.2.lib;vtkglew-8.2.lib;vtkhdf5-8.2.lib;vtkhdf5_hl-8.2.lib;vtkjpeg-8.2.lib;vtkjsoncpp-8.2.lib;vtklibharu-8.2.lib;vtklibxml2-8.2.lib;vtklz4-8.2.lib;vtklzma-8.2.lib;vtkmetaio-8.2.lib;vtkogg-8.2.lib;vtkpng-8.2.lib;vtkproj-8.2.lib;vtkpugixml-8.2.lib;vtksqlite-8.2.lib;vtksys-8.2.lib;vtktheora-8.2.lib;vtktiff-8.2.lib;vtkverdict-8.2.lib;vtkzlib-8.2.lib;xerces-c_3.lib;zip.lib;zlib.lib;zstd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <StackReserveSize>204857600</StackReserveSize>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS;_ITERATOR_DEBUG_LEVEL=0;CGAL_USE_VTK;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;$(ProjectDir)src\rendering pipeline\;$(ProjectDir)src\algorithm\;$(ProjectDir)src\new function\;$(ProjectDir)src\main program\;$(ProjectDir)src\stdafx\;$(ProjectDir)src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <Optimization>MaxSpeed</Optimization>
+      <UseStandardPreprocessor>false</UseStandardPreprocessor>
+      <OpenMPSupport>true</OpenMPSupport>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>E57Format.lib;GlU32.Lib;Iex-3_2.lib;IlmThread-3_2.lib;Imath-3_1.lib;MRCommonPlugins.lib;MRCuda.lib;MRMesh.lib;MRPch.lib;MRTest.lib;MRViewer.lib;MeshViewer.lib;OpenCTM.lib;OpenEXR-3_2.lib;OpenEXRCore-3_2.lib;OpenEXRUtil-3_2.lib;OpenGL32.Lib;Qt53DAnimation.lib;Qt53DAnimationd.lib;Qt53DCore.lib;Qt53DCored.lib;Qt53DExtras.lib;Qt53DExtrasd.lib;Qt53DInput.lib;Qt53DInputd.lib;Qt53DLogic.lib;Qt53DLogicd.lib;Qt53DQuick.lib;Qt53DQuickAnimation.lib;Qt53DQuickAnimationd.lib;Qt53DQuickExtras.lib;Qt53DQuickExtrasd.lib;Qt53DQuickInput.lib;Qt53DQuickInputd.lib;Qt53DQuickRender.lib;Qt53DQuickRenderd.lib;Qt53DQuickScene2D.lib;Qt53DQuickScene2Dd.lib;Qt53DQuickd.lib;Qt53DRender.lib;Qt53DRenderd.lib;Qt5AccessibilitySupport.lib;Qt5AccessibilitySupportd.lib;Qt5AxBase.lib;Qt5AxBased.lib;Qt5AxContainer.lib;Qt5AxContainerd.lib;Qt5AxServer.lib;Qt5AxServerd.lib;Qt5Bluetooth.lib;Qt5Bluetoothd.lib;Qt5Bootstrap.lib;Qt5Concurrent.lib;Qt5Concurrentd.lib;Qt5Core.lib;Qt5Cored.lib;Qt5DBus.lib;Qt5DBusd.lib;Qt5Designer.lib;Qt5DesignerComponents.lib;Qt5DesignerComponentsd.lib;Qt5Designerd.lib;Qt5DeviceDiscoverySupport.lib;Qt5DeviceDiscoverySupportd.lib;Qt5EdidSupport.lib;Qt5EdidSupportd.lib;Qt5EglSupport.lib;Qt5EglSupportd.lib;Qt5EventDispatcherSupport.lib;Qt5EventDispatcherSupportd.lib;Qt5FbSupport.lib;Qt5FbSupportd.lib;Qt5FontDatabaseSupport.lib;Qt5FontDatabaseSupportd.lib;Qt5Gamepad.lib;Qt5Gamepadd.lib;Qt5Gui.lib;Qt5Guid.lib;Qt5Help.lib;Qt5Helpd.lib;Qt5Location.lib;Qt5Locationd.lib;Qt5Multimedia.lib;Qt5MultimediaQuick.lib;Qt5MultimediaQuickd.lib;Qt5MultimediaWidgets.lib;Qt5MultimediaWidgetsd.lib;Qt5Multimediad.lib;Qt5Network.lib;Qt5Networkd.lib;Qt5Nfc.lib;Qt5Nfcd.lib;Qt5OpenGL.lib;Qt5OpenGLExtensions.lib;Qt5OpenGLExtensionsd.lib;Qt5OpenGLd.lib;Qt5PacketProtocol.lib;Qt5PacketProtocold.lib;Qt5PlatformCompositorSupport.lib;Qt5PlatformCompositorSupportd.lib;Qt5Positioning.lib;Qt5PositioningQuick.lib;Qt5PositioningQuickd.lib;Qt5Positioningd.lib;Qt5PrintSupport.lib;Qt5PrintSupportd.lib;Qt5Qml.lib;Qt5QmlDebug.lib;Qt5QmlDebugd.lib;Qt5QmlDevTools.lib;Qt5QmlModels.lib;Qt5QmlModelsd.lib;Qt5QmlWorkerScript.lib;Qt5QmlWorkerScriptd.lib;Qt5Qmld.lib;Qt5Quick.lib;Qt5QuickControls2.lib;Qt5QuickControls2d.lib;Qt5QuickParticles.lib;Qt5QuickParticlesd.lib;Qt5QuickShapes.lib;Qt5QuickShapesd.lib;Qt5QuickTemplates2.lib;Qt5QuickTemplates2d.lib;Qt5QuickTest.lib;Qt5QuickTestd.lib;Qt5QuickWidgets.lib;Qt5QuickWidgetsd.lib;Qt5Quickd.lib;Qt5RemoteObjects.lib;Qt5RemoteObjectsd.lib;Qt5Scxml.lib;Qt5Scxmld.lib;Qt5Sensors.lib;Qt5Sensorsd.lib;Qt5SerialBus.lib;Qt5SerialBusd.lib;Qt5SerialPort.lib;Qt5SerialPortd.lib;Qt5Sql.lib;Qt5Sqld.lib;Qt5Svg.lib;Qt5Svgd.lib;Qt5Test.lib;Qt5Testd.lib;Qt5TextToSpeech.lib;Qt5TextToSpeechd.lib;Qt5ThemeSupport.lib;Qt5ThemeSupportd.lib;Qt5UiTools.lib;Qt5UiToolsd.lib;Qt5VulkanSupport.lib;Qt5VulkanSupportd.lib;Qt5WebChannel.lib;Qt5WebChanneld.lib;Qt5WebSockets.lib;Qt5WebSocketsd.lib;Qt5WebView.lib;Qt5WebViewd.lib;Qt5Widgets.lib;Qt5Widgetsd.lib;Qt5WinExtras.lib;Qt5WinExtrasd.lib;Qt5WindowsUIAutomationSupport.lib;Qt5WindowsUIAutomationSupportd.lib;Qt5Xml.lib;Qt5XmlPatterns.lib;Qt5XmlPatternsd.lib;Qt5Xmld.lib;TKBO.lib;TKBRep.lib;TKBin.lib;TKBinL.lib;TKBinTObj.lib;TKBinXCAF.lib;TKBool.lib;TKCAF.lib;TKCDF.lib;TKDE.lib;TKDECascade.lib;TKDEGLTF.lib;TKDEIGES.lib;TKDEOBJ.lib;TKDEPLY.lib;TKDESTEP.lib;TKDESTL.lib;TKDEVRML.lib;TKFeat.lib;TKFillet.lib;TKG2d.lib;TKG3d.lib;TKGeomAlgo.lib;TKGeomBase.lib;TKHLR.lib;TKLCAF.lib;TKMath.lib;TKMesh.lib;TKMeshVS.lib;TKOffset.lib;TKOpenGl.lib;TKPrim.lib;TKRWMesh.lib;TKService.lib;TKShHealing.lib;TKStd.lib;TKStdL.lib;TKTObj.lib;TKTopAlgo.lib;TKV3d.lib;TKVCAF.lib;TKXCAF.lib;TKXMesh.lib;TKXSBase.lib;TKXml.lib;TKXmlL.lib;TKXmlTObj.lib;TKXmlXCAF.lib;TKernel.lib;blosc.lib;boost_atomic-vc140-mt.lib;boost_chrono-vc140-mt.lib;boost_container-vc140-mt.lib;boost_date_time-vc140-mt.lib;boost_exception-vc140-mt.lib;boost_iostreams-vc140-mt.lib;boost_math_c99-vc140-mt.lib;boost_math_c99f-vc140-mt.lib;boost_math_c99l-vc140-mt.lib;boost_math_tr1-vc140-mt.lib;boost_math_tr1f-vc140-mt.lib;boost_math_tr1l-vc140-mt.lib;boost_program_options-vc140-mt.lib;boost_random-vc140-mt.lib;boost_regex-vc140-mt.lib;boost_serialization-vc140-mt.lib;boost_stacktrace_noop-vc140-mt.lib;boost_stacktrace_windbg-vc140-mt.lib;boost_stacktrace_windbg_cached-vc140-mt.lib;boost_system-vc140-mt.lib;boost_thread-vc140-mt.lib;boost_wserialization-vc140-mt.lib;brotlicommon.lib;brotlidec.lib;brotlienc.lib;bz2.lib;charset.lib;cpr.lib;deflate.lib;ffi.lib;fmt.lib;fontconfig.lib;freetype.lib;gdcmCommon.lib;gdcmDICT.lib;gdcmDSED.lib;gdcmIOD.lib;gdcmMEXD.lib;gdcmMSFF.lib;gdcmcharls.lib;gdcmjpeg12.lib;gdcmjpeg16.lib;gdcmjpeg8.lib;getopt.lib;glad.lib;glfw3dll.lib;gmock.lib;gtest.lib;hidapi.lib;hpdf.lib;hwloc.lib;iconv.lib;imgui.lib;intl.lib;jpeg.lib;jsoncpp.lib;laz-perf.lib;libEGL.lib;libEGLd.lib;libGLESv2.lib;libGLESv2d.lib;libcrypto.lib;libcurl.lib;libexpat.lib;libgmp-10.lib;libmpfr-4.lib;libpng16.lib;libssl.lib;lz4.lib;lzma.lib;meshconv.lib;mrmeshnumpy.lib;mrmeshpy.lib;mrviewerpy.lib;openjp2.lib;openvdb.lib;pkgconf.lib;pthreadVC3.lib;pthreadVCE3.lib;pthreadVSE3.lib;python3.lib;python311.lib;qtfreetype.lib;qtfreetyped.lib;qtlibpng.lib;qtlibpngd.lib;qtmain.lib;qtmaind.lib;snappy.lib;socketxx.lib;spdlog.lib;sqlite3.lib;tbb12.lib;tbbmalloc.lib;tbbmalloc_proxy.lib;tiff.lib;tinyxml2.lib;turbojpeg.lib;vtkChartsCore-8.2.lib;vtkCommonColor-8.2.lib;vtkCommonComputationalGeometry-8.2.lib;vtkCommonCore-8.2.lib;vtkCommonDataModel-8.2.lib;vtkCommonExecutionModel-8.2.lib;vtkCommonMath-8.2.lib;vtkCommonMisc-8.2.lib;vtkCommonSystem-8.2.lib;vtkCommonTransforms-8.2.lib;vtkDICOMParser-8.2.lib;vtkDomainsChemistry-8.2.lib;vtkDomainsChemistryOpenGL2-8.2.lib;vtkFiltersAMR-8.2.lib;vtkFiltersCore-8.2.lib;vtkFiltersExtraction-8.2.lib;vtkFiltersFlowPaths-8.2.lib;vtkFiltersGeneral-8.2.lib;vtkFiltersGeneric-8.2.lib;vtkFiltersGeometry-8.2.lib;vtkFiltersHybrid-8.2.lib;vtkFiltersHyperTree-8.2.lib;vtkFiltersImaging-8.2.lib;vtkFiltersModeling-8.2.lib;vtkFiltersParallel-8.2.lib;vtkFiltersParallelImaging-8.2.lib;vtkFiltersPoints-8.2.lib;vtkFiltersProgrammable-8.2.lib;vtkFiltersSMP-8.2.lib;vtkFiltersSelection-8.2.lib;vtkFiltersSources-8.2.lib;vtkFiltersStatistics-8.2.lib;vtkFiltersTexture-8.2.lib;vtkFiltersTopology-8.2.lib;vtkFiltersVerdict-8.2.lib;vtkGUISupportQt-8.2.lib;vtkGUISupportQtSQL-8.2.lib;vtkGeovisCore-8.2.lib;vtkIOAMR-8.2.lib;vtkIOAsynchronous-8.2.lib;vtkIOCityGML-8.2.lib;vtkIOCore-8.2.lib;vtkIOEnSight-8.2.lib;vtkIOExodus-8.2.lib;vtkIOExport-8.2.lib;vtkIOExportOpenGL2-8.2.lib;vtkIOExportPDF-8.2.lib;vtkIOGeometry-8.2.lib;vtkIOImage-8.2.lib;vtkIOImport-8.2.lib;vtkIOInfovis-8.2.lib;vtkIOLSDyna-8.2.lib;vtkIOLegacy-8.2.lib;vtkIOMINC-8.2.lib;vtkIOMovie-8.2.lib;vtkIONetCDF-8.2.lib;vtkIOPLY-8.2.lib;vtkIOParallel-8.2.lib;vtkIOParallelXML-8.2.lib;vtkIOSQL-8.2.lib;vtkIOSegY-8.2.lib;vtkIOTecplotTable-8.2.lib;vtkIOVeraOut-8.2.lib;vtkIOVideo-8.2.lib;vtkIOXML-8.2.lib;vtkIOXMLParser-8.2.lib;vtkImagingColor-8.2.lib;vtkImagingCore-8.2.lib;vtkImagingFourier-8.2.lib;vtkImagingGeneral-8.2.lib;vtkImagingHybrid-8.2.lib;vtkImagingMath-8.2.lib;vtkImagingMorphological-8.2.lib;vtkImagingSources-8.2.lib;vtkImagingStatistics-8.2.lib;vtkImagingStencil-8.2.lib;vtkInfovisCore-8.2.lib;vtkInfovisLayout-8.2.lib;vtkInteractionImage-8.2.lib;vtkInteractionStyle-8.2.lib;vtkInteractionWidgets-8.2.lib;vtkLocalExample-8.2.lib;vtkNetCDF-8.2.lib;vtkParallelCore-8.2.lib;vtkRenderingAnnotation-8.2.lib;vtkRenderingContext2D-8.2.lib;vtkRenderingContextOpenGL2-8.2.lib;vtkRenderingCore-8.2.lib;vtkRenderingFreeType-8.2.lib;vtkRenderingGL2PSOpenGL2-8.2.lib;vtkRenderingImage-8.2.lib;vtkRenderingLOD-8.2.lib;vtkRenderingLabel-8.2.lib;vtkRenderingOpenGL2-8.2.lib;vtkRenderingQt-8.2.lib;vtkRenderingVolume-8.2.lib;vtkRenderingVolumeOpenGL2-8.2.lib;vtkViewsContext2D-8.2.lib;vtkViewsCore-8.2.lib;vtkViewsInfovis-8.2.lib;vtkViewsQt-8.2.lib;vtkdoubleconversion-8.2.lib;vtkexodusII-8.2.lib;vtkexpat-8.2.lib;vtkfreetype-8.2.lib;vtkgl2ps-8.2.lib;vtkglew-8.2.lib;vtkhdf5-8.2.lib;vtkhdf5_hl-8.2.lib;vtkjpeg-8.2.lib;vtkjsoncpp-8.2.lib;vtklibharu-8.2.lib;vtklibxml2-8.2.lib;vtklz4-8.2.lib;vtklzma-8.2.lib;vtkmetaio-8.2.lib;vtkogg-8.2.lib;vtkpng-8.2.lib;vtkproj-8.2.lib;vtkpugixml-8.2.lib;vtksqlite-8.2.lib;vtksys-8.2.lib;vtktheora-8.2.lib;vtktiff-8.2.lib;vtkverdict-8.2.lib;vtkzlib-8.2.lib;xerces-c_3.lib;zip.lib;zlib.lib;zstd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>%(AdditionalDependencies);E57Format.lib;GlU32.Lib;Iex-3_2.lib;IlmThread-3_2.lib;Imath-3_1.lib;MRCommonPlugins.lib;MRCuda.lib;MRMesh.lib;MRPch.lib;MRTest.lib;MRViewer.lib;MeshViewer.lib;OpenCTM.lib;OpenEXR-3_2.lib;OpenEXRCore-3_2.lib;OpenEXRUtil-3_2.lib;OpenGL32.Lib;Qt53DAnimation.lib;Qt53DAnimationd.lib;Qt53DCore.lib;Qt53DCored.lib;Qt53DExtras.lib;Qt53DExtrasd.lib;Qt53DInput.lib;Qt53DInputd.lib;Qt53DLogic.lib;Qt53DLogicd.lib;Qt53DQuick.lib;Qt53DQuickAnimation.lib;Qt53DQuickAnimationd.lib;Qt53DQuickExtras.lib;Qt53DQuickExtrasd.lib;Qt53DQuickInput.lib;Qt53DQuickInputd.lib;Qt53DQuickRender.lib;Qt53DQuickRenderd.lib;Qt53DQuickScene2D.lib;Qt53DQuickScene2Dd.lib;Qt53DQuickd.lib;Qt53DRender.lib;Qt53DRenderd.lib;Qt5AccessibilitySupport.lib;Qt5AccessibilitySupportd.lib;Qt5AxBase.lib;Qt5AxBased.lib;Qt5AxContainer.lib;Qt5AxContainerd.lib;Qt5AxServer.lib;Qt5AxServerd.lib;Qt5Bluetooth.lib;Qt5Bluetoothd.lib;Qt5Bootstrap.lib;Qt5Concurrent.lib;Qt5Concurrentd.lib;Qt5Core.lib;Qt5Cored.lib;Qt5DBus.lib;Qt5DBusd.lib;Qt5Designer.lib;Qt5DesignerComponents.lib;Qt5DesignerComponentsd.lib;Qt5Designerd.lib;Qt5DeviceDiscoverySupport.lib;Qt5DeviceDiscoverySupportd.lib;Qt5EdidSupport.lib;Qt5EdidSupportd.lib;Qt5EglSupport.lib;Qt5EglSupportd.lib;Qt5EventDispatcherSupport.lib;Qt5EventDispatcherSupportd.lib;Qt5FbSupport.lib;Qt5FbSupportd.lib;Qt5FontDatabaseSupport.lib;Qt5FontDatabaseSupportd.lib;Qt5Gamepad.lib;Qt5Gamepadd.lib;Qt5Gui.lib;Qt5Guid.lib;Qt5Help.lib;Qt5Helpd.lib;Qt5Location.lib;Qt5Locationd.lib;Qt5Multimedia.lib;Qt5MultimediaQuick.lib;Qt5MultimediaQuickd.lib;Qt5MultimediaWidgets.lib;Qt5MultimediaWidgetsd.lib;Qt5Multimediad.lib;Qt5Network.lib;Qt5Networkd.lib;Qt5Nfc.lib;Qt5Nfcd.lib;Qt5OpenGL.lib;Qt5OpenGLExtensions.lib;Qt5OpenGLExtensionsd.lib;Qt5OpenGLd.lib;Qt5PacketProtocol.lib;Qt5PacketProtocold.lib;Qt5PlatformCompositorSupport.lib;Qt5PlatformCompositorSupportd.lib;Qt5Positioning.lib;Qt5PositioningQuick.lib;Qt5PositioningQuickd.lib;Qt5Positioningd.lib;Qt5PrintSupport.lib;Qt5PrintSupportd.lib;Qt5Qml.lib;Qt5QmlDebug.lib;Qt5QmlDebugd.lib;Qt5QmlDevTools.lib;Qt5QmlModels.lib;Qt5QmlModelsd.lib;Qt5QmlWorkerScript.lib;Qt5QmlWorkerScriptd.lib;Qt5Qmld.lib;Qt5Quick.lib;Qt5QuickControls2.lib;Qt5QuickControls2d.lib;Qt5QuickParticles.lib;Qt5QuickParticlesd.lib;Qt5QuickShapes.lib;Qt5QuickShapesd.lib;Qt5QuickTemplates2.lib;Qt5QuickTemplates2d.lib;Qt5QuickTest.lib;Qt5QuickTestd.lib;Qt5QuickWidgets.lib;Qt5QuickWidgetsd.lib;Qt5Quickd.lib;Qt5RemoteObjects.lib;Qt5RemoteObjectsd.lib;Qt5Scxml.lib;Qt5Scxmld.lib;Qt5Sensors.lib;Qt5Sensorsd.lib;Qt5SerialBus.lib;Qt5SerialBusd.lib;Qt5SerialPort.lib;Qt5SerialPortd.lib;Qt5Sql.lib;Qt5Sqld.lib;Qt5Svg.lib;Qt5Svgd.lib;Qt5Test.lib;Qt5Testd.lib;Qt5TextToSpeech.lib;Qt5TextToSpeechd.lib;Qt5ThemeSupport.lib;Qt5ThemeSupportd.lib;Qt5UiTools.lib;Qt5UiToolsd.lib;Qt5VulkanSupport.lib;Qt5VulkanSupportd.lib;Qt5WebChannel.lib;Qt5WebChanneld.lib;Qt5WebSockets.lib;Qt5WebSocketsd.lib;Qt5WebView.lib;Qt5WebViewd.lib;Qt5Widgets.lib;Qt5Widgetsd.lib;Qt5WinExtras.lib;Qt5WinExtrasd.lib;Qt5WindowsUIAutomationSupport.lib;Qt5WindowsUIAutomationSupportd.lib;Qt5Xml.lib;Qt5XmlPatterns.lib;Qt5XmlPatternsd.lib;Qt5Xmld.lib;TKBO.lib;TKBRep.lib;TKBin.lib;TKBinL.lib;TKBinTObj.lib;TKBinXCAF.lib;TKBool.lib;TKCAF.lib;TKCDF.lib;TKDE.lib;TKDECascade.lib;TKDEGLTF.lib;TKDEIGES.lib;TKDEOBJ.lib;TKDEPLY.lib;TKDESTEP.lib;TKDESTL.lib;TKDEVRML.lib;TKFeat.lib;TKFillet.lib;TKG2d.lib;TKG3d.lib;TKGeomAlgo.lib;TKGeomBase.lib;TKHLR.lib;TKLCAF.lib;TKMath.lib;TKMesh.lib;TKMeshVS.lib;TKOffset.lib;TKOpenGl.lib;TKPrim.lib;TKRWMesh.lib;TKService.lib;TKShHealing.lib;TKStd.lib;TKStdL.lib;TKTObj.lib;TKTopAlgo.lib;TKV3d.lib;TKVCAF.lib;TKXCAF.lib;TKXMesh.lib;TKXSBase.lib;TKXml.lib;TKXmlL.lib;TKXmlTObj.lib;TKXmlXCAF.lib;TKernel.lib;blosc.lib;boost_atomic-vc140-mt.lib;boost_chrono-vc140-mt.lib;boost_container-vc140-mt.lib;boost_date_time-vc140-mt.lib;boost_exception-vc140-mt.lib;boost_iostreams-vc140-mt.lib;boost_math_c99-vc140-mt.lib;boost_math_c99f-vc140-mt.lib;boost_math_c99l-vc140-mt.lib;boost_math_tr1-vc140-mt.lib;boost_math_tr1f-vc140-mt.lib;boost_math_tr1l-vc140-mt.lib;boost_program_options-vc140-mt.lib;boost_random-vc140-mt.lib;boost_regex-vc140-mt.lib;boost_serialization-vc140-mt.lib;boost_stacktrace_noop-vc140-mt.lib;boost_stacktrace_windbg-vc140-mt.lib;boost_stacktrace_windbg_cached-vc140-mt.lib;boost_system-vc140-mt.lib;boost_thread-vc140-mt.lib;boost_wserialization-vc140-mt.lib;brotlicommon.lib;brotlidec.lib;brotlienc.lib;bz2.lib;charset.lib;cpr.lib;deflate.lib;ffi.lib;fmt.lib;fontconfig.lib;freetype.lib;gdcmCommon.lib;gdcmDICT.lib;gdcmDSED.lib;gdcmIOD.lib;gdcmMEXD.lib;gdcmMSFF.lib;gdcmcharls.lib;gdcmjpeg12.lib;gdcmjpeg16.lib;gdcmjpeg8.lib;getopt.lib;glad.lib;glfw3dll.lib;gmock.lib;gtest.lib;hidapi.lib;hpdf.lib;hwloc.lib;iconv.lib;imgui.lib;intl.lib;jpeg.lib;jsoncpp.lib;laz-perf.lib;libEGL.lib;libEGLd.lib;libGLESv2.lib;libGLESv2d.lib;libcrypto.lib;libcurl.lib;libexpat.lib;libgmp-10.lib;libmpfr-4.lib;libpng16.lib;libssl.lib;lz4.lib;lzma.lib;meshconv.lib;mrmeshnumpy.lib;mrmeshpy.lib;mrviewerpy.lib;openjp2.lib;openvdb.lib;pkgconf.lib;pthreadVC3.lib;pthreadVCE3.lib;pthreadVSE3.lib;python3.lib;python311.lib;qtfreetype.lib;qtfreetyped.lib;qtlibpng.lib;qtlibpngd.lib;qtmain.lib;qtmaind.lib;snappy.lib;socketxx.lib;spdlog.lib;sqlite3.lib;tbb12.lib;tbbmalloc.lib;tbbmalloc_proxy.lib;tiff.lib;tinyxml2.lib;turbojpeg.lib;vtkChartsCore-8.2.lib;vtkCommonColor-8.2.lib;vtkCommonComputationalGeometry-8.2.lib;vtkCommonCore-8.2.lib;vtkCommonDataModel-8.2.lib;vtkCommonExecutionModel-8.2.lib;vtkCommonMath-8.2.lib;vtkCommonMisc-8.2.lib;vtkCommonSystem-8.2.lib;vtkCommonTransforms-8.2.lib;vtkDICOMParser-8.2.lib;vtkDomainsChemistry-8.2.lib;vtkDomainsChemistryOpenGL2-8.2.lib;vtkFiltersAMR-8.2.lib;vtkFiltersCore-8.2.lib;vtkFiltersExtraction-8.2.lib;vtkFiltersFlowPaths-8.2.lib;vtkFiltersGeneral-8.2.lib;vtkFiltersGeneric-8.2.lib;vtkFiltersGeometry-8.2.lib;vtkFiltersHybrid-8.2.lib;vtkFiltersHyperTree-8.2.lib;vtkFiltersImaging-8.2.lib;vtkFiltersModeling-8.2.lib;vtkFiltersParallel-8.2.lib;vtkFiltersParallelImaging-8.2.lib;vtkFiltersPoints-8.2.lib;vtkFiltersProgrammable-8.2.lib;vtkFiltersSMP-8.2.lib;vtkFiltersSelection-8.2.lib;vtkFiltersSources-8.2.lib;vtkFiltersStatistics-8.2.lib;vtkFiltersTexture-8.2.lib;vtkFiltersTopology-8.2.lib;vtkFiltersVerdict-8.2.lib;vtkGUISupportQt-8.2.lib;vtkGUISupportQtSQL-8.2.lib;vtkGeovisCore-8.2.lib;vtkIOAMR-8.2.lib;vtkIOAsynchronous-8.2.lib;vtkIOCityGML-8.2.lib;vtkIOCore-8.2.lib;vtkIOEnSight-8.2.lib;vtkIOExodus-8.2.lib;vtkIOExport-8.2.lib;vtkIOExportOpenGL2-8.2.lib;vtkIOExportPDF-8.2.lib;vtkIOGeometry-8.2.lib;vtkIOImage-8.2.lib;vtkIOImport-8.2.lib;vtkIOInfovis-8.2.lib;vtkIOLSDyna-8.2.lib;vtkIOLegacy-8.2.lib;vtkIOMINC-8.2.lib;vtkIOMovie-8.2.lib;vtkIONetCDF-8.2.lib;vtkIOPLY-8.2.lib;vtkIOParallel-8.2.lib;vtkIOParallelXML-8.2.lib;vtkIOSQL-8.2.lib;vtkIOSegY-8.2.lib;vtkIOTecplotTable-8.2.lib;vtkIOVeraOut-8.2.lib;vtkIOVideo-8.2.lib;vtkIOXML-8.2.lib;vtkIOXMLParser-8.2.lib;vtkImagingColor-8.2.lib;vtkImagingCore-8.2.lib;vtkImagingFourier-8.2.lib;vtkImagingGeneral-8.2.lib;vtkImagingHybrid-8.2.lib;vtkImagingMath-8.2.lib;vtkImagingMorphological-8.2.lib;vtkImagingSources-8.2.lib;vtkImagingStatistics-8.2.lib;vtkImagingStencil-8.2.lib;vtkInfovisCore-8.2.lib;vtkInfovisLayout-8.2.lib;vtkInteractionImage-8.2.lib;vtkInteractionStyle-8.2.lib;vtkInteractionWidgets-8.2.lib;vtkLocalExample-8.2.lib;vtkNetCDF-8.2.lib;vtkParallelCore-8.2.lib;vtkRenderingAnnotation-8.2.lib;vtkRenderingContext2D-8.2.lib;vtkRenderingContextOpenGL2-8.2.lib;vtkRenderingCore-8.2.lib;vtkRenderingFreeType-8.2.lib;vtkRenderingGL2PSOpenGL2-8.2.lib;vtkRenderingImage-8.2.lib;vtkRenderingLOD-8.2.lib;vtkRenderingLabel-8.2.lib;vtkRenderingOpenGL2-8.2.lib;vtkRenderingQt-8.2.lib;vtkRenderingVolume-8.2.lib;vtkRenderingVolumeOpenGL2-8.2.lib;vtkViewsContext2D-8.2.lib;vtkViewsCore-8.2.lib;vtkViewsInfovis-8.2.lib;vtkViewsQt-8.2.lib;vtkdoubleconversion-8.2.lib;vtkexodusII-8.2.lib;vtkexpat-8.2.lib;vtkfreetype-8.2.lib;vtkgl2ps-8.2.lib;vtkglew-8.2.lib;vtkhdf5-8.2.lib;vtkhdf5_hl-8.2.lib;vtkjpeg-8.2.lib;vtkjsoncpp-8.2.lib;vtklibharu-8.2.lib;vtklibxml2-8.2.lib;vtklz4-8.2.lib;vtklzma-8.2.lib;vtkmetaio-8.2.lib;vtkogg-8.2.lib;vtkpng-8.2.lib;vtkproj-8.2.lib;vtkpugixml-8.2.lib;vtksqlite-8.2.lib;vtksys-8.2.lib;vtktheora-8.2.lib;vtktiff-8.2.lib;vtkverdict-8.2.lib;vtkzlib-8.2.lib;xerces-c_3.lib;zip.lib;zlib.lib;zstd.lib</AdditionalDependencies>
+      <StackReserveSize>204857600</StackReserveSize>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main program\main.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\main program\MainWindow.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\stdafx\stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\algorithm\IOManip.hpp" />
+    <ClInclude Include="src\algorithm\meshTransform.h" />
+    <ClInclude Include="src\algorithm\Rotation.h" />
+    <ClInclude Include="src\algorithm\Timer.hpp" />
+    <ClInclude Include="src\algorithm\vectorAlgorithm.h" />
+    <QtMoc Include="src\main program\MainWindow.h" />
+    <ClInclude Include="src\main program\CameraSyncInteractorStyle.h" />
+    <ClInclude Include="src\rendering pipeline\simpleRender.h" />
+    <ClInclude Include="src\rendering pipeline\vtkRenderPipeline.h" />
+    <ClInclude Include="src\stdafx\stdafx.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Import Project="$(QtMsBuild)\qt.targets" Condition="Exists('$(QtMsBuild)\qt.targets')" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
