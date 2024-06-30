@@ -178,6 +178,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\main program\CustomInteractorStyle.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\main program\main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
     </ClCompile>
@@ -196,6 +199,7 @@
     <ClInclude Include="src\algorithm\vectorAlgorithm.h" />
     <QtMoc Include="src\main program\MainWindow.h" />
     <ClInclude Include="src\main program\CameraSyncInteractorStyle.h" />
+    <QtMoc Include="src\main program\CustomInteractorStyle.h" />
     <ClInclude Include="src\rendering pipeline\simpleRender.h" />
     <ClInclude Include="src\rendering pipeline\vtkRenderPipeline.h" />
     <ClInclude Include="src\stdafx\stdafx.h" />

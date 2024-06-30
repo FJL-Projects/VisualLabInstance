@@ -30,6 +30,9 @@
     <ClCompile Include="src\main program\MainWindow.cpp">
       <Filter>src\main program</Filter>
     </ClCompile>
+    <ClCompile Include="src\main program\CustomInteractorStyle.cpp">
+      <Filter>src\main program</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\stdafx\stdafx.h">
@@ -62,6 +65,9 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="src\main program\MainWindow.h">
+      <Filter>src\main program</Filter>
+    </QtMoc>
+    <QtMoc Include="src\main program\CustomInteractorStyle.h">
       <Filter>src\main program</Filter>
     </QtMoc>
   </ItemGroup>

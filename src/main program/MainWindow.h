@@ -6,26 +6,23 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <vtkSmartPointer.h>
-#include <vtkSTLReader.h>
 #include <vtkRenderer.h>
-#include <vtkRenderWindow.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkPolyDataMapper.h>
 #include <vtkActor.h>
-#include <vtkCamera.h>
+#include <vtkSTLReader.h>
+#include <vtkPolyDataMapper.h>
 #include <QVTKWidget.h>
-#include <vtkCallbackCommand.h>
+#include "CustomInteractorStyle.h"
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget* parent = nullptr);
+    MainWindow(QWidget* parent = nullptr);
     ~MainWindow();
 
 private slots:
-    void OnLoadButtonClicked();
+    void LoadSTLFile();
 
 private:
     QVBoxLayout* m_p_main_layout;
@@ -35,13 +32,15 @@ private:
     vtkSmartPointer<vtkRenderer> m_p_renderer_left;
     vtkSmartPointer<vtkRenderer> m_p_renderer_right;
     vtkSmartPointer<vtkActor> m_p_actor;
-    vtkSmartPointer<vtkCallbackCommand> m_p_camera_callback;
 
-    void LoadSTLFile(const QString& file_path);
-    void SynchronizeCameras();
+    vtkSmartPointer<CustomInteractorStyle> m_p_interactor_style_left;
+    vtkSmartPointer<CustomInteractorStyle> m_p_interactor_style_right;
 
-    static void CameraModifiedCallback(vtkObject* caller, long unsigned int eventId, void* clientData, void* callData);
-    void SynchronizeCamerasWithParallax(double angle);
+    void InitializeRenderers();
+    void SetupInteractorStyle();
+    void RotateActorForParallax(vtkSmartPointer<vtkActor> actor, double angle);
+
+    void ConnectInteractorStyles();
 };
 
 #endif // MAINWINDOW_H
