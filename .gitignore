@@ -21,7 +21,7 @@
 *.pyo
 
 # Ignore all the build output
-Release/*.obj
+*Release/*.obj
 *.pdb
 *.exe
 *.ipdb
@@ -65,3 +65,8 @@ _NCrunch_*
 *.ini
 
 VTK_CGAL_Libigl/
+# Ignore Temp folders of Qt
+Debug/qmake/temp/*
+Release/qmake/temp/*
+
+*.obj

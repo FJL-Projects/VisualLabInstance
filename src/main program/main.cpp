@@ -437,7 +437,7 @@ void LeftRelease(vtkObject* caller, long unsigned int eventId, void* clientData,
 {
 }
 
-int main()
+int main(int argc, char* argv[])
 {
 	using namespace MR;
 

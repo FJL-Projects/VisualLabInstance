@@ -53,8 +53,5 @@
     <ClInclude Include="src\algorithm\IOManip.hpp">
       <Filter>src\algorithm</Filter>
     </ClInclude>
-    <ClInclude Include="src\new function\TeethDataInitialization.h">
-      <Filter>src\new function</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>
